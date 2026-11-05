@@ -1,0 +1,143 @@
+{
+  "test": {
+    "id": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
+    "name": "sample.test.ts",
+    "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
+    "language": "typescript",
+    "framework": "vitest",
+    "type": "UNIT"
+  },
+  "analysisStatus": "SUCCESS",
+  "evaluationStatus": "EVALUATED",
+  "completeness": "COMPLETE",
+  "scope": "test-body",
+  "test_type": {
+    "value": "UNIT",
+    "source": "EXPLICIT"
+  },
+  "capabilities": {
+    "assertion_forms": "AVAILABLE",
+    "custom_helper_resolution": "UNAVAILABLE",
+    "runtime_execution": "UNAVAILABLE"
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 1,
+      "availability": "KNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "collector_version": "0.1.0",
+      "scope": "test-body",
+      "coverage": {
+        "status": "COMPLETE",
+        "supported_frameworks": [
+          "jest",
+          "vitest"
+        ],
+        "supported_assertion_forms": [
+          "expect-to-be",
+          "expect-to-equal",
+          "expect-to-be-truthy",
+          "expect-to-be-falsy",
+          "expect-to-throw",
+          "expect-rejects-to-throw",
+          "expect-to-match-snapshot",
+          "expect-to-contain",
+          "expect-matcher-utils",
+          "expect-to-match-object",
+          "expect-to-have-been-called-times"
+        ]
+      },
+      "location": {
+        "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
+        "line": 5
+      }
+    }
+  },
+  "ruleResults": [
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4",
+      "location": {
+        "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
+        "line": 5
+      }
+    }
+  ],
+  "schemaVersion": "0.4",
+  "testResults": [
+    {
+      "test": {
+        "id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4",
+        "name": "adds two numbers",
+        "line": 4,
+        "declaration": "it"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "jest",
+              "vitest"
+            ],
+            "supported_assertion_forms": [
+              "expect-to-be",
+              "expect-to-equal",
+              "expect-to-be-truthy",
+              "expect-to-be-falsy",
+              "expect-to-throw",
+              "expect-rejects-to-throw",
+              "expect-to-match-snapshot",
+              "expect-to-contain",
+              "expect-matcher-utils",
+              "expect-to-match-object",
+              "expect-to-have-been-called-times"
+            ]
+          },
+          "location": {
+            "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
+            "line": 5
+          }
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4",
+          "location": {
+            "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
+            "line": 5
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "pass": 1,
+    "fail": 0,
+    "indeterminate": 0,
+    "not_applicable": 0,
+    "failed": 0
+  }
+}
