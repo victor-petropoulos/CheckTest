@@ -1,0 +1,38 @@
+{
+  "name": "checktest-cli",
+  "version": "1.2.0",
+  "description": "Static test-quality analysis: deterministic evidence collector + rule engine",
+  "license": "MIT",
+  "bin": {
+    "checktest": "bin/checktest.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "typescript": "^6.0.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest --runInBand",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "prepublishOnly": "npm run build",
+    "gate": "npm test -- --coverage && npm run typecheck && npm run build && checkchange check --base master --json"
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/jest-runner": "^10.1.1",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^24.19.2",
+    "prettier": "^3.9.10",
+    "ts-jest": "^29.3",
+    "typescript": "^6.0.3"
+  }
+}
