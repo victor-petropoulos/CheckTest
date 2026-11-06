@@ -1,0 +1,29 @@
+name: ci
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --frozen-lockfile
+      - run: npm test -- --coverage
+      - run: npm run typecheck
+      - run: npm run build
+      - name: format check
+        run: |
+          npm run format
+          # package-lock.json legitimately differs from the dev repo: the tarball
+          # ships without devDependencies, so `npm install` in CI regenerates the
+          # lock. Compare only source files.
+          git diff --exit-code -- src tests
+      - name: smoke CLI
+        run: node dist/src/cli.js --version && node dist/src/cli.js check --test tests/cli.test.ts --type UNIT > report.json && jq -e '.analysisStatus' report.json

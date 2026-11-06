@@ -1,0 +1,23 @@
+{
+  "case": "case-08-callback",
+  "fixture": "sample.test.ts",
+  "declared_type": "UNIT",
+  "rule": "CT-INT-001",
+  "analysis": {
+    "status": "SUCCESS",
+    "completeness": "COMPLETE",
+    "test_type": { "value": "UNIT", "source": "EXPLICIT" }
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 0,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "coverage_status": "PARTIAL",
+      "reason_contains": ["unestablished executability", "inside a callback"]
+    }
+  },
+  "rule_result": "INDETERMINATE",
+  "conflicts": []
+}
