@@ -1,0 +1,24 @@
+{
+  "case": "case-14-not-applicable",
+  "fixture": "sample.test.ts",
+  "declared_type": "COMPONENT",
+  "rule": "CT-DEMO-001",
+  "analysis": {
+    "status": "SUCCESS",
+    "completeness": "COMPLETE",
+    "test_type": { "value": "COMPONENT", "source": "EXPLICIT" }
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 1,
+      "availability": "KNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "coverage_status": "COMPLETE",
+      "reason_contains": []
+    }
+  },
+  "rule_result": "N/A",
+  "conflicts": [],
+  "_note": "A2 OPTION A. Evidence is healthy (1/KNOWN/COMPLETE — it would PASS under CT-INT-001), so the N/A verdict can only come from the applicability guard running first. Plan §4 records assertion_count as 'n/a' for this row because the rule never consults it; the sidecar records the true collected values so the short-circuit is provable rather than asserted."
+}

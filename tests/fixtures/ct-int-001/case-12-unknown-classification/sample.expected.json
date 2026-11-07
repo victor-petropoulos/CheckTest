@@ -1,0 +1,23 @@
+{
+  "case": "case-12-unknown-classification",
+  "fixture": "sample.test.ts",
+  "declared_type": "UNKNOWN",
+  "rule": "CT-INT-001",
+  "analysis": {
+    "status": "SUCCESS",
+    "completeness": "COMPLETE",
+    "test_type": { "value": "UNKNOWN", "source": "DEFAULT" }
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 1,
+      "availability": "KNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "coverage_status": "COMPLETE",
+      "reason_contains": []
+    }
+  },
+  "rule_result": "INDETERMINATE",
+  "conflicts": []
+}

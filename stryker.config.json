@@ -1,0 +1,21 @@
+{
+  "testRunner": "jest",
+  "mutate": [
+    "src/**/*.ts",
+    "!src/**/*.test.ts"
+  ],
+  "ignorePatterns": [
+    "coverage/**",
+    "dist/**",
+    "graphify-out/**"
+  ],
+  "reporters": [
+    "progress",
+    "json"
+  ],
+  "jest": {
+    "projectType": "custom",
+    "configFile": "jest.config.js"
+  },
+  "logLevel": "warn"
+}
