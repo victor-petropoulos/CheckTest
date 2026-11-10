@@ -1,0 +1,27 @@
+{
+  "case": "case-13-conflict",
+  "fixture": "sample.test.ts",
+  "declared_type": "UNIT",
+  "rule": "CT-INT-001",
+  "analysis": {
+    "status": "SUCCESS",
+    "completeness": "COMPLETE",
+    "test_type": { "value": "UNIT", "source": "EXPLICIT" }
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 1,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "coverage_status": "COMPLETE",
+      "reason_contains": []
+    }
+  },
+  "rule_result": "INDETERMINATE",
+  "conflicts": [
+    { "value": 1, "source": "typescript-jest-adapter", "provenance": "DIRECT" },
+    { "value": 2, "source": "typescript-jest-regex-stub", "provenance": "DERIVED" }
+  ],
+  "attach_regex_stub_conflict": true
+}
