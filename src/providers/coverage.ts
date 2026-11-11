@@ -45,6 +45,14 @@ export interface CoverageReportOptions {
   coverage_map?: CoverageMapInput;
   mappings?: CoverageMapInput;
   mapping?: CoverageMapInput;
+  /**
+   * CT-COV-001 — the report at `path` was produced by a run scoped to a single
+   * test file. Additive opt-in: when true, the subject-level `line_coverage`
+   * record gains `per_test_run: true`; when absent/false nothing is set and
+   * behavior is unchanged (ADR-031). Parsed by the CLI/config layer
+   * (`--per-test-run`), never inferred from the report.
+   */
+  per_test_run?: boolean;
 }
 
 /** Normalize any supported coverage-map input shape into from=to pairs. */
@@ -418,6 +426,47 @@ function advisoryPerDeclarationRecord(
   });
 }
 
+/**
+ * CT-COV-001 per-test-run mode (design §2). A numeric per-declaration record
+ * standing for the file-level claim "the mapped production file was exercised in
+ * the run of this test file". Declaration lines are never instrumented (design
+ * Goal; ADR-031:11-12,66-67), so the value is the FILE-level verdict restricted
+ * to 0/1 — 1 when the mapped report shows >= 1 covered line, 0 otherwise — and
+ * the reason names the test file the run was scoped to.
+ */
+function scopedPerDeclarationRecord(
+  targetRecord: EvidenceRecord,
+  parsed: CoverageReportResult,
+  testFile: string,
+): EvidenceRecord {
+  const provider = targetRecord.provider ?? parsed.provider;
+  const version = targetRecord.provider_version ?? parsed.provider_version;
+  const revision = targetRecord.source_revision ?? parsed.source_revision;
+  return makeEvidenceRecord({
+    type: 'line_coverage',
+    value: countCoveredLines(targetRecord.value) >= 1 ? 1 : 0,
+    availability: targetRecord.availability,
+    provenance: Provenance.EXTERNAL,
+    source: provider,
+    collector_version: version,
+    scope: EVIDENCE_SCOPE_TEST_BODY,
+    coverage: coverageBlock(targetRecord.coverage.status),
+    provider,
+    provider_version: version,
+    source_revision: revision,
+    reason: `coverage evidence from a run scoped to ${testFile}`,
+  });
+}
+
+/** Any report entry other than `mappedTo` whose collection status is PARTIAL. */
+function hasPartialSibling(parsed: CoverageReportResult, mappedTo: string): boolean {
+  const target = normalizePath(mappedTo);
+  for (const [file, record] of parsed.records) {
+    if (normalizePath(file) !== target && record.coverage.status === CollectionStatus.PARTIAL) return true;
+  }
+  return false;
+}
+
 function perDeclarationRecord(
   fileRecord: EvidenceRecord,
   parsed: CoverageReportResult,
@@ -471,6 +520,12 @@ export function applyCoverageReport(
   const isMapped = mappedTo !== undefined;
 
   let fileRecord: EvidenceRecord;
+  // CT-COV-001 per-test-run mode (design §2): when the marker is set AND the
+  // mapped target is KNOWN + COMPLETE, per-declaration records become numeric
+  // against the mapped production file instead of advisory. `perDeclNumericSource`
+  // keeps the RAW target record (the fileRecord's value is already collapsed to a
+  // covered-line count, which the numeric per-declaration records appraise).
+  let perDeclNumericSource: EvidenceRecord | undefined;
   if (mappedTo !== undefined) {
     const targetRecord = findFileRecord(parsed, mappedTo);
     if (targetRecord !== undefined) {
@@ -483,6 +538,13 @@ export function applyCoverageReport(
           targetRecord.availability === Availability.KNOWN ? countCoveredLines(targetRecord.value) : targetRecord.value,
         reason: targetRecord.reason ? `${mappingReason} (${targetRecord.reason})` : mappingReason,
       };
+      if (
+        opts?.per_test_run === true &&
+        targetRecord.availability === Availability.KNOWN &&
+        targetRecord.coverage.status === CollectionStatus.COMPLETE
+      ) {
+        perDeclNumericSource = targetRecord;
+      }
     } else {
       fileRecord = unknownRecord(parsed, `no coverage data for ${mappedTo}`);
       if (mappingReason !== undefined)
@@ -492,6 +554,35 @@ export function applyCoverageReport(
     fileRecord =
       findFileRecord(parsed, analysis.subject.file) ??
       unknownRecord(parsed, `no coverage data for ${analysis.subject.file}`);
+  }
+
+  // CT-COV-001 marker (design §1): the flag describes the RUN SCOPE of the
+  // report just parsed, so it is attached to the subject-level record whichever
+  // branch produced it. One added field, no verdict moves here — the rule reads
+  // it (design §2) in a later unit.
+  if (opts?.per_test_run === true) {
+    fileRecord = { ...fileRecord, per_test_run: true };
+  }
+
+  // CT-COV-001 veto-WARN (design §1, task 6): a scoped run whose mapped target is
+  // KNOWN + COMPLETE but whose report ALSO carries unrelated PARTIAL entries
+  // contradicts a single-test-file scope. The contradiction only ANNOTATES the
+  // subject reason; it never gates a verdict and never touches the numeric
+  // per-declaration path above.
+  if (
+    opts?.per_test_run === true &&
+    mappedTo !== undefined &&
+    fileRecord.availability === Availability.KNOWN &&
+    fileRecord.coverage.status === CollectionStatus.COMPLETE &&
+    hasPartialSibling(parsed, mappedTo)
+  ) {
+    fileRecord = {
+      ...fileRecord,
+      reason:
+        fileRecord.reason !== undefined
+          ? `veto-WARN: ${fileRecord.reason}`
+          : 'veto-WARN: mapped pair evidence contradicts a run scoped to one test file',
+    };
   }
 
   const next: AnalysisOutput = {
@@ -504,9 +595,12 @@ export function applyCoverageReport(
       ...testScope,
       evidence: {
         ...testScope.evidence,
-        line_coverage: isMapped
-          ? advisoryPerDeclarationRecord(fileRecord, parsed, mappingReason)
-          : perDeclarationRecord(fileRecord, parsed, testScope.test.line),
+        line_coverage:
+          perDeclNumericSource !== undefined
+            ? scopedPerDeclarationRecord(perDeclNumericSource, parsed, analysis.subject.file)
+            : isMapped
+              ? advisoryPerDeclarationRecord(fileRecord, parsed, mappingReason)
+              : perDeclarationRecord(fileRecord, parsed, testScope.test.line),
       },
     }));
   }

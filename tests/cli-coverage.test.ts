@@ -314,3 +314,84 @@ describe('stale revision: no definitive verdict (provider -> engine)', () => {
     expect(evaluateRule(CT_COV_001, analysis).finding?.result).toBe('INDETERMINATE');
   });
 });
+
+describe('--per-test-run flag (CT-COV-001 unit A)', () => {
+  it('accepted as a boolean flag: last-argument position consumes no value', () => {
+    // A value-consuming switch would throw "missing value for '--per-test-run'"
+    // here, which is the regression this test pins.
+    const code = run(['--test', CASE_01, '--type', 'UNIT', '--rule', 'CT-COV-001', '--per-test-run']);
+
+    expect(stderr).toBe('');
+    expect(code).toBe(0);
+    // No report supplied -> nothing to mark, and no verdict moves.
+    expect(reportJson().testResults[0].evidence.line_coverage).toBeUndefined();
+  });
+
+  it('--help lists --per-test-run', () => {
+    const code = run(['--help']);
+
+    expect(code).toBe(0);
+    expect(stdout).toContain('--per-test-run');
+  });
+
+  // Still byte-identical under unit B, because the CLI injects `analyzedRevision`
+  // = git HEAD while the report carries no revision -> revision 'unknown' +
+  // analyzed set => UNAVAILABLE (cli.ts:294-312). Unit B's numeric per-declaration
+  // path needs a KNOWN + COMPLETE target, so the stale report keeps every record
+  // advisory and the marker moves nothing here. The numeric-on-the-wire proof
+  // lives in tests/providers/coverage.test.ts (provider -> toJson, KNOWN state).
+  it('with report + map: report is byte-identical to the unmarked run and never carries the field', () => {
+    const body = JSON.stringify({ covered: { 'to.ts': [0, 0, 0, 0, 0, 0, 0, 1] } });
+    const plainCode = run([
+      '--test',
+      CASE_01,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      report('ptr-cli-plain.json', body),
+      '--coverage-map',
+      `${CASE_01}=to.ts`,
+    ]);
+    expect(plainCode).toBe(0);
+    const plain = stdout;
+
+    const markedCode = run([
+      '--test',
+      CASE_01,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      report('ptr-cli-marked.json', body),
+      '--coverage-map',
+      `${CASE_01}=to.ts`,
+      '--per-test-run',
+    ]);
+
+    expect(markedCode).toBe(0);
+    expect(stderr).toBe('');
+    expect(stdout).toBe(plain);
+    expect(stdout).not.toContain('per_test_run');
+  });
+
+  it('--coverage-map validation is unaffected by the new flag', () => {
+    const p = report('ptr-cli-bad-map.json', JSON.stringify({ covered: { 'to.ts': [1] } }));
+    const code = run([
+      '--test',
+      CASE_01,
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      p,
+      '--per-test-run',
+      '--coverage-map',
+      'no-equals-sign',
+    ]);
+
+    expect(code).toBe(1);
+    expect(stderr).toContain("invalid --coverage-map 'no-equals-sign'");
+  });
+});

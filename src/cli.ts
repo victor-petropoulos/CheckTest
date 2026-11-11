@@ -75,6 +75,7 @@ const USAGE = [
   "  --format <fmt>  report format: 'json' | 'sarif' (default json)",
   '  --coverage-report <path>  external Istanbul/c8 coverage report to attach',
   '  --coverage-map <from>=<to>  map analyzed file path to report key (repeatable)',
+  '  --per-test-run            mark the coverage report as a single-test-file run (CT-COV-001)',
   '  --mutation-report <path>  external Stryker mutation report to attach',
   '  --config <path>           explicit config file (checktest.config.json); no implicit discovery',
   '',
@@ -97,6 +98,8 @@ export interface Options {
   format: string;
   coverageReport?: string;
   coverageMap?: string[];
+  /** CT-COV-001: the coverage report came from a run scoped to one test file. */
+  perTestRun?: boolean;
   mutationReport?: string;
   config?: CheckTestConfig;
   ruleExplicit?: boolean;
@@ -118,6 +121,12 @@ function parseArgs(argv: readonly string[]): Options {
 
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
+    // `--per-test-run` is the one value-less flag: it is handled BEFORE the
+    // missing-value guard below, and `continue` advances past this token only.
+    if (flag === '--per-test-run') {
+      options.perTestRun = true;
+      continue;
+    }
     // Every supported flag is `--name value`, so a missing value is detected
     // here rather than silently consuming the next flag as a path.
     const value = argv[i + 1];
@@ -299,6 +308,7 @@ export function runAnalysis(options: Options): { report: string; exitCode: numbe
       analysis = applyCoverageReport(analysis, options.coverageReport, {
         analyzedRevision,
         coverageMap: options.coverageMap,
+        per_test_run: options.perTestRun,
       });
     }
   }

@@ -3,7 +3,8 @@ import { writeFileSync, mkdirSync } from 'fs';
 
 import { parseCoverageReport, applyCoverageReport } from '../../src/providers/coverage';
 import { Availability, CollectionStatus, EVIDENCE_SCOPE_TEST_BODY, Provenance } from '../../src/core/evidence';
-import { evaluateRule } from '../../src/core/evaluation';
+import { evaluateRule, evaluateTests } from '../../src/core/evaluation';
+import { toJson } from '../../src/reporters/json';
 import { CT_COV_001 } from '../../src/rules/ct-cov-001';
 import { RuleResult } from '../../src/core/result';
 import {
@@ -699,5 +700,231 @@ describe('SP2.2-fix mapped file-level verdicts (TDD)', () => {
         'per-declaration attribution not supported for mapped coverage',
       );
     }
+  });
+});
+
+// CT-COV-001 per-test-run marker (plan tasks 2 + 4, TDD unit A). The marker is an
+// additive flag on the subject-level fileRecord only: the rule reads it in a
+// later unit, so nothing here moves a verdict.
+describe('per_test_run marker (CT-COV-001 unit A)', () => {
+  it('marked run: mapped subject record gains per_test_run: true', () => {
+    const p = tmpFile('ptr-marked.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    const subj = out.evidence.line_coverage;
+    expect(subj.per_test_run).toBe(true);
+    // Nothing else moves: same value and same mapping reason as the unmarked run.
+    expect(subj.value).toBe(1);
+    expect(subj.reason).toContain('coverage mapped from from.ts to to.ts per user mapping');
+  });
+
+  it('unmarked run: field absent, and output byte-identical to per_test_run: false', () => {
+    const body = JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } });
+    const absent = applyCoverageReport(analysisWith('from.ts', [1, 2]), tmpFile('ptr-absent.json', body), {
+      coverageMap: { 'from.ts': 'to.ts' },
+    });
+    const explicitFalse = applyCoverageReport(analysisWith('from.ts', [1, 2]), tmpFile('ptr-false.json', body), {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: false,
+    });
+    expect(absent.evidence.line_coverage.per_test_run).toBeUndefined();
+    expect('per_test_run' in absent.evidence.line_coverage).toBe(false);
+    // Serialized form is the contract ADR-031 protects: identical bytes.
+    expect(JSON.stringify(explicitFalse)).toBe(JSON.stringify(absent));
+  });
+
+  // Unit B supersedes the original whole-output equality here: in marked mode the
+  // PER-DECLARATION records legitimately differ (numeric vs advisory — see the
+  // unit-B describe below). The surviving contract is that the SUBJECT record
+  // differs only by the added field.
+  it('marked vs unmarked: the subject record differs only by the added field', () => {
+    const body = JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } });
+    const marked = JSON.parse(
+      JSON.stringify(
+        applyCoverageReport(analysisWith('from.ts', [1, 2]), tmpFile('ptr-diff-marked.json', body), {
+          coverageMap: { 'from.ts': 'to.ts' },
+          per_test_run: true,
+        }),
+      ),
+    );
+    const plain = JSON.parse(
+      JSON.stringify(
+        applyCoverageReport(analysisWith('from.ts', [1, 2]), tmpFile('ptr-diff-plain.json', body), {
+          coverageMap: { 'from.ts': 'to.ts' },
+        }),
+      ),
+    );
+    expect(marked.evidence.line_coverage.per_test_run).toBe(true);
+    delete marked.evidence.line_coverage.per_test_run;
+    expect(marked.evidence.line_coverage).toEqual(plain.evidence.line_coverage);
+  });
+
+  // Unit A pinned "marked moves no verdict"; unit B (tasks 5+6) supersedes it:
+  // marked + map + KNOWN + COMPLETE now yields NUMERIC per-declaration records.
+  // The marker field itself is still never added to a per-declaration record.
+  it('marked run + KNOWN + COMPLETE target: per-declaration records become numeric (unit B)', () => {
+    const p = tmpFile('ptr-decl.json', JSON.stringify({ covered: { 'to.ts': [0, 1] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    expect(out.tests).toHaveLength(2);
+    for (const t of out.tests!) {
+      const decl = t.evidence.line_coverage;
+      expect(decl.value).toBe(1);
+      expect(decl.reason).toBe('coverage evidence from a run scoped to from.ts');
+      expect('per_test_run' in decl).toBe(false);
+    }
+  });
+
+  it('parseCoverageReport accepts the marker option and its records are unchanged', () => {
+    const body = JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } });
+    const plain = parseCoverageReport(tmpFile('ptr-parse-plain.json', body));
+    const marked = parseCoverageReport(tmpFile('ptr-parse-marked.json', body), { per_test_run: true });
+    expect(JSON.stringify(marked.records.get('to.ts'))).toBe(JSON.stringify(plain.records.get('to.ts')));
+  });
+});
+
+// CT-COV-001 per-test-run verdicts + veto-WARN (plan tasks 5+6, TDD unit B).
+// Unit A plumbed the marker only; unit B reads it. With the marker + a mapping +
+// a KNOWN + COMPLETE mapped target, per-declaration records become NUMERIC (the
+// same shape unmapped mode produces) instead of advisory — the claim stays
+// file-level ("the mapped production file was exercised in the run of this test
+// file"), never a per-test-body claim (design §2). A mapped-pair contradiction
+// prepends a veto-WARN to the subject reason and NEVER moves a verdict.
+describe('per-test-run verdicts + veto-WARN (CT-COV-001 unit B)', () => {
+  const active = (): typeof CT_COV_001 => ({ ...CT_COV_001, status: 'active' });
+
+  it('marked + map + KNOWN + COMPLETE: per-declaration records are numeric with the scoped reason', () => {
+    const p = tmpFile('ptrb-numeric.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    expect(out.tests).toHaveLength(2);
+    for (const t of out.tests!) {
+      const decl = t.evidence.line_coverage;
+      expect(decl.value).toBe(1);
+      expect(decl.availability).toBe(Availability.KNOWN);
+      expect(decl.provenance).toBe(Provenance.EXTERNAL);
+      expect(decl.scope).toBe(EVIDENCE_SCOPE_TEST_BODY);
+      expect(decl.coverage.status).toBe(CollectionStatus.COMPLETE);
+      expect(decl.reason).toBe('coverage evidence from a run scoped to from.ts');
+    }
+    // Subject-level verdict unchanged by the mode: >= 1 covered line in the mapped file.
+    expect(out.evidence.line_coverage.value).toBe(1);
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.PASS);
+  });
+
+  it('marked + map + all-uncovered target: per-declaration numeric 0 -> FAIL', () => {
+    const p = tmpFile('ptrb-numeric-zero.json', JSON.stringify({ covered: { 'to.ts': [0, 0, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    for (const t of out.tests!) expect(t.evidence.line_coverage.value).toBe(0);
+    for (const e of evaluateTests(active(), out)) expect(e.finding?.result).toBe(RuleResult.FAIL);
+  });
+
+  it('per-declaration verdict changes ONLY in marked mode (subject verdict identical)', () => {
+    const body = JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } });
+    const marked = applyCoverageReport(analysisWith('from.ts', [1, 2]), tmpFile('ptrb-mode-marked.json', body), {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    const unmarked = applyCoverageReport(analysisWith('from.ts', [1, 2]), tmpFile('ptrb-mode-plain.json', body), {
+      coverageMap: { 'from.ts': 'to.ts' },
+    });
+    // Unmarked is the ADR-031 advisory contract exactly as unit A pinned it.
+    for (const t of unmarked.tests!) {
+      const decl = t.evidence.line_coverage;
+      expect(decl.value).toBeUndefined();
+      expect(decl.availability).toBe(Availability.UNKNOWN);
+      expect(decl.reason).toContain('per-declaration attribution not supported for mapped coverage');
+    }
+    // Per-declaration: unmarked INDETERMINATE, marked decidable PASS.
+    for (const e of evaluateTests(active(), unmarked)) expect(e.finding?.result).toBe(RuleResult.INDETERMINATE);
+    for (const e of evaluateTests(active(), marked)) expect(e.finding?.result).toBe(RuleResult.PASS);
+    // The subject verdict is the same either way.
+    expect(evaluateRule(active(), marked).finding?.result).toBe(RuleResult.PASS);
+    expect(evaluateRule(active(), unmarked).finding?.result).toBe(RuleResult.PASS);
+  });
+
+  it('veto-WARN: PARTIAL sibling entry annotates the subject reason, verdict unchanged', () => {
+    const clean = applyCoverageReport(
+      analysisWith('from.ts', [1, 2]),
+      tmpFile('ptrb-warn-clean.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } })),
+      { coverageMap: { 'from.ts': 'to.ts' }, per_test_run: true },
+    );
+    const warned = applyCoverageReport(
+      analysisWith('from.ts', [1, 2]),
+      tmpFile('ptrb-warn.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0], 'other.ts': [null, 1] } })),
+      { coverageMap: { 'from.ts': 'to.ts' }, per_test_run: true },
+    );
+    expect(warned.evidence.line_coverage.reason).toMatch(/^veto-WARN: /);
+    expect(warned.evidence.line_coverage.reason).toContain('coverage mapped from from.ts to to.ts per user mapping');
+    expect(clean.evidence.line_coverage.reason).not.toContain('veto-WARN');
+    // WARN annotates; it never gates the verdict.
+    expect(evaluateRule(active(), warned).finding?.result).toBe(evaluateRule(active(), clean).finding?.result);
+    expect(evaluateRule(active(), warned).finding?.result).toBe(RuleResult.PASS);
+  });
+
+  it('veto-WARN absent: unmarked, no mapping, or no PARTIAL sibling', () => {
+    const partialBody = JSON.stringify({ covered: { 'to.ts': [0, 1, 0], 'other.ts': [null, 1] } });
+    const unmarked = applyCoverageReport(
+      analysisWith('from.ts', [1, 2]),
+      tmpFile('ptrb-nowarn-unmarked.json', partialBody),
+      { coverageMap: { 'from.ts': 'to.ts' } },
+    );
+    expect(unmarked.evidence.line_coverage.reason).not.toContain('veto-WARN');
+
+    const unmapped = applyCoverageReport(
+      analysisWith('other.test.ts', [1]),
+      tmpFile('ptrb-nowarn-unmapped.json', partialBody),
+      {
+        per_test_run: true,
+      },
+    );
+    expect(unmapped.evidence.line_coverage.reason ?? '').not.toContain('veto-WARN');
+
+    const noPartial = applyCoverageReport(
+      analysisWith('from.ts', [1, 2]),
+      tmpFile('ptrb-nowarn-clean.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0], 'other.ts': [1, 1] } })),
+      { coverageMap: { 'from.ts': 'to.ts' }, per_test_run: true },
+    );
+    expect(noPartial.evidence.line_coverage.reason).not.toContain('veto-WARN');
+  });
+
+  it('the numeric per-declaration value serializes in the JSON report (no reporter change)', () => {
+    const p = tmpFile('ptrb-json.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    const json = JSON.parse(toJson(out, evaluateRule(active(), out), evaluateTests(active(), out))) as Record<
+      string,
+      any
+    >;
+    expect(json.testResults[0].evidence.line_coverage.value).toBe(1);
+    expect(json.testResults[0].evidence.line_coverage.reason).toContain('coverage evidence from a run scoped to');
+    // The marker field is still not on the wire (unit-A reporter decision).
+    expect(json.testResults[0].evidence.line_coverage.per_test_run).toBeUndefined();
+  });
+
+  it('marked + map + PARTIAL target: per-declaration stays advisory (guard)', () => {
+    const p = tmpFile('ptrb-partial-target.json', JSON.stringify({ covered: { 'to.ts': [null, 1] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    expect(out.evidence.line_coverage.coverage.status).toBe(CollectionStatus.PARTIAL);
+    for (const t of out.tests!) {
+      const decl = t.evidence.line_coverage;
+      expect(decl.value).toBeUndefined();
+      expect(decl.reason).toContain('per-declaration attribution not supported for mapped coverage');
+    }
+    for (const e of evaluateTests(active(), out)) expect(e.finding?.result).toBe(RuleResult.INDETERMINATE);
   });
 });

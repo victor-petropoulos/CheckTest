@@ -146,6 +146,20 @@ export interface EvidenceRecord {
   provider_version?: string;
   /** Source revision the external evidence was derived from. Only meaningful with EXTERNAL provenance. */
   source_revision?: string;
+  /**
+   * CT-COV-001 — the coverage evidence came from a run SCOPED TO ONE TEST FILE
+   * (`vitest run <file> --coverage`, design §1 "Marker mechanism").
+   *
+   * Additive, optional: absent (undefined) unless the caller opted in
+   * (`--per-test-run` / `per_test_run` on `CoverageReportOptions`), so unmarked
+   * input keeps ADR-031 semantics byte-identical. It describes the RUN SCOPE of
+   * the parsed report, never a per-declaration attribution: the claim stays
+   * "the mapped production file was exercised in the run of this test file".
+   *
+   * Only the coverage provider (src/providers/coverage.ts) sets it; DIRECT
+   * records never carry it.
+   */
+  per_test_run?: boolean;
 }
 
 /**
