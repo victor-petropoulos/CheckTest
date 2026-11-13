@@ -1,0 +1,23 @@
+{
+  "case": "case-15-mixed-framework",
+  "fixture": "sample.test.ts",
+  "declared_type": "UNIT",
+  "rule": "CT-INT-001",
+  "analysis": {
+    "status": "UNSUPPORTED",
+    "completeness": "NOT_APPLICABLE",
+    "test_type": { "value": "UNIT", "source": "EXPLICIT" }
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": null,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "coverage_status": "UNAVAILABLE",
+      "reason_contains": ["framework 'mixed' is outside the supported framework list"]
+    }
+  },
+  "rule_result": "INDETERMINATE",
+  "conflicts": []
+}

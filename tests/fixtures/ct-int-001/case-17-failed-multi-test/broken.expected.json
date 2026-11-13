@@ -1,0 +1,23 @@
+{
+  "case": "case-17-failed-multi-test",
+  "fixture": "broken.test.ts",
+  "declared_type": "UNIT",
+  "rule": "CT-INT-001",
+  "analysis": {
+    "status": "FAILED",
+    "completeness": "INCOMPLETE",
+    "test_type": { "value": "UNIT", "source": "EXPLICIT" }
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": null,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "coverage_status": "UNAVAILABLE",
+      "reason_contains": ["parse diagnostics"]
+    }
+  },
+  "rule_result": null,
+  "conflicts": []
+}

@@ -1,0 +1,6117 @@
+{
+  "test": {
+    "id": "<corpus-root>/pytest/testing/test_unittest.py",
+    "name": "test_unittest.py",
+    "file": "<corpus-root>/pytest/testing/test_unittest.py",
+    "language": "python",
+    "framework": "pytest",
+    "type": "UNIT"
+  },
+  "analysisStatus": "SUCCESS",
+  "evaluationStatus": "EVALUATED",
+  "completeness": "COMPLETE",
+  "scope": "test-body",
+  "test_type": {
+    "value": "UNIT",
+    "source": "EXPLICIT"
+  },
+  "capabilities": {
+    "assertion_forms": "AVAILABLE",
+    "custom_helper_resolution": "UNAVAILABLE",
+    "runtime_execution": "UNAVAILABLE"
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 50,
+      "availability": "KNOWN",
+      "provenance": "DIRECT",
+      "source": "python-pytest-adapter",
+      "collector_version": "0.1.0",
+      "scope": "test-body",
+      "coverage": {
+        "status": "COMPLETE",
+        "supported_frameworks": [
+          "pytest",
+          "unittest"
+        ],
+        "supported_assertion_forms": [
+          "assert",
+          "pytest.raises",
+          "self.assertEqual",
+          "self.assertTrue",
+          "self.assertFalse",
+          "self.assertIsNone",
+          "self.assertRaises",
+          "self.assertIn",
+          "self.assertAlmostEqual"
+        ]
+      },
+      "location": {
+        "file": "<corpus-root>/pytest/testing/test_unittest.py",
+        "line": 1
+      }
+    },
+    "mutation_score": {
+      "value": null,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "python-pytest-adapter",
+      "collector_version": "0.1.0",
+      "scope": "test-body",
+      "coverage": {
+        "status": "UNAVAILABLE",
+        "supported_frameworks": [
+          "pytest",
+          "unittest"
+        ],
+        "supported_assertion_forms": [
+          "assert",
+          "pytest.raises",
+          "self.assertEqual",
+          "self.assertTrue",
+          "self.assertFalse",
+          "self.assertIsNone",
+          "self.assertRaises",
+          "self.assertIn",
+          "self.assertAlmostEqual"
+        ]
+      },
+      "reason": "no mutation report supplied"
+    }
+  },
+  "ruleResults": [
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_simple_unittest@12"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_runTest_method@28"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_isclasscheck_issue53@52"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup@66"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setUpModule@89"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setUpModule_failing_no_teardown@111"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_new_instances@132"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_function_item_obj_is_instance@147"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=3 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_teardown@170"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_teardown_issue1649@192"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_issue148@226"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_with_autouse_fixture@247"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_method_and_teardown_failing_reporting@268"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_failure_is_shown@292"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_setUpClass@311"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_fixtures_setup_setUpClass_issue8394@336"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_class@360"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_adderrorandfailure_defers@384"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_custom_exception_info@407"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=3 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_totally_incompatible_exception_info@450"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_module_level_pytestmark@468"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testcase_runtest_not_collected@490"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_exceptions_with_skips@514"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_error@564"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_pdb@628"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testcase_skip_property@642"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testfunction_skip_property@655"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testcase_todo_property@668"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testfunction_todo_property@681"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_djangolike_testcase@697"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_not_shown_in_traceback@755"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unorderable_types@769"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_typerror_traceback@789"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_expected_failure_for_failing_test_is_xfail@804"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_expected_failure_for_passing_test_is_fail@830"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_setup_interaction@863"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_non_unittest_no_setupclass_support@895"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_no_teardown_if_setupclass_failed@921"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_cleanup_functions@949"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_issue333_result_clearing@980"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_raise_skip_issue748@1003"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_issue1169@1022"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_method_containing_test_issue1558@1042"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_usefixtures_marker_on_unittest@1060"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_skip_setup_class@1120"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_function@1143"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_handles_init_exceptions@1163"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_error_message_with_parametrized_fixtures@1184"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_inheritance_skipping@1204"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_BdbQuit@1213"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_exit_outcome@1231"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=3 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trace@1249"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_pdb_teardown_called@1278"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_pdb_teardown_skipped_for_functions@1314"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_pdb_teardown_skipped_for_classes@1349"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_async_support@1383"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_asynctest_support@1394"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_plain_unittest_does_not_support_async@1402"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_class_cleanups_on_success@1425"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_class_cleanups_on_setupclass_failure@1450"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_class_cleanups_on_teardownclass_failure@1474"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_cleanups_on_success@1501"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_cleanups_on_setup_failure@1525"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_cleanups_on_teardown_failure@1550"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_cleanups_failure_in_setup@1584"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_cleanups_failure_in_teardown@1616"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_cleanup_1_failure_in_teardown@1641"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=3 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_traceback_pruning@1665"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=4 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_raising_unittest_skiptest_during_collection@1691"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_abstract_testcase_is_not_collected@1718"
+    }
+  ],
+  "schemaVersion": "0.5",
+  "adapter": "python-pytest-adapter",
+  "decidedBy": "manifest",
+  "testResults": [
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_simple_unittest@12",
+        "name": "test_simple_unittest",
+        "line": 12,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_simple_unittest@12"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_runTest_method@28",
+        "name": "test_runTest_method",
+        "line": 28,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_runTest_method@28"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_isclasscheck_issue53@52",
+        "name": "test_isclasscheck_issue53",
+        "line": 52,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_isclasscheck_issue53@52"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup@66",
+        "name": "test_setup",
+        "line": 66,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup@66"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_setUpModule@89",
+        "name": "test_setUpModule",
+        "line": 89,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setUpModule@89"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_setUpModule_failing_no_teardown@111",
+        "name": "test_setUpModule_failing_no_teardown",
+        "line": 111,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setUpModule_failing_no_teardown@111"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_new_instances@132",
+        "name": "test_new_instances",
+        "line": 132,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_new_instances@132"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_function_item_obj_is_instance@147",
+        "name": "test_function_item_obj_is_instance",
+        "line": 147,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_function_item_obj_is_instance@147"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_teardown@170",
+        "name": "test_teardown",
+        "line": 170,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 3,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=3 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_teardown@170"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_teardown_issue1649@192",
+        "name": "test_teardown_issue1649",
+        "line": 192,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_teardown_issue1649@192"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_issue148@226",
+        "name": "test_unittest_skip_issue148",
+        "line": 226,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_issue148@226"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_with_autouse_fixture@247",
+        "name": "test_unittest_skip_with_autouse_fixture",
+        "line": 247,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_with_autouse_fixture@247"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_method_and_teardown_failing_reporting@268",
+        "name": "test_method_and_teardown_failing_reporting",
+        "line": 268,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_method_and_teardown_failing_reporting@268"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_failure_is_shown@292",
+        "name": "test_setup_failure_is_shown",
+        "line": 292,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_failure_is_shown@292"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_setUpClass@311",
+        "name": "test_setup_setUpClass",
+        "line": 311,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_setUpClass@311"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_fixtures_setup_setUpClass_issue8394@336",
+        "name": "test_fixtures_setup_setUpClass_issue8394",
+        "line": 336,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_fixtures_setup_setUpClass_issue8394@336"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_class@360",
+        "name": "test_setup_class",
+        "line": 360,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_class@360"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_adderrorandfailure_defers@384",
+        "name": "test_testcase_adderrorandfailure_defers",
+        "line": 384,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_adderrorandfailure_defers@384"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_custom_exception_info@407",
+        "name": "test_testcase_custom_exception_info",
+        "line": 407,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_custom_exception_info@407"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_totally_incompatible_exception_info@450",
+        "name": "test_testcase_totally_incompatible_exception_info",
+        "line": 450,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 3,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=3 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_totally_incompatible_exception_info@450"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_module_level_pytestmark@468",
+        "name": "test_module_level_pytestmark",
+        "line": 468,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_module_level_pytestmark@468"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testcase_runtest_not_collected@490",
+        "name": "test_trial_testcase_runtest_not_collected",
+        "line": 490,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testcase_runtest_not_collected@490"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_exceptions_with_skips@514",
+        "name": "test_trial_exceptions_with_skips",
+        "line": 514,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_exceptions_with_skips@514"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_error@564",
+        "name": "test_trial_error",
+        "line": 564,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_error@564"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_pdb@628",
+        "name": "test_trial_pdb",
+        "line": 628,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_pdb@628"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testcase_skip_property@642",
+        "name": "test_trial_testcase_skip_property",
+        "line": 642,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testcase_skip_property@642"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testfunction_skip_property@655",
+        "name": "test_trial_testfunction_skip_property",
+        "line": 655,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testfunction_skip_property@655"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testcase_todo_property@668",
+        "name": "test_trial_testcase_todo_property",
+        "line": 668,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testcase_todo_property@668"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testfunction_todo_property@681",
+        "name": "test_trial_testfunction_todo_property",
+        "line": 681,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trial_testfunction_todo_property@681"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_djangolike_testcase@697",
+        "name": "test_djangolike_testcase",
+        "line": 697,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_djangolike_testcase@697"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_not_shown_in_traceback@755",
+        "name": "test_unittest_not_shown_in_traceback",
+        "line": 755,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_not_shown_in_traceback@755"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unorderable_types@769",
+        "name": "test_unorderable_types",
+        "line": 769,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unorderable_types@769"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_typerror_traceback@789",
+        "name": "test_unittest_typerror_traceback",
+        "line": 789,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_typerror_traceback@789"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_expected_failure_for_failing_test_is_xfail@804",
+        "name": "test_unittest_expected_failure_for_failing_test_is_xfail",
+        "line": 804,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_expected_failure_for_failing_test_is_xfail@804"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_expected_failure_for_passing_test_is_fail@830",
+        "name": "test_unittest_expected_failure_for_passing_test_is_fail",
+        "line": 830,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_expected_failure_for_passing_test_is_fail@830"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_setup_interaction@863",
+        "name": "test_unittest_setup_interaction",
+        "line": 863,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_setup_interaction@863"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_non_unittest_no_setupclass_support@895",
+        "name": "test_non_unittest_no_setupclass_support",
+        "line": 895,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_non_unittest_no_setupclass_support@895"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_no_teardown_if_setupclass_failed@921",
+        "name": "test_no_teardown_if_setupclass_failed",
+        "line": 921,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_no_teardown_if_setupclass_failed@921"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_cleanup_functions@949",
+        "name": "test_cleanup_functions",
+        "line": 949,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_cleanup_functions@949"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_issue333_result_clearing@980",
+        "name": "test_issue333_result_clearing",
+        "line": 980,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_issue333_result_clearing@980"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_raise_skip_issue748@1003",
+        "name": "test_unittest_raise_skip_issue748",
+        "line": 1003,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_raise_skip_issue748@1003"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_issue1169@1022",
+        "name": "test_unittest_skip_issue1169",
+        "line": 1022,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_issue1169@1022"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_method_containing_test_issue1558@1042",
+        "name": "test_class_method_containing_test_issue1558",
+        "line": 1042,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_method_containing_test_issue1558@1042"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_usefixtures_marker_on_unittest@1060",
+        "name": "test_usefixtures_marker_on_unittest",
+        "line": 1060,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_usefixtures_marker_on_unittest@1060"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_skip_setup_class@1120",
+        "name": "test_skip_setup_class",
+        "line": 1120,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_skip_setup_class@1120"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_function@1143",
+        "name": "test_unittest_skip_function",
+        "line": 1143,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_unittest_skip_function@1143"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_handles_init_exceptions@1163",
+        "name": "test_testcase_handles_init_exceptions",
+        "line": 1163,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_testcase_handles_init_exceptions@1163"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_error_message_with_parametrized_fixtures@1184",
+        "name": "test_error_message_with_parametrized_fixtures",
+        "line": 1184,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_error_message_with_parametrized_fixtures@1184"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_inheritance_skipping@1204",
+        "name": "test_setup_inheritance_skipping",
+        "line": 1204,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_setup_inheritance_skipping@1204"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_BdbQuit@1213",
+        "name": "test_BdbQuit",
+        "line": 1213,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_BdbQuit@1213"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_exit_outcome@1231",
+        "name": "test_exit_outcome",
+        "line": 1231,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_exit_outcome@1231"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_trace@1249",
+        "name": "test_trace",
+        "line": 1249,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 3,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=3 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_trace@1249"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_pdb_teardown_called@1278",
+        "name": "test_pdb_teardown_called",
+        "line": 1278,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_pdb_teardown_called@1278"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_pdb_teardown_skipped_for_functions@1314",
+        "name": "test_pdb_teardown_skipped_for_functions",
+        "line": 1314,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_pdb_teardown_skipped_for_functions@1314"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_pdb_teardown_skipped_for_classes@1349",
+        "name": "test_pdb_teardown_skipped_for_classes",
+        "line": 1349,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_pdb_teardown_skipped_for_classes@1349"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_async_support@1383",
+        "name": "test_async_support",
+        "line": 1383,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_async_support@1383"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_asynctest_support@1394",
+        "name": "test_asynctest_support",
+        "line": 1394,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_asynctest_support@1394"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_plain_unittest_does_not_support_async@1402",
+        "name": "test_plain_unittest_does_not_support_async",
+        "line": 1402,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_plain_unittest_does_not_support_async@1402"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_class_cleanups_on_success@1425",
+        "name": "test_do_class_cleanups_on_success",
+        "line": 1425,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_class_cleanups_on_success@1425"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_class_cleanups_on_setupclass_failure@1450",
+        "name": "test_do_class_cleanups_on_setupclass_failure",
+        "line": 1450,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_class_cleanups_on_setupclass_failure@1450"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_class_cleanups_on_teardownclass_failure@1474",
+        "name": "test_do_class_cleanups_on_teardownclass_failure",
+        "line": 1474,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_class_cleanups_on_teardownclass_failure@1474"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_cleanups_on_success@1501",
+        "name": "test_do_cleanups_on_success",
+        "line": 1501,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_cleanups_on_success@1501"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_cleanups_on_setup_failure@1525",
+        "name": "test_do_cleanups_on_setup_failure",
+        "line": 1525,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_cleanups_on_setup_failure@1525"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_cleanups_on_teardown_failure@1550",
+        "name": "test_do_cleanups_on_teardown_failure",
+        "line": 1550,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_do_cleanups_on_teardown_failure@1550"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_cleanups_failure_in_setup@1584",
+        "name": "test_class_cleanups_failure_in_setup",
+        "line": 1584,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_cleanups_failure_in_setup@1584"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_cleanups_failure_in_teardown@1616",
+        "name": "test_class_cleanups_failure_in_teardown",
+        "line": 1616,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_cleanups_failure_in_teardown@1616"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_cleanup_1_failure_in_teardown@1641",
+        "name": "test_class_cleanup_1_failure_in_teardown",
+        "line": 1641,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_class_cleanup_1_failure_in_teardown@1641"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_traceback_pruning@1665",
+        "name": "test_traceback_pruning",
+        "line": 1665,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 3,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=3 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_traceback_pruning@1665"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_raising_unittest_skiptest_during_collection@1691",
+        "name": "test_raising_unittest_skiptest_during_collection",
+        "line": 1691,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 4,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=4 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_raising_unittest_skiptest_during_collection@1691"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/pytest/testing/test_unittest.py#test_abstract_testcase_is_not_collected@1718",
+        "name": "test_abstract_testcase_is_not_collected",
+        "line": 1718,
+        "declaration": "def"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<corpus-root>/pytest/testing/test_unittest.py#test_abstract_testcase_is_not_collected@1718"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 70,
+    "pass": 30,
+    "fail": 40,
+    "indeterminate": 0,
+    "not_applicable": 0,
+    "failed": 40
+  }
+}

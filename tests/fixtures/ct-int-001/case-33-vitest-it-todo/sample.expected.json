@@ -1,0 +1,23 @@
+{
+  "case": "case-33-vitest-it-todo",
+  "fixture": "sample.test.ts",
+  "declared_type": "UNIT",
+  "rule": "CT-INT-001",
+  "analysis": {
+    "status": "SUCCESS",
+    "completeness": "COMPLETE",
+    "test_type": { "value": "UNIT", "source": "EXPLICIT" }
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 0,
+      "availability": "KNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "coverage_status": "COMPLETE",
+      "reason_contains": ["it.todo", "declares no executable test body"]
+    }
+  },
+  "rule_result": "FAIL",
+  "conflicts": []
+}

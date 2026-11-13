@@ -1,0 +1,29 @@
+{
+  "case": "case-22-conditional-declaration",
+  "fixture": "sample.test.ts",
+  "declared_type": "UNIT",
+  "rule": "CT-INT-001",
+  "analysis": {
+    "status": "SUCCESS",
+    "completeness": "INCOMPLETE",
+    "test_type": {
+      "value": "UNIT",
+      "source": "EXPLICIT"
+    }
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 0,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "coverage_status": "PARTIAL",
+      "reason_contains": [
+        "conditional",
+        "statically"
+      ]
+    }
+  },
+  "rule_result": "INDETERMINATE",
+  "conflicts": []
+}
