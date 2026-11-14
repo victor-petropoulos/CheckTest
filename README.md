@@ -20,7 +20,7 @@ npm run build
 ## Usage
 
 ```
-checktest check --test <file> [--type UNIT|COMPONENT|INTEGRATION|CONTRACT|E2E] [--rule <id>] [--format json|sarif] [--coverage-report <path>] [--source-revision <rev>] [--mutation-report <path>]
+checktest check --test <file> [--type UNIT|COMPONENT|INTEGRATION|CONTRACT|E2E] [--rule <id>] [--format json|sarif] [--coverage-report <path>] [--source-revision <rev>] [--mutation-report <path>] [--mutation-source-revision <rev>]
 ```
 
 Full `--help` output (verified live):
@@ -36,6 +36,7 @@ Usage: checktest [check] --test <path> [--type <TYPE>] [--rule <id>] [--format <
   --coverage-report <path>  external Istanbul/c8 coverage report to attach
   --source-revision <rev>   declared revision the coverage report was produced against
   --mutation-report <path>  external Stryker mutation report to attach
+  --mutation-source-revision <rev>  declared revision the mutation report was produced against (valid git rev or unknown)
 
 Writes the report (JSON by default, SARIF 2.1.0 with --format sarif) to
 stdout. Exits 0 when the rule was evaluated (any rule result, including FAIL,
@@ -45,17 +46,32 @@ a file that declares no tests), and 1 on a usage error or a failed run.
 
 ### Flags
 
-| Flag                       | Description                                                                                              |
-| -------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `--test <path>`            | Path to the test file to analyze (required)                                                              |
-| `--type <TYPE>`            | Declared test type: `UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`, `UNKNOWN` (default `UNKNOWN`) |
-| `--rule <id>`              | Rule ID to evaluate (default `CT-INT-001`)                                                               |
-| `--format <fmt>`           | Report format: `json` or `sarif` (default `json`)                                                        |
-| `--coverage-report <path>` | External Istanbul/c8 coverage report JSON to attach                                                      |
-| `--source-revision <rev>`  | Declared revision the coverage report was produced against (CLI beats config `sourceRevision`)           |
-| `--mutation-report <path>` | External Stryker mutation report JSON to attach                                                          |
+| Flag                               | Description                                                                                              |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `--test <path>`                    | Path to the test file to analyze (required)                                                              |
+| `--type <TYPE>`                    | Declared test type: `UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`, `UNKNOWN` (default `UNKNOWN`) |
+| `--rule <id>`                      | Rule ID to evaluate (default `CT-INT-001`)                                                               |
+| `--format <fmt>`                   | Report format: `json` or `sarif` (default `json`)                                                        |
+| `--coverage-report <path>`         | External Istanbul/c8 coverage report JSON to attach                                                      |
+| `--source-revision <rev>`          | Declared revision the coverage report was produced against (CLI beats config `sourceRevision`)           |
+| `--mutation-report <path>`         | External Stryker mutation report JSON to attach                                                          |
+| `--mutation-source-revision <rev>` | Declared revision the mutation report was produced against (valid git rev or `unknown`)                  |     |
 
 | `--adapter <id>` | Adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034); explicit id wins (`python-pytest-adapter` for Python test files)
+
+### Mutation Testing
+
+Attach an external Stryker mutation report and evaluate CT-MUT-001 against it.
+
+```sh
+npx stryker run --reporter json
+checktest check --test <file> --mutation-report <path> --mutation-source-revision <rev>
+```
+
+- `--mutation-report <path>` attaches the external Stryker mutation report JSON.
+- `--mutation-source-revision <rev>` declares the revision the mutation report was produced against (valid git rev or `unknown`).
+- Freshness: report usable when declared revision matches analyzed git HEAD; mismatch or missing flag → INDETERMINATE (CT-MUT-001), never FAIL from stale/missing report.
+- CT-MUT-001: PASS ≥ 0.5 / FAIL < 0.5 on mutation_score, only when freshness established.
 
 ### Exit Codes
 

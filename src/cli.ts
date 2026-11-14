@@ -86,6 +86,7 @@ const USAGE = [
   '  --per-test-run            mark the coverage report as a single-test-file run (CT-COV-001)',
   '  --source-revision <rev>   declared revision the coverage report was produced against',
   '  --mutation-report <path>  external Stryker mutation report to attach',
+  '  --mutation-source-revision <rev>  declared revision the mutation report was produced against (valid git rev or unknown)',
   '  --config <path>           explicit config file (checktest.config.json); no implicit discovery',
   '',
   'Writes the report (JSON by default, SARIF 2.1.0 with --format sarif) to',
@@ -112,6 +113,8 @@ export interface Options {
   /** Declared source revision (--source-revision); beats config sourceRevision. */
   sourceRevision?: string;
   mutationReport?: string;
+  /** Declared mutation report revision (--mutation-source-revision). */
+  mutationSourceRevision?: string;
   /** Explicit adapter id (--adapter); beats manifest/extension layers (ADR-034). */
   adapter?: string;
   config?: CheckTestConfig;
@@ -122,6 +125,15 @@ export interface Options {
  * Re-exported from the config layer (SP4.1) so a single UsageError travels
  * through both surfaces. */
 export { UsageError };
+
+function isValidGitRevision(value: string): boolean {
+  if (value === 'unknown') return true;
+  // Full or abbreviated SHA.
+  if (/^[0-9a-fA-F]{7,40}$/.test(value)) return true;
+  // Tag / ref name: conservative refname shape (no whitespace, no '..').
+  if (/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(value) && !value.includes('..')) return true;
+  return false;
+}
 
 function parseArgs(argv: readonly string[]): Options {
   const options: Options = {
@@ -195,6 +207,14 @@ function parseArgs(argv: readonly string[]): Options {
         break;
       case '--mutation-report':
         options.mutationReport = value;
+        break;
+      case '--mutation-source-revision':
+        if (!isValidGitRevision(value)) {
+          throw new UsageError(
+            `invalid --mutation-source-revision '${value}'; expected a git revision (SHA or tag) or 'unknown'`,
+          );
+        }
+        options.mutationSourceRevision = value;
         break;
       case '--adapter':
         // No id validation here: an unregistered id falls through to the
@@ -393,7 +413,12 @@ export function runAnalysis(options: Options): { report: string; exitCode: numbe
   // mutation_score record and can flip the verdict (PASS ≥ 0.5, FAIL < 0.5);
   // missing / malformed / zero-valid / mismatched evidence stays INDETERMINATE.
   if (options.mutationReport !== undefined) {
-    analysis = applyMutationReport(analysis, options.mutationReport, { analyzedRevision });
+    analysis = applyMutationReport(analysis, options.mutationReport, {
+      analyzedRevision,
+      ...(options.mutationSourceRevision !== undefined
+        ? { mutationSourceRevision: options.mutationSourceRevision }
+        : {}),
+    });
   }
   // The engine reports whether a verdict was reached at all; an aborted
   // evaluation (FAILED analysis) yields status FAILED with no finding, so the

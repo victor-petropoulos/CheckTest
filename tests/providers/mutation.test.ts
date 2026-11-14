@@ -271,7 +271,7 @@ describe('mutation provider — apply and revision mismatch', () => {
     expect(rec.availability).toBe(Availability.UNKNOWN);
     expect(rec.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
     expect(rec.value).toBeUndefined();
-    expect(rec.reason).toContain('mismatch');
+    expect(rec.reason).toContain('does not match analyzed revision');
   });
 
   it('defaults: provider stryker, version 1.0.0, revision unknown', () => {
@@ -332,5 +332,44 @@ describe('evidence provenance/completeness (WP2.3 regression)', () => {
     expect(rec.scope).toBe(EVIDENCE_SCOPE_TEST_BODY);
     expect(rec.provenance).toBe(Provenance.EXTERNAL);
     expect((rec.value as Record<string, number>).score).toBe(0.5);
+  });
+});
+
+describe('mutation provider — mutationSourceRevision wiring (phase9 3.2)', () => {
+  it('provided == analyzedRevision → normal scoring', () => {
+    const p = tmpFile('msr-match.json', REAL_SAMPLE);
+    const out = applyMutationReport(analysisWith('src/a.ts'), p, {
+      mutationSourceRevision: 'rev1',
+      analyzedRevision: 'rev1',
+    });
+    const rec = out.evidence.mutation_score;
+    expect(rec.availability).toBe(Availability.KNOWN);
+    expect((rec.value as Record<string, number>).score).toBe(0.5);
+  });
+
+  it('provided != analyzedRevision → UNKNOWN/UNAVAILABLE with mismatch reason', () => {
+    const p = tmpFile('msr-mismatch.json', REAL_SAMPLE);
+    const out = applyMutationReport(analysisWith('src/a.ts'), p, {
+      mutationSourceRevision: 'rev1',
+      analyzedRevision: 'rev2',
+    });
+    const rec = out.evidence.mutation_score;
+    expect(rec.availability).toBe(Availability.UNKNOWN);
+    expect(rec.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    expect(rec.reason).toBe('mutation report revision rev1 does not match analyzed revision rev2');
+  });
+
+  it('missing mutationSourceRevision with analyzedRevision → missing reason (distinct)', () => {
+    const p = tmpFile('msr-missing.json', REAL_SAMPLE);
+    const out = applyMutationReport(analysisWith('src/a.ts'), p, { analyzedRevision: 'rev2' });
+    const rec = out.evidence.mutation_score;
+    expect(rec.availability).toBe(Availability.UNKNOWN);
+    expect(rec.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    expect(rec.reason).toBe('mutation report revision unknown; freshness cannot be established');
+  });
+
+  it('no mutation report at all → no mutation_score evidence key', () => {
+    const out = analysisWith('src/a.ts');
+    expect(out.evidence.mutation_score).toBeUndefined();
   });
 });

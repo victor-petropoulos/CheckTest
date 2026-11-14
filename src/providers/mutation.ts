@@ -41,6 +41,9 @@ export interface MutationReportOptions {
   providerVersion?: string;
   source_revision?: string;
   sourceRevision?: string;
+  /** Declared mutation report revision (--mutation-source-revision). */
+  mutationSourceRevision?: string;
+  mutation_source_revision?: string;
   analyzedRevision?: string;
   analyzed_revision?: string;
   revision?: string;
@@ -173,8 +176,8 @@ function isUnavailableRevision(revision: string, analyzed: string | undefined): 
 }
 function reasonRevision(revision: string, analyzed: string | undefined): string {
   return revision === 'unknown'
-    ? 'report revision unknown; freshness cannot be established'
-    : `source revision mismatch: report ${revision} != analyzed ${analyzed ?? ''}`.trim();
+    ? 'mutation report revision unknown; freshness cannot be established'
+    : `mutation report revision ${revision} does not match analyzed revision ${analyzed ?? ''}`.trim();
 }
 function buildRecord(
   provider: string,
@@ -257,7 +260,9 @@ function parseFiles(
 export function parseMutationReport(path: string, opts?: MutationReportOptions): MutationReportResult {
   const providerOverride = pick(opts, 'provider');
   const version = pick(opts, 'provider_version', 'providerVersion') ?? '1.0.0';
-  const revision = pick(opts, 'source_revision', 'sourceRevision', 'revision') ?? 'unknown';
+  const revision =
+    pick(opts, 'mutationSourceRevision', 'mutation_source_revision', 'source_revision', 'sourceRevision', 'revision') ??
+    'unknown';
   const analyzed = pick(opts, 'analyzedRevision', 'analyzed_revision');
   const mismatch = analyzed !== undefined && (revision === 'unknown' || analyzed !== revision);
   const provider = providerOverride ?? 'stryker';

@@ -19,6 +19,7 @@
  * they exit 0; only an evaluation that produced no verdict at all exits 2.
  */
 
+import { execFileSync } from 'child_process';
 import { join } from 'path';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
@@ -26,6 +27,11 @@ import { tmpdir } from 'os';
 import { main } from '../src/cli';
 import { UsageError } from '../src/cli';
 import { getRule } from '../src/rules/registry';
+import { collectAnalysis } from '../src/adapters/typescript/collector';
+import { applyMutationReport } from '../src/providers/mutation';
+import { evaluateRule } from '../src/core/evaluation';
+import { TestType } from '../src/core/analysis';
+import { CT_MUT_001 } from '../src/rules/ct-mut-001';
 
 const CASE_ROOT = join(__dirname, 'fixtures', 'ct-int-001');
 
@@ -381,7 +387,7 @@ describe('CLI --mutation-report', () => {
     expect(ev.availability).toBe('UNKNOWN');
     expect(ev.coverage.status).toBe('UNAVAILABLE');
     expect(ev.value).toBeNull();
-    expect(ev.reason).toBe('report revision unknown; freshness cannot be established');
+    expect(ev.reason).toBe('mutation report revision unknown; freshness cannot be established');
     expect(stderr).toBe('');
   });
 
@@ -439,6 +445,184 @@ describe('CLI --mutation-report', () => {
     expect(flagged.summary).toEqual(baseline.summary);
     expect(flagged.evidence.mutation_score.provenance).toBe('EXTERNAL');
     expect(flagged.evidence.assertion_count).toEqual(baseline.evidence.assertion_count);
+  });
+
+  /**
+   * Phase 9 task 3.3 — CLI revision matrix: matching revision, mismatched
+   * revision, missing revision, malformed report, and a definite CT-MUT-001
+   * verdict when every input is valid.
+   *
+   * What the CLI report exposes for mutation evidence is the ENVELOPE record
+   * `evidence.mutation_score` (json.ts:273-275 serializes `analysis.evidence`).
+   * A file-level rule's verdict is computed by the CLI's own engine call
+   * (cli.ts:426 `evaluateRule(rule, analysis)`), and that is asserted through the
+   * same call here — the pattern tests/cli-coverage.test.ts already uses for the
+   * CT-COV-001 subject-level verdict (cli-coverage.test.ts:236-320).
+   *
+   * `--source-revision` is NOT the mutation revision: it feeds
+   * applyCoverageReport only (cli.ts:401-407). analyzedRevision for a mutation
+   * report is always `git rev-parse HEAD` (cli.ts:377-387), so a MATCHING
+   * revision means `--mutation-source-revision <git HEAD>`.
+   */
+  describe('revision matrix (phase9 3.3)', () => {
+    const REV = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    // Well-formed SHA that is not HEAD: drives the mismatch branch without
+    // depending on any real object in the repo.
+    const OTHER_REV = 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
+    const SUBJECT = fixture('case-01-standard-assertion');
+
+    /** A schema-v2 report keyed to the subject file, one mutant per status. */
+    function scoredReport(name: string, statuses: string[]): string {
+      const mutants = statuses.map((status, index) => ({
+        id: String(index),
+        mutatorName: 'BooleanLiteral',
+        replacement: 'false',
+        status,
+      }));
+      return reportFile(
+        name,
+        JSON.stringify({
+          schemaVersion: '2',
+          files: { [SUBJECT]: { language: 'typescript', source: 'function a() { return true; }', mutants } },
+        }),
+      );
+    }
+
+    /**
+     * The file-level CT-MUT-001 verdict for this report, produced exactly as the
+     * CLI produces it: collectAnalysis -> applyMutationReport -> evaluateRule.
+     */
+    function fileLevelVerdict(reportPath: string, mutationSourceRevision?: string) {
+      const analysis = applyMutationReport(collectAnalysis(SUBJECT, TestType.UNIT), reportPath, {
+        analyzedRevision: REV,
+        ...(mutationSourceRevision !== undefined ? { mutationSourceRevision } : {}),
+      });
+      return evaluateRule(CT_MUT_001, analysis).finding;
+    }
+
+    function runCli(reportPath: string, extra: string[] = []): number {
+      stdout = '';
+      return main(['--test', SUBJECT, '--type', 'UNIT', '--mutation-report', reportPath, ...extra]);
+    }
+
+    it('matching revision + valid report → KNOWN/COMPLETE score 0.5, definite PASS (not UNKNOWN)', () => {
+      const p = scoredReport('p33-match.json', ['Survived', 'Killed']);
+      const code = runCli(p, ['--mutation-source-revision', REV]);
+      expect(code).toBe(0);
+      expect(stderr).toBe('');
+      const ev = report().evidence.mutation_score;
+      // The record is decidable: a matching revision is what makes it so.
+      expect(ev.availability).toBe('KNOWN');
+      expect(ev.coverage.status).toBe('COMPLETE');
+      expect(ev.provenance).toBe('EXTERNAL');
+      expect(ev.provider).toBe('stryker');
+      expect(ev.source_revision).toBe(REV);
+      expect(ev.value).toEqual({
+        score: 0.5,
+        detected: 1,
+        valid: 2,
+        killed: 1,
+        survived: 1,
+        timeout: 0,
+        noCoverage: 0,
+        compileError: 0,
+        runtimeError: 0,
+        ignored: 0,
+        pending: 0,
+      });
+      // No revision reason: the report revision equals the analyzed revision.
+      expect(ev.reason).toBeUndefined();
+      // Definite verdict, never UNKNOWN/INDETERMINATE.
+      const finding = fileLevelVerdict(p, REV);
+      expect(finding?.rule_id).toBe('CT-MUT-001');
+      expect(finding?.result).toBe('PASS');
+      expect(finding?.reason).toBe('CT-MUT-001: mutation_score=0.5 >= 0.5');
+    });
+
+    it('matching revision + all-survived report → KNOWN score 0, definite FAIL (not UNKNOWN)', () => {
+      const p = scoredReport('p33-match-fail.json', ['Survived', 'Survived', 'Survived']);
+      const code = runCli(p, ['--mutation-source-revision', REV]);
+      expect(code).toBe(0);
+      expect(stderr).toBe('');
+      const ev = report().evidence.mutation_score;
+      expect(ev.availability).toBe('KNOWN');
+      expect(ev.coverage.status).toBe('COMPLETE');
+      expect(ev.value.score).toBe(0);
+      expect(ev.value.detected).toBe(0);
+      expect(ev.value.valid).toBe(3);
+      expect(ev.reason).toBeUndefined();
+      const finding = fileLevelVerdict(p, REV);
+      expect(finding?.result).toBe('FAIL');
+      expect(finding?.reason).toBe('CT-MUT-001: mutation_score=0 < 0.5');
+    });
+
+    it('mismatched revision → UNKNOWN + mismatch reason naming both revisions', () => {
+      const p = scoredReport('p33-mismatch.json', ['Survived', 'Killed']);
+      const code = runCli(p, ['--mutation-source-revision', OTHER_REV]);
+      // The flag never changes the verdict: the run is still a successful analysis.
+      expect(code).toBe(0);
+      expect(stderr).toBe('');
+      const ev = report().evidence.mutation_score;
+      expect(ev.availability).toBe('UNKNOWN');
+      expect(ev.coverage.status).toBe('UNAVAILABLE');
+      // undefined serializes to null — never a fabricated 0.5.
+      expect(ev.value).toBeNull();
+      expect(ev.source_revision).toBe(OTHER_REV);
+      expect(ev.reason).toBe(`mutation report revision ${OTHER_REV} does not match analyzed revision ${REV}`);
+      // And the rule stays undecided: a stale report is not a FAIL.
+      expect(fileLevelVerdict(p, OTHER_REV)?.result).toBe('INDETERMINATE');
+    });
+
+    it('missing --mutation-source-revision → UNKNOWN + "revision unknown" reason', () => {
+      const p = scoredReport('p33-missing-rev.json', ['Survived', 'Killed']);
+      const code = runCli(p);
+      expect(code).toBe(0);
+      expect(stderr).toBe('');
+      const ev = report().evidence.mutation_score;
+      expect(ev.availability).toBe('UNKNOWN');
+      expect(ev.coverage.status).toBe('UNAVAILABLE');
+      expect(ev.value).toBeNull();
+      expect(ev.reason).toBe('mutation report revision unknown; freshness cannot be established');
+      expect(fileLevelVerdict(p)?.result).toBe('INDETERMINATE');
+    });
+
+    it('malformed report → UNKNOWN + parse error reason, never a fabricated score', () => {
+      const p = reportFile('p33-malformed.json', '{"schemaVersion":"2", not json');
+      const code = runCli(p, ['--mutation-source-revision', REV]);
+      expect(code).toBe(0);
+      expect(stderr).toBe('');
+      const ev = report().evidence.mutation_score;
+      expect(ev.availability).toBe('UNKNOWN');
+      expect(ev.coverage.status).toBe('UNAVAILABLE');
+      expect(ev.value).toBeNull();
+      expect(ev.reason).toContain('malformed mutation report JSON');
+      expect(fileLevelVerdict(p, REV)?.result).toBe('INDETERMINATE');
+    });
+
+    it('valid report + no revision flags → UNKNOWN + missing reason, CT-INT-001 record identical to the no-flag baseline', () => {
+      // Row 5 (current behavior preserved): the same evidence record the existing
+      // p24-valid.json case pins, plus the regression guard that the CT-INT-001
+      // verdict and its evidence list are untouched by the mutation flag.
+      const p = scoredReport('p33-no-flags.json', ['Survived', 'Killed']);
+      const withFlag = runCli(p);
+      expect(withFlag).toBe(0);
+      expect(stderr).toBe('');
+      const flagged = report();
+      const ev = flagged.evidence.mutation_score;
+      expect(ev.availability).toBe('UNKNOWN');
+      expect(ev.coverage.status).toBe('UNAVAILABLE');
+      expect(ev.value).toBeNull();
+      expect(ev.reason).toBe('mutation report revision unknown; freshness cannot be established');
+
+      stdout = '';
+      const baseline = main(['--test', SUBJECT, '--type', 'UNIT']);
+      expect(baseline).toBe(0);
+      const bare = report();
+      expect(flagged.ruleResults).toEqual(bare.ruleResults);
+      expect(flagged.testResults).toEqual(bare.testResults);
+      expect(flagged.summary).toEqual(bare.summary);
+      expect(bare.evidence.mutation_score).toBeUndefined();
+    });
   });
 });
 
@@ -619,5 +803,67 @@ describe('CLI adapter dispatch (Phase 8 task B3, ADR-034)', () => {
       process.chdir(cwd);
       rmRf(dir);
     }
+  });
+});
+
+describe('CLI --mutation-source-revision (phase9 3.1)', () => {
+  const REV = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+
+  it('accepts a valid git revision (HEAD sha)', () => {
+    const code = main([
+      '--test',
+      fixture('case-01-standard-assertion'),
+      '--type',
+      'UNIT',
+      '--mutation-source-revision',
+      REV,
+    ]);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+  });
+
+  it('accepts the literal "unknown"', () => {
+    const code = main([
+      '--test',
+      fixture('case-01-standard-assertion'),
+      '--type',
+      'UNIT',
+      '--mutation-source-revision',
+      'unknown',
+    ]);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+  });
+
+  it('rejects an invalid value with usage error', () => {
+    const code = main([
+      '--test',
+      fixture('case-01-standard-assertion'),
+      '--type',
+      'UNIT',
+      '--mutation-source-revision',
+      'not a rev',
+    ]);
+    expect(code).toBe(1);
+    expect(stderr).toContain("invalid --mutation-source-revision 'not a rev'");
+    expect(stdout).toBe('');
+  });
+
+  it('--source-revision behavior unchanged (still accepted)', () => {
+    const code = main(['--test', fixture('case-01-standard-assertion'), '--type', 'UNIT', '--source-revision', REV]);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+  });
+
+  it('flag is standalone (no --mutation-report required)', () => {
+    const code = main([
+      '--test',
+      fixture('case-01-standard-assertion'),
+      '--type',
+      'UNIT',
+      '--mutation-source-revision',
+      REV,
+    ]);
+    expect(code).toBe(0);
   });
 });
