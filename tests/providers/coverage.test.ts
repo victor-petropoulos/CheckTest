@@ -303,12 +303,14 @@ describe('findFileRecord via applyCoverageReport (fail-closed join)', () => {
     const byBasename = applyCoverageReport(analysisWith('s.test.ts', [1]), p);
     expect(byBasename.evidence.line_coverage.value).toBeUndefined();
     expect(byBasename.evidence.line_coverage.availability).toBe(Availability.UNKNOWN);
-    expect(byBasename.evidence.line_coverage.reason).toContain('no coverage data for s.test.ts');
     expect(byBasename.evidence.line_coverage.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    expect(byBasename.evidence.line_coverage.reason).toContain('ambiguous basename match:');
+    expect(byBasename.evidence.line_coverage.reason).toContain('/one/s.test.ts');
+    expect(byBasename.evidence.line_coverage.reason).toContain('/two/s.test.ts');
     const decl = byBasename.tests![0].evidence.line_coverage;
     expect(decl.availability).toBe(Availability.UNKNOWN);
     expect(decl.value).toBeUndefined();
-    expect(decl.reason).toContain('no coverage data');
+    expect(decl.reason).toContain('ambiguous basename match:');
     expect(decl.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
   });
 
@@ -349,6 +351,374 @@ describe('findFileRecord via applyCoverageReport (fail-closed join)', () => {
     expect(decl.availability).toBe(Availability.UNKNOWN);
     expect(decl.value).toBeUndefined();
     expect(decl.reason).toContain('no coverage data');
+  });
+
+  it('ambiguous basename match: multiple report files map to same source basename', () => {
+    const p = tmpFile(
+      'ffr-ambig.json',
+      JSON.stringify({ covered: { 'src/a/mod.ts': [1, 1], 'src/b/mod.ts': [0, 1] } }),
+    );
+    const out = applyCoverageReport(analysisWith('mod.ts', [1]), p);
+    expect(out.evidence.line_coverage.availability).toBe(Availability.UNKNOWN);
+    expect(out.evidence.line_coverage.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    expect(out.evidence.line_coverage.reason).toContain('ambiguous basename match:');
+    expect(out.evidence.line_coverage.reason).toContain('src/a/mod.ts');
+    expect(out.evidence.line_coverage.reason).toContain('src/b/mod.ts');
+    const decl = out.tests![0].evidence.line_coverage;
+    expect(decl.availability).toBe(Availability.UNKNOWN);
+    expect(decl.value).toBeUndefined();
+    expect(decl.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    expect(decl.reason).toContain('ambiguous basename match:');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// phase9 2.3 — failure-mode matrix. Every row names the DISTINCTING reason
+// keyword the provider emits, so no two failure modes are conflated and none
+// ever yields a fabricated numeric.
+// ---------------------------------------------------------------------------
+describe('failure-mode matrix (phase9 2.3)', () => {
+  const active = (): typeof CT_COV_001 => ({ ...CT_COV_001, status: 'active' });
+
+  interface Row {
+    readonly name: string;
+    readonly subj: { availability: Availability; status: CollectionStatus; value: unknown; reason: string };
+    readonly decl: { availability: Availability; value: unknown; reason: string };
+  }
+
+  function row(out: ReturnType<typeof applyCoverageReport>): Row {
+    const subj = out.evidence.line_coverage;
+    const decl = out.tests![0].evidence.line_coverage;
+    return {
+      name: '',
+      subj: {
+        availability: subj.availability,
+        status: subj.coverage.status,
+        value: subj.value,
+        reason: subj.reason ?? '',
+      },
+      decl: { availability: decl.availability, value: decl.value, reason: decl.reason ?? '' },
+    };
+  }
+
+  /**
+   * The contract every failure row shares: nothing is decidable, nothing numeric.
+   * `value` is undefined, or the c8 fail-closed EMPTY array (coverage.ts:228) —
+   * never a number, so no threshold can read it as a measured zero.
+   */
+  function expectNotNumeric(value: unknown): void {
+    if (value !== undefined) expect(value).toEqual([]);
+    expect(typeof value === 'number').toBe(false);
+  }
+
+  function expectUndecidable(r: Row, keyword: string): void {
+    expect(r.subj.availability).toBe(Availability.UNKNOWN);
+    expect(r.subj.status).toBe(CollectionStatus.UNAVAILABLE);
+    expectNotNumeric(r.subj.value);
+    expect(r.subj.reason).toContain(keyword);
+    expect(r.decl.availability).toBe(Availability.UNKNOWN);
+    expectNotNumeric(r.decl.value);
+    expect(r.decl.reason).toBeTruthy();
+    // Rule level: an undecidable record is INDETERMINATE, never FAIL.
+    expect(r.subj.status).not.toBe(CollectionStatus.COMPLETE);
+  }
+
+  /**
+   * Mapped rows carry TWO wordings by design: the SUBJECT record names the mapping
+   * and the join outcome (coverage.ts:530, :540-542); the per-declaration record is
+   * advisory for mapped coverage (advisoryPerDeclarationRecord, coverage.ts:392-418).
+   */
+  function expectMappedUndecidable(r: Row, subjectKeyword: string): void {
+    expectUndecidable(r, subjectKeyword);
+    expect(r.decl.reason).toContain('per-declaration attribution not supported for mapped coverage');
+  }
+
+  it('valid zero coverage is MEASURED data (KNOWN/COMPLETE, value 0) — not a failure mode', () => {
+    // c8: a present-but-empty coveredLines array is a measured zero.
+    const c8Zero = row(
+      applyCoverageReport(
+        analysisWith('from.ts', [1]),
+        tmpFile(
+          'fm-zero-c8.json',
+          JSON.stringify({
+            files: { 'to.ts': { coveredLines: [] } },
+          }),
+        ),
+        { coverageMap: { 'from.ts': 'to.ts' } },
+      ),
+    );
+    expect(c8Zero.subj.availability).toBe(Availability.KNOWN);
+    expect(c8Zero.subj.status).toBe(CollectionStatus.COMPLETE);
+    expect(c8Zero.subj.value).toBe(0);
+    expect(c8Zero.subj.reason).toContain('coverage mapped from from.ts to to.ts per user mapping');
+
+    // Istanbul: an all-zero hit-map is the same measured zero.
+    const istZero = row(
+      applyCoverageReport(
+        analysisWith('from.ts', [1]),
+        tmpFile(
+          'fm-zero-ist.json',
+          JSON.stringify({
+            covered: { 'to.ts': [0, 0, 0] },
+          }),
+        ),
+        { coverageMap: { 'from.ts': 'to.ts' } },
+      ),
+    );
+    expect(istZero.subj.availability).toBe(Availability.KNOWN);
+    expect(istZero.subj.status).toBe(CollectionStatus.COMPLETE);
+    expect(istZero.subj.value).toBe(0);
+    expect(
+      evaluateRule(
+        active(),
+        applyCoverageReport(
+          analysisWith('from.ts', [1]),
+          tmpFile('fm-zero-ist2.json', JSON.stringify({ covered: { 'to.ts': [0, 0, 0] } })),
+          { coverageMap: { 'from.ts': 'to.ts' } },
+        ),
+      ).finding?.result,
+    ).toBe(RuleResult.FAIL); // a measured zero is decidable
+  });
+
+  it('missing array: c8 entry without coveredLines/covered -> UNKNOWN/UNAVAILABLE + parse reason', () => {
+    const out = applyCoverageReport(
+      analysisWith('from.ts', [1]),
+      tmpFile('fm-missing-array.json', JSON.stringify({ files: { 'to.ts': { hits: 3 } } })),
+      { coverageMap: { 'from.ts': 'to.ts' } },
+    );
+    const r = row(out);
+    expectUndecidable(r, 'missing or invalid coveredLines array');
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('malformed array: c8 coveredLines of the wrong JSON type -> UNKNOWN/UNAVAILABLE + parse reason', () => {
+    const out = applyCoverageReport(
+      analysisWith('from.ts', [1]),
+      tmpFile('fm-malformed-array.json', JSON.stringify({ files: { 'to.ts': { coveredLines: 'nope' } } })),
+      { coverageMap: { 'from.ts': 'to.ts' } },
+    );
+    expectUndecidable(row(out), 'missing or invalid coveredLines array');
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('malformed at the report level (unparseable JSON / unsupported shape) -> no records, reason, INDETERMINATE', () => {
+    // Malformed JSON fails at PARSE, not at apply: the provider returns zero
+    // records plus a reason, and apply turns the empty join into UNKNOWN.
+    const bad = parseCoverageReport(tmpFile('fm-bad-json.json', '{not json'));
+    expect(bad.records.size).toBe(0);
+    expect(bad.reason).toContain('malformed coverage report JSON');
+    const unsupported = parseCoverageReport(tmpFile('fm-unsupported.json', JSON.stringify({ foo: 1 })));
+    expect(unsupported.records.size).toBe(0);
+    expect(unsupported.reason).toContain('unsupported coverage report format');
+
+    const out = applyCoverageReport(analysisWith('from.ts', [1]), tmpFile('fm-bad-json2.json', '{not json'), {
+      coverageMap: { 'from.ts': 'to.ts' },
+    });
+    expectMappedUndecidable(row(out), 'no coverage data for to.ts');
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('unmapped file, no basename collision -> UNKNOWN/UNAVAILABLE "no coverage data for <subject>"', () => {
+    const out = applyCoverageReport(
+      analysisWith('s.test.ts', [1]),
+      tmpFile('fm-unmapped.json', JSON.stringify({ covered: { 'x.ts': [1], 'y.ts': [1, 1] } })),
+    );
+    expectUndecidable(row(out), 'no coverage data for s.test.ts');
+    expect(out.evidence.line_coverage.reason).not.toContain('ambiguous basename');
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('ambiguous basename match -> UNKNOWN/UNAVAILABLE "ambiguous basename match: <paths>"', () => {
+    const out = applyCoverageReport(
+      analysisWith('mod.ts', [1]),
+      tmpFile('fm-ambiguous.json', JSON.stringify({ covered: { 'src/a/mod.ts': [1, 1], 'src/b/mod.ts': [0, 1] } })),
+    );
+    expectUndecidable(row(out), 'ambiguous basename match:');
+    expect(out.evidence.line_coverage.reason).toContain('src/a/mod.ts');
+    expect(out.evidence.line_coverage.reason).toContain('src/b/mod.ts');
+    expect(out.evidence.line_coverage.reason).not.toContain('no coverage data for');
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('mapped target absent from report -> UNKNOWN/UNAVAILABLE, mappingReason prefix + "no coverage data for <mappedTo>"', () => {
+    const out = applyCoverageReport(
+      analysisWith('from.ts', [1]),
+      tmpFile('fm-mapped-missing.json', JSON.stringify({ covered: { 'other.ts': [1] } })),
+      { coverageMap: { 'from.ts': 'nope.ts' } },
+    );
+    const r = row(out);
+    expectMappedUndecidable(r, 'no coverage data for nope.ts');
+    expect(r.subj.reason).toContain('coverage mapped from from.ts to nope.ts per user mapping');
+    expect(r.subj.reason).not.toContain('ambiguous basename');
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('mapped target present but malformed (istanbul non-array value) -> same "no coverage data for <mappedTo>" wording', () => {
+    // Istanbul entries that are not arrays are SKIPPED at parse
+    // (parseIstanbul, coverage.ts:195-198), so the mapped target is absent.
+    const parsed = parseCoverageReport(
+      tmpFile('fm-mapped-malformed.json', JSON.stringify({ covered: { 'to.ts': 'nope', 'other.ts': [1] } })),
+    );
+    expect(parsed.records.has('to.ts')).toBe(false);
+    expect(parsed.records.size).toBe(1);
+
+    const out = applyCoverageReport(
+      analysisWith('from.ts', [1]),
+      tmpFile('fm-mapped-malformed2.json', JSON.stringify({ covered: { 'to.ts': 'nope', 'other.ts': [1] } })),
+      { coverageMap: { 'from.ts': 'to.ts' } },
+    );
+    expectMappedUndecidable(row(out), 'no coverage data for to.ts');
+    expect(out.evidence.line_coverage.reason).toContain('coverage mapped from from.ts to to.ts per user mapping');
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('revision mismatch (istanbul + c8) -> UNKNOWN/UNAVAILABLE + mismatch reason, never numeric', () => {
+    const ist = applyCoverageReport(
+      analysisWith('s.test.ts', [1]),
+      tmpFile('fm-rev-ist.json', JSON.stringify({ covered: { 's.test.ts': [1, 1] } })),
+      { source_revision: 'rev-old', analyzedRevision: 'rev-new' },
+    );
+    expectUndecidable(row(ist), 'source revision mismatch');
+    expect(ist.evidence.line_coverage.reason).toContain('rev-old');
+    expect(ist.evidence.line_coverage.reason).toContain('rev-new');
+
+    const c8 = applyCoverageReport(
+      analysisWith('s.test.ts', [1]),
+      tmpFile('fm-rev-c8.json', JSON.stringify({ files: { 's.test.ts': { coveredLines: [1] } } })),
+      { source_revision: 'rev-old', analyzedRevision: 'rev-new' },
+    );
+    expectUndecidable(row(c8), 'source revision mismatch');
+    for (const out of [ist, c8]) {
+      expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+      for (const scope of evaluateTests(active(), out)) expect(scope.finding?.result).toBe(RuleResult.INDETERMINATE);
+    }
+  });
+
+  it('revision unknown + analyzed declared -> "freshness cannot be established" (no freshness claim without the analyzed input)', () => {
+    const out = applyCoverageReport(
+      analysisWith('s.test.ts', [1]),
+      tmpFile('fm-rev-unknown.json', JSON.stringify({ covered: { 's.test.ts': [1, 1] } })),
+      { analyzedRevision: 'rev-new' },
+    );
+    expectUndecidable(row(out), 'report revision unknown; freshness cannot be established');
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+
+    // No analyzed input -> no freshness claim at all (KNOWN, no reason).
+    const none = applyCoverageReport(
+      analysisWith('s.test.ts', [1]),
+      tmpFile('fm-rev-none.json', JSON.stringify({ covered: { 's.test.ts': [1, 1] } })),
+    );
+    expect(none.evidence.line_coverage.availability).toBe(Availability.KNOWN);
+    expect(none.evidence.line_coverage.reason).toBeUndefined();
+  });
+
+  it('every failure row yields a distinct reason (no two modes share wording)', () => {
+    const reasons = [
+      row(
+        applyCoverageReport(
+          analysisWith('s.test.ts', [1]),
+          tmpFile(
+            'fm-dist-unmapped.json',
+            JSON.stringify({
+              covered: { 'x.ts': [1] },
+            }),
+          ),
+        ),
+      ).subj.reason,
+      row(
+        applyCoverageReport(
+          analysisWith('mod.ts', [1]),
+          tmpFile(
+            'fm-dist-ambig.json',
+            JSON.stringify({
+              covered: { 'a/mod.ts': [1], 'b/mod.ts': [1] },
+            }),
+          ),
+        ),
+      ).subj.reason,
+      row(
+        applyCoverageReport(
+          analysisWith('from.ts', [1]),
+          tmpFile(
+            'fm-dist-mapped.json',
+            JSON.stringify({
+              covered: { 'other.ts': [1] },
+            }),
+          ),
+          { coverageMap: { 'from.ts': 'nope.ts' } },
+        ),
+      ).subj.reason,
+      row(
+        applyCoverageReport(
+          analysisWith('s.test.ts', [1]),
+          tmpFile(
+            'fm-dist-rev.json',
+            JSON.stringify({
+              covered: { 's.test.ts': [1] },
+            }),
+          ),
+          { source_revision: 'r1', analyzedRevision: 'r2' },
+        ),
+      ).subj.reason,
+    ];
+    expect(new Set(reasons).size).toBe(reasons.length);
+  });
+
+  it('characterization: two --coverage-map entries naming the SAME `to` target resolve silently to the report key, whichever entry matched the subject', () => {
+    // The report holds TWO records whose basename is `to.ts`, neither of which
+    // is the literal `to.ts` the mapping names, plus one exact `src/to.ts`.
+    const body = JSON.stringify({
+      covered: { 'src/to.ts': [0, 0], 'vendor/to.ts': [1, 1], 'keep.ts': [1] },
+    });
+    const reportPath = tmpFile('fm-collision.json', body);
+
+    // (a) two `from` entries -> the same `to`; the SUBJECT-matching entry wins
+    //     (mappings.find first match, coverage.ts:507) and the mapping is exact.
+    const twoFrom = applyCoverageReport(analysisWith('from.ts', [1]), reportPath, {
+      coverageMap: [
+        { from: 'other.ts', to: 'src/to.ts' },
+        { from: 'from.ts', to: 'src/to.ts' },
+      ],
+    });
+    expect(twoFrom.evidence.line_coverage.value).toBe(0); // count of 1s in [0,0]
+    expect(twoFrom.evidence.line_coverage.reason).toBe('coverage mapped from from.ts to src/to.ts per user mapping');
+    expect(evaluateRule(active(), twoFrom).finding?.result).toBe(RuleResult.FAIL);
+
+    // (b) reversed order: the SUBJECT-matching entry is second, so a
+    //     first-match-only implementation would miss it — it does not.
+    const reversed = applyCoverageReport(analysisWith('from.ts', [1]), reportPath, {
+      coverageMap: [
+        { from: 'from.ts', to: 'src/to.ts' },
+        { from: 'other.ts', to: 'src/to.ts' },
+      ],
+    });
+    expect(reversed.evidence.line_coverage.reason).toBe('coverage mapped from from.ts to src/to.ts per user mapping');
+    expect(reversed.evidence.line_coverage.value).toBe(0);
+
+    // (c) the same `to` under a DIFFERENT subject also resolves, silently.
+    const other = applyCoverageReport(analysisWith('other.ts', [1]), reportPath, {
+      coverageMap: [
+        { from: 'other.ts', to: 'src/to.ts' },
+        { from: 'from.ts', to: 'src/to.ts' },
+      ],
+    });
+    expect(other.evidence.line_coverage.value).toBe(0);
+    expect(other.evidence.line_coverage.reason).toBe('coverage mapped from other.ts to src/to.ts per user mapping');
+
+    // (d) a `to` that matches NO report key is UNKNOWN even when another
+    //     record shares its basename (no basename fallback in the mapped branch).
+    const noKey = applyCoverageReport(analysisWith('from.ts', [1]), reportPath, {
+      coverageMap: [
+        { from: 'a.ts', to: 'to.ts' },
+        { from: 'from.ts', to: 'to.ts' },
+      ],
+    });
+    expect(noKey.evidence.line_coverage.availability).toBe(Availability.UNKNOWN);
+    expect(noKey.evidence.line_coverage.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    expect(noKey.evidence.line_coverage.reason).toBe(
+      'coverage mapped from from.ts to to.ts per user mapping (no coverage data for to.ts)',
+    );
+    expect(evaluateRule(active(), noKey).finding?.result).toBe(RuleResult.INDETERMINATE);
   });
 });
 

@@ -29,9 +29,11 @@
  * rather than skipping.
  */
 
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { createHash } from 'crypto';
 import { join } from 'path';
+
+import { main } from '../../src/cli';
 
 import { applyCoverageReport, parseCoverageReport } from '../../src/providers/coverage';
 import { evaluateRule, evaluateTests } from '../../src/core/evaluation';
@@ -352,4 +354,172 @@ describe('CT-COV-001 unit D — per-test-run corpus recipe (real vitest runs)', 
       });
     }
   }
+});
+
+// ---------------------------------------------------------------------------
+// phase9 2.3 — synthetic-report CLI cases. The corpus block above needs
+// machine-local validation/ artifacts; these build their own report in a tmp
+// dir, so they run on any checkout (same seam as tests/cli-coverage.test.ts:
+// main() called directly with stdout captured).
+// ---------------------------------------------------------------------------
+const SYNTH_TMP = join(process.env.TMPDIR || '/tmp', 'checktest-ptr-synthetic');
+const SYNTH_SUBJECT = join(__dirname, '..', 'fixtures', 'ct-int-001', 'case-01-standard-assertion', 'sample.test.ts');
+const SYNTH_SUBJECT_ABS = join(process.cwd(), 'tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts');
+
+function synthReport(name: string, body: string): string {
+  mkdirSync(SYNTH_TMP, { recursive: true });
+  const p = join(SYNTH_TMP, name);
+  writeFileSync(p, body, 'utf8');
+  return p;
+}
+
+describe('CT-COV-001 unit D — synthetic-report CLI cases (phase9 2.3)', () => {
+  let stdout = '';
+  let stderr = '';
+  let outSpy: jest.SpyInstance;
+  let errSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    stdout = '';
+    stderr = '';
+    outSpy = jest.spyOn(process.stdout, 'write').mockImplementation((chunk: string | Uint8Array): boolean => {
+      stdout += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
+      return true;
+    });
+    errSpy = jest.spyOn(process.stderr, 'write').mockImplementation((chunk: string | Uint8Array): boolean => {
+      stderr += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
+      return true;
+    });
+  });
+
+  afterEach(() => {
+    outSpy.mockRestore();
+    errSpy.mockRestore();
+  });
+
+  function runCli(report: string): { code: number; json: Record<string, any> } {
+    const code = main([
+      '--test',
+      SYNTH_SUBJECT,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      report,
+      '--source-revision',
+      'rev-synth',
+    ]);
+    return { code, json: JSON.parse(stdout.trim()) as Record<string, any> };
+  }
+
+  it('mapped target absent from a synthetic report: UNKNOWN/UNAVAILABLE on the record, INDETERMINATE at both levels', () => {
+    const p = synthReport('synth-missing.json', JSON.stringify({ covered: { 'unrelated.ts': [1, 1] } }));
+    const { code, json } = runCli(p);
+    // INDETERMINATE is a verdict, not a failure: exit 0, no stderr.
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    expect(json.summary.fail).toBe(0);
+
+    const subj = json.testResults[0].evidence.line_coverage;
+    expect(subj.availability).toBe('UNKNOWN');
+    expect(subj.coverage.status).toBe('UNAVAILABLE');
+    expect(subj.value).toBeNull();
+    expect(subj.reason).toBe(`no coverage data for ${SYNTH_SUBJECT_ABS}`);
+
+    expect(json.ruleResults).toHaveLength(1);
+    expect(json.ruleResults[0].result).toBe('INDETERMINATE');
+    expect(json.testResults[0].ruleResults[0].result).toBe('INDETERMINATE');
+  });
+
+  it('one --coverage-map value carries ONE mapping (split at the first `=`); a two-pair value degrades to unmapped UNKNOWN', () => {
+    const p = synthReport(
+      'synth-collision.json',
+      JSON.stringify({ covered: { 'src/collide.ts': [0, 0], 'vendor/collide.ts': [1, 1], 'keep.ts': [1] } }),
+    );
+    // CLI limitation, characterized not fixed: '--coverage-map a=b,c=d' is ONE
+    // string, and toCoverageMappings splits it at the FIRST '=' (coverage.ts:88-92),
+    // so the second pair never becomes a mapping and the subject stays unmapped.
+    // The two-entry collision itself is characterized at the provider seam below.
+    const code = main([
+      '--test',
+      SYNTH_SUBJECT,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      p,
+      '--source-revision',
+      'rev-synth',
+      '--coverage-map',
+      `other.ts=src/collide.ts,${SYNTH_SUBJECT_ABS}=src/collide.ts`,
+    ]);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    const json = JSON.parse(stdout.trim()) as Record<string, any>;
+    const subj = json.testResults[0].evidence.line_coverage;
+    expect(subj.availability).toBe('UNKNOWN');
+    expect(subj.coverage.status).toBe('UNAVAILABLE');
+    expect(subj.value).toBeNull();
+    expect(subj.reason).toBe(`no coverage data for ${SYNTH_SUBJECT_ABS}`);
+    expect(json.ruleResults[0].result).toBe('INDETERMINATE');
+  });
+
+  // Provider-seam characterization (applyCoverageReport directly): two distinct
+  // `from` entries naming the SAME `to` that EXISTS in the report resolve
+  // silently, whichever entry matched the subject. No src/ change — documented.
+  function mappedPair(mappings: Array<{ from: string; to: string }>, subject: string, report: string) {
+    const out = applyCoverageReport(analysisWith(subject, [1, 2]), report, { coverageMap: mappings });
+    const subj = out.evidence.line_coverage;
+    return { subj, verdict: evaluateRule(CT_COV_001, out).finding?.result };
+  }
+
+  it('mapped collision, both entry orders: exact-key pick, same reason, no ambiguity, no misattribution', () => {
+    const p = synthReport(
+      'synth-collision2.json',
+      JSON.stringify({ covered: { 'src/collide.ts': [0, 0], 'vendor/collide.ts': [1, 1], 'keep.ts': [1] } }),
+    );
+    const forward = mappedPair(
+      [
+        { from: 'other.ts', to: 'src/collide.ts' },
+        { from: SYNTH_SUBJECT_ABS, to: 'src/collide.ts' },
+      ],
+      SYNTH_SUBJECT_ABS,
+      p,
+    );
+    expect(forward.subj.availability).toBe(Availability.KNOWN);
+    expect(forward.subj.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect(forward.subj.value).toBe(0); // count of 1s in [0, 0] — the exact key, not vendor/collide.ts
+    expect(forward.subj.reason).toBe(`coverage mapped from ${SYNTH_SUBJECT_ABS} to src/collide.ts per user mapping`);
+    expect(forward.verdict).toBe(RuleResult.FAIL);
+
+    const reversed = mappedPair(
+      [
+        { from: SYNTH_SUBJECT_ABS, to: 'src/collide.ts' },
+        { from: 'other.ts', to: 'src/collide.ts' },
+      ],
+      SYNTH_SUBJECT_ABS,
+      p,
+    );
+    expect(reversed.subj.value).toBe(0);
+    expect(reversed.subj.reason).toBe(forward.subj.reason);
+
+    // A `to` matching NO report key stays UNKNOWN even though two records share
+    // its basename: the mapped branch has no basename fallback (coverage.ts:520-543).
+    const noKey = mappedPair(
+      [
+        { from: 'other.ts', to: 'collide.ts' },
+        { from: SYNTH_SUBJECT_ABS, to: 'collide.ts' },
+      ],
+      SYNTH_SUBJECT_ABS,
+      p,
+    );
+    expect(noKey.subj.availability).toBe(Availability.UNKNOWN);
+    expect(noKey.subj.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    expect(noKey.subj.reason).toBe(
+      `coverage mapped from ${SYNTH_SUBJECT_ABS} to collide.ts per user mapping (no coverage data for collide.ts)`,
+    );
+    expect(noKey.verdict).toBe(RuleResult.INDETERMINATE);
+  });
 });

@@ -502,3 +502,18 @@ Aggregation: weakest-strength at subject level (`aggregateSubjectStrength`); per
 **Note (1.6b):** evidence/completeness state IS exposed in reports today via the existing `availability`/`coverage.status`/`completeness` fields; the D10 `evidenceStrength` dimension specifically lands in Package 6 by design (tasks 6.1/6.2). Package 1 must NOT be recorded as satisfying report exposure of `evidenceStrength` alone.
 
 **Source:** `src/core/evidence.ts:50-79` (enum + doc comments), `src/adapters/typescript/regex-assertion-count.ts:44-77` (`classifyFormStrength`), `src/adapters/typescript/collector.ts:323-331`, `:410-420`, `src/adapters/python/collector.ts:136-156` (`AST_SCRIPT` classify), `:374-409` (native `countAsserts`), `:635-644` (`testEvidence`), `:718-768` (`buildSubjectEvidence`/`aggregateSubjectStrength`), `src/reporters/json.ts:77-130` (`serializeEvidence`), `src/reporters/sarif.ts`.
+
+## 25. Coverage Input Formats and File Identity Matching (Phase 9 Package 2, task 2.2)
+
+The TypeScript external coverage provider accepts only explicitly shaped JSON reports for the supported coverage inputs.
+
+| Format                                        | Provenance | Freshness check                                                                                                                                          | Example                                                       |
+| --------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Istanbul JSON                                 | `EXTERNAL` | source revision must be declared and equal the analyzed revision for a `KNOWN` freshness claim; mismatch or unknown revision → `UNKNOWN` / `UNAVAILABLE` | `{ "covered": { "/abs/file.js": [null, 1, 0] } }`             |
+| c8 JSON                                       | `EXTERNAL` | source revision must be declared and equal the analyzed revision for a `KNOWN` freshness claim; mismatch or unknown revision → `UNKNOWN` / `UNAVAILABLE` | `{ "files": { "/abs/file.js": { "coveredLines": [1, 3] } } }` |
+| Per-test-run derived shape                    | `EXTERNAL` | source revision plus explicit mapping plus `--per-test-run`; numeric per-declaration attribution only when `KNOWN` + `COMPLETE`                          | derived c8-shaped report plus mapping plus attestation        |
+| UNSUPPORTED: raw Vitest `coverage-final.json` | `N/A`      | unsupported format                                                                                                                                       | reason: `unsupported coverage report format`                  |
+
+**File identity matching.** Exact normalized path match is preferred. Explicit mapping uses `--coverage-map <from>=<to>`; a mapped-missing target yields reason `no coverage data for <mappedTo>`, optionally prefixed with the mapping reason. Without mapping, an exact miss with multiple basename collisions fails closed with reason `ambiguous basename match: <sorted colliding paths>`, availability `UNKNOWN`, coverage status `UNAVAILABLE`, no numeric value (undefined, or the c8 fail-closed empty array); never wrong-file selection.
+
+Cross-reference: [§14](../limitations.md) and ADR-031 for mapped semantics; do not duplicate.

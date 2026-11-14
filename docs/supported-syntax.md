@@ -232,7 +232,7 @@ These are the verbatim elements of `SUPPORTED_ASSERTION_FORMS` in `src/adapters/
 
 ### Coverage formats
 
-Auto-detected: **coverage.py JSON** (`--cov-report=json`, parsed for `files.<name>.executed_lines`) and **lcov** (`--cov-report=lcov`, parsed via `SF:`/`DA:` records). The report must contain an entry for the analyzed test file itself — matching is by **basename** (`collector.ts:444`); a report that lacks the file raises `no entry for <name> in ... report` (`:453`, `:464`).
+Auto-detected: **coverage.py JSON** (`--cov-report=json`, parsed for `files.<name>.executed_lines`) and **lcov** (`--cov-report=lcov`, parsed via `SF:`/`DA:` records). TypeScript/Jest/Vitest supported coverage inputs: Istanbul JSON (`covered`) and c8 JSON (`files`); raw Vitest `coverage-final.json` is unsupported with reason `unsupported coverage report format`. See [Limitations §25](../limitations.md). The report must contain an entry for the analyzed test file itself — matching is by **basename** (`collector.ts:444`); a report that lacks the file raises `no entry for <name> in ... report` (`:453`, `:464`).
 
 **Source:** `src/adapters/python/collector.ts:441-465` (`parseCoverageReport` — lcov branch `:446-453`, coverage.py JSON branch `:456-464`), `tests/adapters/python/fixtures/coverage.json`, `tests/adapters/python/fixtures/coverage.lcov`.
 

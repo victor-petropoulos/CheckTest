@@ -542,9 +542,20 @@ export function applyCoverageReport(
         fileRecord = { ...fileRecord, reason: `${mappingReason} (no coverage data for ${mappedTo})` };
     }
   } else {
-    fileRecord =
-      findFileRecord(parsed, analysis.subject.file) ??
-      unknownRecord(parsed, `no coverage data for ${analysis.subject.file}`);
+    const exact = findFileRecord(parsed, analysis.subject.file);
+    if (exact !== undefined) {
+      fileRecord = exact;
+    } else {
+      const subjectBase = normalizePath(analysis.subject.file).split('/').pop()!;
+      const basenameMatches = Array.from(parsed.records.keys()).filter(
+        (k) => normalizePath(k).split('/').pop() === subjectBase,
+      );
+      if (basenameMatches.length > 1) {
+        fileRecord = unknownRecord(parsed, `ambiguous basename match: ${basenameMatches.slice().sort().join(', ')}`);
+      } else {
+        fileRecord = unknownRecord(parsed, `no coverage data for ${analysis.subject.file}`);
+      }
+    }
   }
 
   // CT-COV-001 marker (design §1): the flag describes the RUN SCOPE of the
