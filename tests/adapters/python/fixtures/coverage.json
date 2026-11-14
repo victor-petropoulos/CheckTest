@@ -1,0 +1,11 @@
+{
+  "meta": { "version": "7.0" },
+  "files": {
+    "pytest_sample.py": {
+      "executed_lines": [1, 2, 5, 6, 9],
+      "missing_lines": [],
+      "summary": { "covered_lines": 5, "num_statements": 5, "percent_covered": 100.0 }
+    }
+  },
+  "totals": { "covered_lines": 5, "num_statements": 5, "percent_covered": 100.0 }
+}

@@ -1,0 +1,23 @@
+{
+  "case": "case-31-vitest-it-each-array",
+  "fixture": "sample.test.ts",
+  "declared_type": "UNIT",
+  "rule": "CT-INT-001",
+  "analysis": {
+    "status": "SUCCESS",
+    "completeness": "INCOMPLETE",
+    "test_type": { "value": "UNIT", "source": "EXPLICIT" }
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 0,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "coverage_status": "PARTIAL",
+      "reason_contains": ["it.each", "not a supported test declaration form"]
+    }
+  },
+  "rule_result": "INDETERMINATE",
+  "conflicts": []
+}

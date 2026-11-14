@@ -1,0 +1,155 @@
+{
+  "test": {
+    "id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts",
+    "name": "sample.test.ts",
+    "file": "<fixture-root>/case-25-vitest-aliased/sample.test.ts",
+    "language": "typescript",
+    "framework": "vitest",
+    "type": "UNIT"
+  },
+  "analysisStatus": "SUCCESS",
+  "evaluationStatus": "EVALUATED",
+  "completeness": "INCOMPLETE",
+  "scope": "test-body",
+  "test_type": {
+    "value": "UNIT",
+    "source": "EXPLICIT"
+  },
+  "capabilities": {
+    "assertion_forms": "PARTIAL",
+    "custom_helper_resolution": "UNAVAILABLE",
+    "runtime_execution": "UNAVAILABLE"
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 0,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "collector_version": "0.1.0",
+      "scope": "test-body",
+      "coverage": {
+        "status": "PARTIAL",
+        "supported_frameworks": [
+          "jest",
+          "vitest",
+          "mocha"
+        ],
+        "supported_assertion_forms": [
+          "expect-to-be",
+          "expect-to-equal",
+          "expect-to-be-truthy",
+          "expect-to-be-falsy",
+          "expect-to-throw",
+          "expect-rejects-to-throw",
+          "expect-to-match-snapshot",
+          "expect-to-contain",
+          "expect-matcher-utils",
+          "expect-to-match-object",
+          "expect-to-have-been-called-times"
+        ]
+      },
+      "reason": "1 of 1 recognized assertion(s) have unestablished executability: expect(1).toBe(1) — 'it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs | 1 test declaration(s) recognized, 1 not fully supported: t('aliased', () => { expect(1).toBe(1); }) — 'it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs",
+      "location": {
+        "file": "<fixture-root>/case-25-vitest-aliased/sample.test.ts",
+        "line": 6
+      }
+    }
+  },
+  "ruleResults": [
+    {
+      "rule_id": "CT-INT-001",
+      "result": "INDETERMINATE",
+      "reason": "CT-INT-001: coverage.status PARTIAL for 'assertion_count' is below required COMPLETE ('it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs)",
+      "evidence": [
+        "assertion_count"
+      ],
+      "test_id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5",
+      "location": {
+        "file": "<fixture-root>/case-25-vitest-aliased/sample.test.ts",
+        "line": 6
+      }
+    }
+  ],
+  "schemaVersion": "0.5",
+  "adapter": "typescript-jest-adapter",
+  "decidedBy": "manifest",
+  "testResults": [
+    {
+      "test": {
+        "id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5",
+        "name": "aliased",
+        "line": 5,
+        "declaration": "it.aliased"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "INCOMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "PARTIAL",
+            "supported_frameworks": [
+              "jest",
+              "vitest",
+              "mocha"
+            ],
+            "supported_assertion_forms": [
+              "expect-to-be",
+              "expect-to-equal",
+              "expect-to-be-truthy",
+              "expect-to-be-falsy",
+              "expect-to-throw",
+              "expect-rejects-to-throw",
+              "expect-to-match-snapshot",
+              "expect-to-contain",
+              "expect-matcher-utils",
+              "expect-to-match-object",
+              "expect-to-have-been-called-times"
+            ]
+          },
+          "reason": "'it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs",
+          "location": {
+            "file": "<fixture-root>/case-25-vitest-aliased/sample.test.ts",
+            "line": 6
+          },
+          "unestablished_assertions": {
+            "count": 1,
+            "reasons": [
+              "'it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs"
+            ]
+          }
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "INDETERMINATE",
+          "reason": "CT-INT-001: coverage.status PARTIAL for 'assertion_count' is below required COMPLETE ('it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs)",
+          "evidence": [
+            "assertion_count"
+          ],
+          "test_id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5",
+          "location": {
+            "file": "<fixture-root>/case-25-vitest-aliased/sample.test.ts",
+            "line": 6
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "pass": 0,
+    "fail": 0,
+    "indeterminate": 1,
+    "not_applicable": 0,
+    "failed": 0
+  }
+}
