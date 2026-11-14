@@ -3,6 +3,7 @@ import {
   CollectionStatus,
   EvidenceConflict,
   EvidenceRecord,
+  EvidenceStrength,
   EVIDENCE_SCOPE_TEST_BODY,
   Provenance,
   deriveAvailability,
@@ -50,6 +51,48 @@ describe('enums', () => {
 
   it('CollectionStatus has exactly COMPLETE/PARTIAL/UNAVAILABLE (SPEC:421)', () => {
     expect(Object.values(CollectionStatus).sort()).toEqual(['COMPLETE', 'PARTIAL', 'UNAVAILABLE']);
+  });
+
+  it('EvidenceStrength has exactly the three D10 levels (syntax < execution, plus unsupported)', () => {
+    expect(Object.values(EvidenceStrength).sort()).toEqual(['EXECUTION_ESTABLISHED', 'SYNTAX_OBSERVED', 'UNSUPPORTED']);
+  });
+});
+
+describe('evidenceStrength (D10)', () => {
+  it('is absent by default — no adapter classifies strength yet', () => {
+    expect(record().evidenceStrength).toBeUndefined();
+    expect(
+      makeEvidenceRecord({
+        type: 'assertion_count',
+        value: 1,
+        availability: Availability.KNOWN,
+        provenance: Provenance.DIRECT,
+        source: 'typescript-jest-adapter',
+        coverage: coverage(CollectionStatus.COMPLETE),
+      }),
+    ).not.toHaveProperty('evidenceStrength');
+  });
+
+  it('passes through the factory when supplied', () => {
+    const r = makeEvidenceRecord({
+      type: 'assertion_count',
+      value: 1,
+      availability: Availability.KNOWN,
+      provenance: Provenance.DIRECT,
+      source: 'python-pytest-adapter',
+      coverage: coverage(CollectionStatus.PARTIAL),
+      evidenceStrength: EvidenceStrength.SYNTAX_OBSERVED,
+    });
+    expect(r.evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
+  });
+
+  it('is orthogonal to availability: an observed form never promotes UNKNOWN', () => {
+    const r = record({
+      availability: Availability.UNKNOWN,
+      evidenceStrength: EvidenceStrength.EXECUTION_ESTABLISHED,
+    });
+    expect(r.availability).toBe(Availability.UNKNOWN);
+    expect(r.evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
   });
 });
 

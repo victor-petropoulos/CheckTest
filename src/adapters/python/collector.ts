@@ -38,6 +38,7 @@ import {
   Availability,
   CollectionStatus,
   EvidenceCoverage,
+  EvidenceStrength,
   Provenance,
   deriveAvailability,
   makeEvidenceRecord,
@@ -97,13 +98,26 @@ interface ParsedPython {
   totalAsserts: number;
 }
 
+export interface ParsedPythonCoverage {
+  value: number[];
+  provider: 'lcov' | 'coverage.py';
+  providerVersion?: string;
+  sourceRevision?: string;
+}
+
+/** D10: how many assertions a declaration holds, and how EACH one was established. */
+interface AssertCount {
+  total: number;
+  strength: EvidenceStrength[];
+}
+
 interface PythonTest {
   name: string;
   line: number;
   /** Inclusive last line of the declaration body — the span coverage intersects. */
   end: number;
   given: boolean;
-  asserts: number;
+  asserts: AssertCount;
 }
 
 /** stdlib-ast fallback script: emits the SAME JSON shape the tree-sitter walk builds. */
@@ -117,19 +131,31 @@ const AST_SCRIPT = [
   '        name = getattr(f, "id", None) or getattr(f, "attr", None)',
   '        out.append(name)',
   '    return out',
+  'HELPERS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)',
+  'BRANCHES = tuple(getattr(ast, n) for n in ("If", "For", "AsyncFor", "While", "Try", "TryStar", "Match", "match_case", "ExceptHandler", "comprehension", "IfExp") if hasattr(ast, n))',
   'def count_asserts(fn):',
-  '    n = 0',
-  '    for node in ast.walk(fn):',
+  '    out = {"total": 0, "strength": []}',
+  '    def classify(node):',
   '        if isinstance(node, ast.Assert):',
-  '            n += 1',
-  '        elif isinstance(node, ast.Call):',
-  '            f = node.func',
-  '            if isinstance(f, ast.Attribute):',
-  '                if f.attr in METHODS:',
-  '                    n += 1',
-  '                elif f.attr == "raises" and isinstance(f.value, ast.Name) and f.value.id == "pytest":',
-  '                    n += 1',
-  '    return n',
+  '            return "EXECUTION_ESTABLISHED"',
+  '        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):',
+  '            attr = node.func.attr',
+  '            if attr in METHODS:',
+  '                return "EXECUTION_ESTABLISHED"',
+  '            if attr == "raises":',
+  '                if isinstance(node.func.value, ast.Name) and node.func.value.id == "pytest":',
+  '                    return "EXECUTION_ESTABLISHED"',
+  '                return "UNSUPPORTED"',
+  '        return None',
+  '    def walk(node, nested):',
+  '        kind = classify(node)',
+  '        if kind is not None:',
+  '            out["total"] += 1',
+  '            out["strength"].append("SYNTAX_OBSERVED" if nested else kind)',
+  '        for child in ast.iter_child_nodes(node):',
+  '            walk(child, nested or isinstance(child, HELPERS) or isinstance(child, BRANCHES))',
+  '    walk(fn, False)',
+  '    return out',
   'tree = ast.parse(open(sys.argv[1], "rb").read(), sys.argv[1])',
   'tests = []',
   'def is_test(n):',
@@ -139,7 +165,7 @@ const AST_SCRIPT = [
   '        tests += [{"name": s.name, "line": s.lineno, "end": getattr(s, "end_lineno", None) or s.lineno, "given": "given" in decs(s), "asserts": count_asserts(s)} for s in node.body if is_test(s)]',
   '    if is_test(node):',
   '        tests.append({"name": node.name, "line": node.lineno, "end": getattr(node, "end_lineno", None) or node.lineno, "given": "given" in decs(node), "asserts": count_asserts(node)})',
-  'print(json.dumps({"tests": tests, "totalAsserts": sum(t["asserts"] for t in tests)}))',
+  'print(json.dumps({"tests": tests, "totalAsserts": sum(t["asserts"]["total"] for t in tests)}))',
 ].join('\n');
 
 /** Substrate probe seam: which native module name resolves for `require`.
@@ -327,25 +353,61 @@ function decoratedWithGiven(node: StNode): boolean {
   return (parent.children ?? []).some((child) => child.type === 'decorator' && /\bgiven\b/.test(child.text));
 }
 
-function countAsserts(node: StNode): number {
-  let count = 0;
-  const visit = (n: StNode): void => {
+/** Node types that make any contained assertion non-straight-line (D10). */
+const PYTHON_NESTED_DEF_TYPES: ReadonlySet<string> = new Set(['function_definition', 'class_definition', 'lambda']);
+const PYTHON_BRANCH_TYPES: ReadonlySet<string> = new Set([
+  'if_statement',
+  'elif_clause',
+  'else_clause',
+  'for_statement',
+  'while_statement',
+  'try_statement',
+  'except_clause',
+  'finally_clause',
+  'match_statement',
+  'case_clause',
+  'conditional_expression',
+  'list_comprehension',
+  'set_comprehension',
+  'dictionary_comprehension',
+  'generator_expression',
+]);
+
+function countAsserts(node: StNode): AssertCount {
+  const strength: EvidenceStrength[] = [];
+  let total = 0;
+  const visit = (n: StNode, nested: boolean): void => {
+    let kind: EvidenceStrength | null = null;
     if (n.type === 'assert_statement') {
-      count += 1;
+      kind = EvidenceStrength.EXECUTION_ESTABLISHED;
     } else if (n.type === 'call') {
       const fn = n.childForFieldName('function');
       const attr = fn !== null && fn.type === 'attribute' ? fn.childForFieldName('attribute') : null;
       if (attr !== null && (ASSERTION_METHODS.has(attr.text) || attr.text === 'raises')) {
-        count += 1;
+        if (attr.text === 'raises') {
+          const receiver = fn!.childForFieldName('object');
+          kind =
+            receiver !== null && receiver.type === 'identifier' && receiver.text === 'pytest'
+              ? EvidenceStrength.EXECUTION_ESTABLISHED
+              : EvidenceStrength.UNSUPPORTED;
+        } else {
+          kind = EvidenceStrength.EXECUTION_ESTABLISHED;
+        }
       }
+    }
+    if (kind !== null) {
+      total += 1;
+      strength.push(nested ? EvidenceStrength.SYNTAX_OBSERVED : kind);
     }
     for (let i = 0; i < n.childCount; i += 1) {
       const child = n.child(i);
-      if (child !== null) visit(child);
+      if (child !== null) {
+        visit(child, nested || PYTHON_NESTED_DEF_TYPES.has(child.type) || PYTHON_BRANCH_TYPES.has(child.type));
+      }
     }
   };
-  visit(node);
-  return count;
+  visit(node, false);
+  return { total, strength };
 }
 
 function walkNative(root: StNode): ParsedPython {
@@ -381,7 +443,7 @@ function walkNative(root: StNode): ParsedPython {
       }
     }
   }
-  return { tests, totalAsserts: tests.reduce((sum, test) => sum + test.asserts, 0) };
+  return { tests, totalAsserts: tests.reduce((sum, test) => sum + test.asserts.total, 0) };
 }
 
 /* ------------------------------------------------------------------ *
@@ -452,6 +514,42 @@ function parseCoverageMapEntries(entries: string[] | undefined): Array<{ from: s
   return mappings;
 }
 
+export interface PythonCoverageFreshness {
+  availability: Availability;
+  status: CollectionStatus;
+  reason?: string;
+}
+
+/**
+ * Freshness verdict for an EXTERNAL coverage report — mirrors
+ * src/providers/coverage.ts:245 (keep_guard ruling, jev/record/ct-cov-revision-2026-11-10.md).
+ * analyzedRevision undefined → no freshness claim (KNOWN); otherwise a report
+ * with no revision or a mismatched revision degrades to UNKNOWN/UNAVAILABLE.
+ */
+export function pythonCoverageFreshness(
+  analyzedRevision: string | undefined,
+  reportRevision: string | undefined,
+): PythonCoverageFreshness {
+  if (analyzedRevision === undefined) {
+    return { availability: Availability.KNOWN, status: CollectionStatus.COMPLETE };
+  }
+  if (reportRevision === undefined) {
+    return {
+      availability: Availability.UNKNOWN,
+      status: CollectionStatus.UNAVAILABLE,
+      reason: 'report revision unknown; freshness cannot be established',
+    };
+  }
+  if (reportRevision !== analyzedRevision) {
+    return {
+      availability: Availability.UNKNOWN,
+      status: CollectionStatus.UNAVAILABLE,
+      reason: `source revision mismatch: report ${reportRevision} != analyzed ${analyzedRevision}`,
+    };
+  }
+  return { availability: Availability.KNOWN, status: CollectionStatus.COMPLETE };
+}
+
 /**
  * Parse a supplied coverage report into covered line numbers for the analyzed
  * file. Mirrors the TS-side shape (src/providers/coverage.ts:223): the value is
@@ -464,8 +562,9 @@ function parseCoverageMapEntries(entries: string[] | undefined): Array<{ from: s
 function parseCoverageReport(
   reportPath: string,
   analyzedPath: string,
+  analyzedRevision?: string,
   pickKey?: string,
-): { value: number[]; provider: string } {
+): ParsedPythonCoverage {
   const text = readFileSync(reportPath, 'utf8');
   const analyzed = basename(analyzedPath);
   const wanted = (key: string): boolean =>
@@ -482,13 +581,32 @@ function parseCoverageReport(
     throw new Error(`no entry for ${label} in lcov report`);
   }
 
-  const parsed = JSON.parse(text) as { files?: Record<string, { executed_lines?: unknown }> };
+  const parsed = JSON.parse(text) as {
+    files?: Record<string, { executed_lines?: unknown }>;
+    source_revision?: string;
+    sourceRevision?: string;
+    revision?: string;
+    meta?: { version?: string; source_revision?: string; sourceRevision?: string };
+  };
   const files = parsed.files ?? {};
   for (const [key, info] of Object.entries(files)) {
     if (!wanted(key)) continue;
     const executed = info.executed_lines;
     if (!Array.isArray(executed)) throw new Error('coverage.py entry missing executed_lines');
-    return { value: executed.map(Number), provider: 'coverage.py' };
+    const meta = (parsed.meta ?? {}) as { version?: string; source_revision?: string; sourceRevision?: string };
+    let sourceRevision: string | undefined;
+    for (const holder of [parsed, meta]) {
+      for (const key2 of ['source_revision', 'sourceRevision', 'revision'] as const) {
+        const v = (holder as Record<string, unknown>)[key2];
+        if (typeof v === 'string' && v.length > 0) {
+          sourceRevision = v;
+          break;
+        }
+      }
+      if (sourceRevision) break;
+    }
+    const providerVersion = typeof meta.version === 'string' && meta.version.length > 0 ? meta.version : undefined;
+    return { value: executed.map(Number), provider: 'coverage.py', providerVersion, sourceRevision };
   }
   const label = pickKey ?? analyzed;
   throw new Error(`no entry for ${label} in coverage.py report`);
@@ -503,8 +621,9 @@ function parseCoverageReport(
  * the engine can threshold (CT-COV-001: pass_at_least 1). A declaration whose
  * span holds no covered line is a measured 0, not a gap — the report parsed
  * and the file matched, so the count IS known. Provenance mirrors the
- * subject-level record of the same report (DIRECT, this adapter owns the
- * evidence end-to-end).
+ * subject-level record of the same report (EXTERNAL — the coverage report is
+ * an external artifact this adapter consumes; per task 1.5 the subject-level
+ * record rides EXTERNAL provenance with the report's provider id).
  *
  * `mutation_score` mirrors the subject-level convention: the collector has no
  * mutation report, so the record is UNKNOWN with the canonical gap reason (the
@@ -513,13 +632,23 @@ function parseCoverageReport(
 function testEvidence(
   filePath: string,
   test: PythonTest,
-  coveredLines: number[] | undefined,
-  perDecl?: { mode: 'scoped'; value: 0 | 1; testFile: string },
+  covered: { lines: number[]; report: ParsedPythonCoverage } | undefined,
+  perDecl: { mode: 'scoped'; value: 0 | 1; testFile: string; report: ParsedPythonCoverage } | undefined,
 ): Record<string, ReturnType<typeof makeEvidenceRecord>> {
+  const testStrength = test.given
+    ? test.asserts.total > 0
+      ? EvidenceStrength.SYNTAX_OBSERVED
+      : undefined
+    : (test.asserts.strength.reduce<EvidenceStrength | undefined>((weakest, s) => {
+        if (weakest === undefined) return s;
+        const rank = (v: EvidenceStrength): number =>
+          v === EvidenceStrength.UNSUPPORTED ? 2 : v === EvidenceStrength.SYNTAX_OBSERVED ? 1 : 0;
+        return rank(s) > rank(weakest) ? s : weakest;
+      }, undefined) ?? undefined);
   const evidence: Record<string, ReturnType<typeof makeEvidenceRecord>> = {
     [EVIDENCE_ASSERTION_COUNT]: makeEvidenceRecord({
       type: EVIDENCE_ASSERTION_COUNT,
-      value: test.given ? undefined : test.asserts,
+      value: test.given ? undefined : test.asserts.total,
       availability: deriveAvailability(test.given ? CollectionStatus.PARTIAL : CollectionStatus.COMPLETE),
       provenance: Provenance.DIRECT,
       source: ANALYZER_ID,
@@ -527,6 +656,7 @@ function testEvidence(
       scope: ANALYSIS_SCOPE,
       coverage: coverageBlock(test.given ? CollectionStatus.PARTIAL : CollectionStatus.COMPLETE),
       ...(test.given ? { reason: `hypothesis @given: ${gapReason('unsupported-form')}` } : {}),
+      evidenceStrength: testStrength,
     }),
     mutation_score: makeEvidenceRecord({
       type: 'mutation_score',
@@ -545,25 +675,31 @@ function testEvidence(
       type: 'line_coverage',
       value: perDecl.value,
       availability: Availability.KNOWN,
-      provenance: Provenance.DIRECT,
+      provenance: Provenance.EXTERNAL,
       source: ANALYZER_ID,
       collector_version: COLLECTOR_VERSION,
       scope: ANALYSIS_SCOPE,
       coverage: coverageBlock(CollectionStatus.COMPLETE),
       location: { file: filePath, line: test.line },
+      provider: perDecl.report.provider,
+      provider_version: perDecl.report.providerVersion,
+      source_revision: perDecl.report.sourceRevision ?? 'unknown',
       reason: `coverage evidence from a run scoped to ${perDecl.testFile}`,
     });
-  } else if (coveredLines !== undefined) {
+  } else if (covered !== undefined) {
     evidence.line_coverage = makeEvidenceRecord({
       type: 'line_coverage',
-      value: intersectLines(toLineSet(coveredLines), test.line, test.end),
+      value: intersectLines(toLineSet(covered.lines), test.line, test.end),
       availability: Availability.KNOWN,
-      provenance: Provenance.DIRECT,
+      provenance: Provenance.EXTERNAL,
       source: ANALYZER_ID,
       collector_version: COLLECTOR_VERSION,
       scope: ANALYSIS_SCOPE,
       coverage: coverageBlock(CollectionStatus.COMPLETE),
       location: { file: filePath, line: test.line },
+      provider: covered.report.provider,
+      provider_version: covered.report.providerVersion,
+      source_revision: covered.report.sourceRevision ?? 'unknown',
     });
   }
   return evidence;
@@ -577,63 +713,17 @@ function testEvidence(
  *   declaredType: caller-declared test type, threaded like the TS collector
  *   (D-20261112-5 Q2) — never inferred, UNKNOWN when absent
  */
-export function collectAnalysis(
+/**
+ * Build the subject-level assertion_count record — the aggregate over the whole
+ * file (D10). Carries the weakest strength classification reached by any
+ * declaration: a body is only as established as its least-established assert.
+ */
+function buildSubjectEvidence(
   filePath: string,
-  options: {
-    coverageReport?: string;
-    declaredType?: TestType;
-    substrateProbe?: SubstrateProbe;
-    coverageMap?: string[];
-    perTestRun?: boolean;
-  } = {},
-): AnalysisOutput {
-  const declaredType = options.declaredType ?? TestType.UNKNOWN;
-  let sourceText: string;
-  try {
-    sourceText = readFileSync(filePath, 'utf8');
-  } catch (error) {
-    return failed(filePath, declaredType, `unable to read test file: ${(error as Error).message}`);
-  }
-
-  let parsed: ParsedPython;
-  const native = loadNativeParser(options.substrateProbe);
-  if (native !== null) {
-    try {
-      // Defensive guard: the upstream binding can hand back a parse without a
-      // usable root (node-tree-sitter #181). A non-usable tree must never
-      // reach the walk unchecked — it routes to the earned python3-ast
-      // fallback below, exactly like any other native failure.
-      const root: StNode | undefined = native(sourceText);
-      if (root === undefined) {
-        throw new Error('tree-sitter returned an unusable tree (undefined rootNode)');
-      }
-      parsed = walkNative(root);
-    } catch (error) {
-      // The native walk can fail for infrastructure reasons, not only for
-      // unparseable source: under jest the tree-sitter binding can hand back
-      // an undefined rootNode for a parse that actually succeeded (upstream
-      // node-tree-sitter #181 — the "jest race"). The parse lambda retries
-      // once with a fresh parser and then throws, so an unusable tree lands
-      // here. The earned fallback answers the same question, so try it before
-      // giving up; source python3-ast also rejects still fails below.
-      try {
-        parsed = parseWithPythonAst(filePath, options.substrateProbe ?? PRODUCTION_PROBE);
-      } catch {
-        return failed(filePath, declaredType, `python parse failed: ${(error as Error).message}`);
-      }
-    }
-  } else {
-    try {
-      parsed = parseWithPythonAst(filePath, options.substrateProbe ?? PRODUCTION_PROBE);
-    } catch (error) {
-      return unsupportedParser(filePath, declaredType, `no python parser available: ${(error as Error).message}`);
-    }
-  }
-
-  const framework = SUPPORTED_FRAMEWORKS[0];
+  parsed: ParsedPython,
+  coverageStatus: CollectionStatus,
+): ReturnType<typeof makeEvidenceRecord> {
   const anyGiven = parsed.tests.some((test) => test.given);
-  const coverageStatus = anyGiven ? CollectionStatus.PARTIAL : CollectionStatus.COMPLETE;
-
   const record = makeEvidenceRecord({
     type: EVIDENCE_ASSERTION_COUNT,
     value: parsed.totalAsserts,
@@ -643,6 +733,7 @@ export function collectAnalysis(
     collector_version: COLLECTOR_VERSION,
     scope: ANALYSIS_SCOPE,
     coverage: coverageBlock(coverageStatus),
+    evidenceStrength: aggregateSubjectStrength(parsed),
   });
 
   const reasonParts: string[] = [];
@@ -658,6 +749,211 @@ export function collectAnalysis(
   if (parsed.totalAsserts > 0) {
     record.location = { file: filePath, line: 1 };
   }
+  return record;
+}
+
+function aggregateSubjectStrength(parsed: ParsedPython): EvidenceStrength | undefined {
+  const rank = (v: EvidenceStrength): number =>
+    v === EvidenceStrength.UNSUPPORTED ? 2 : v === EvidenceStrength.SYNTAX_OBSERVED ? 1 : 0;
+  let weakest: EvidenceStrength | undefined;
+  for (const test of parsed.tests) {
+    const s = test.given
+      ? EvidenceStrength.SYNTAX_OBSERVED
+      : test.asserts.strength.reduce<EvidenceStrength | undefined>((w, cur) => {
+          if (w === undefined) return cur;
+          return rank(cur) > rank(w) ? cur : w;
+        }, undefined);
+    if (s !== undefined && (weakest === undefined || rank(s) > rank(weakest))) weakest = s;
+  }
+  return weakest;
+}
+
+class PythonParseFailure extends Error {
+  constructor(
+    public readonly kind: 'failed' | 'unsupported',
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+function parsePythonSource(sourceText: string, filePath: string, probe: SubstrateProbe | undefined): ParsedPython {
+  const native = loadNativeParser(probe);
+  if (native !== null) {
+    try {
+      const root: StNode | undefined = native(sourceText);
+      if (root === undefined) {
+        throw new Error('tree-sitter returned an unusable tree (undefined rootNode)');
+      }
+      return walkNative(root);
+    } catch (error) {
+      try {
+        return parseWithPythonAst(filePath, probe ?? PRODUCTION_PROBE);
+      } catch {
+        throw new PythonParseFailure('failed', `python parse failed: ${(error as Error).message}`);
+      }
+    }
+  }
+  try {
+    return parseWithPythonAst(filePath, probe ?? PRODUCTION_PROBE);
+  } catch (error) {
+    throw new PythonParseFailure('unsupported', `no python parser available: ${(error as Error).message}`);
+  }
+}
+
+interface PythonCoveredLines {
+  lines: number[];
+  report: ParsedPythonCoverage;
+}
+
+interface PythonScopedCoverage {
+  mode: 'scoped';
+  value: 0 | 1;
+  testFile: string;
+  report: ParsedPythonCoverage;
+}
+
+function applyCoverageReport(
+  evidence: Record<string, ReturnType<typeof makeEvidenceRecord>>,
+  options: {
+    coverageReport?: string;
+    coverageMap?: string[];
+    perTestRun?: boolean;
+    analyzedRevision?: string;
+  },
+  filePath: string,
+): { covered?: PythonCoveredLines; perDeclScoped?: PythonScopedCoverage } {
+  if (options.coverageReport === undefined) return {};
+  const mappings = parseCoverageMapEntries(options.coverageMap);
+  const mappedEntry = mappings.find((m) => normalizeRelativePath(m.from) === normalizeRelativePath(filePath));
+  const mappedTo = mappedEntry?.to;
+
+  if (mappedTo !== undefined && options.perTestRun === true) {
+    try {
+      const parsed = parseCoverageReport(options.coverageReport, filePath, options.analyzedRevision, mappedTo);
+      const fresh = pythonCoverageFreshness(options.analyzedRevision, parsed.sourceRevision);
+      const count = lineCount(parsed.value);
+      evidence.line_coverage = makeEvidenceRecord({
+        type: 'line_coverage',
+        value: fresh.availability === Availability.KNOWN ? count : undefined,
+        availability: fresh.availability,
+        provenance: Provenance.EXTERNAL,
+        source: ANALYZER_ID,
+        collector_version: COLLECTOR_VERSION,
+        scope: ANALYSIS_SCOPE,
+        coverage: coverageBlock(fresh.status),
+        provider: parsed.provider,
+        provider_version: parsed.providerVersion,
+        source_revision: parsed.sourceRevision ?? 'unknown',
+        ...(fresh.reason !== undefined
+          ? { reason: fresh.reason }
+          : { reason: `coverage evidence mapped to ${mappedTo}` }),
+      });
+      if (fresh.availability === Availability.KNOWN) {
+        return {
+          perDeclScoped: {
+            mode: 'scoped',
+            value: (count >= 1 ? 1 : 0) as 0 | 1,
+            testFile: basename(filePath),
+            report: parsed,
+          },
+        };
+      }
+      return {};
+    } catch (error) {
+      const msg = (error as Error).message;
+      const missing = msg.includes(`no entry for ${mappedTo}`);
+      evidence.line_coverage = makeEvidenceRecord({
+        type: 'line_coverage',
+        value: undefined,
+        availability: Availability.UNKNOWN,
+        provenance: Provenance.DIRECT,
+        source: ANALYZER_ID,
+        collector_version: COLLECTOR_VERSION,
+        scope: ANALYSIS_SCOPE,
+        coverage: coverageBlock(CollectionStatus.UNAVAILABLE),
+        reason: missing ? `no coverage data for ${mappedTo}` : `${gapReason('unparseable-report')}: ${msg}`,
+      });
+      return {};
+    }
+  }
+
+  try {
+    const parsed = parseCoverageReport(options.coverageReport, filePath, options.analyzedRevision);
+    const fresh = pythonCoverageFreshness(options.analyzedRevision, parsed.sourceRevision);
+    evidence.line_coverage = makeEvidenceRecord({
+      type: 'line_coverage',
+      value: fresh.availability === Availability.KNOWN ? parsed.value : undefined,
+      availability: fresh.availability,
+      provenance: Provenance.EXTERNAL,
+      source: ANALYZER_ID,
+      collector_version: COLLECTOR_VERSION,
+      scope: ANALYSIS_SCOPE,
+      coverage: coverageBlock(fresh.status),
+      provider: parsed.provider,
+      provider_version: parsed.providerVersion,
+      source_revision: parsed.sourceRevision ?? 'unknown',
+      ...(fresh.reason !== undefined
+        ? { reason: fresh.reason }
+        : mappedTo !== undefined
+          ? { reason: 'coverage map supplied without --per-test-run attestation; mapped semantics not applied' }
+          : {}),
+    });
+    if (fresh.availability === Availability.KNOWN) {
+      return { covered: { lines: parsed.value, report: parsed } };
+    }
+    return {};
+  } catch (error) {
+    evidence.line_coverage = makeEvidenceRecord({
+      type: 'line_coverage',
+      value: undefined,
+      availability: Availability.UNKNOWN,
+      provenance: Provenance.DIRECT,
+      source: ANALYZER_ID,
+      collector_version: COLLECTOR_VERSION,
+      scope: ANALYSIS_SCOPE,
+      coverage: coverageBlock(CollectionStatus.UNAVAILABLE),
+      reason: `${gapReason('unparseable-report')}: ${(error as Error).message}`,
+    });
+    return {};
+  }
+}
+
+export function collectAnalysis(
+  filePath: string,
+  options: {
+    coverageReport?: string;
+    declaredType?: TestType;
+    substrateProbe?: SubstrateProbe;
+    coverageMap?: string[];
+    perTestRun?: boolean;
+    analyzedRevision?: string;
+  } = {},
+): AnalysisOutput {
+  const declaredType = options.declaredType ?? TestType.UNKNOWN;
+  let sourceText: string;
+  try {
+    sourceText = readFileSync(filePath, 'utf8');
+  } catch (error) {
+    return failed(filePath, declaredType, `unable to read test file: ${(error as Error).message}`);
+  }
+
+  let parsed: ParsedPython;
+  try {
+    parsed = parsePythonSource(sourceText, filePath, options.substrateProbe);
+  } catch (error) {
+    const failure = error as PythonParseFailure;
+    if (failure.kind === 'failed') {
+      return failed(filePath, declaredType, failure.message);
+    }
+    return unsupportedParser(filePath, declaredType, failure.message);
+  }
+
+  const framework = SUPPORTED_FRAMEWORKS[0];
+  const anyGiven = parsed.tests.some((test) => test.given);
+  const coverageStatus = anyGiven ? CollectionStatus.PARTIAL : CollectionStatus.COMPLETE;
+
+  const record = buildSubjectEvidence(filePath, parsed, coverageStatus);
 
   const evidence: Record<string, ReturnType<typeof makeEvidenceRecord>> = {
     [EVIDENCE_ASSERTION_COUNT]: record,
@@ -674,83 +970,9 @@ export function collectAnalysis(
     }),
   };
 
-  // The covered lines of the analyzed file, kept for the per-declaration
-  // records below (CT-COV-001 appraises EACH declaration against them).
-  let coveredLines: number[] | undefined;
-  let perDeclScoped: { mode: 'scoped'; value: 0 | 1; testFile: string } | undefined;
-  if (options.coverageReport !== undefined) {
-    const mappings = parseCoverageMapEntries(options.coverageMap);
-    const mappedEntry = mappings.find((m) => normalizeRelativePath(m.from) === normalizeRelativePath(filePath));
-    const mappedTo = mappedEntry?.to;
-
-    if (mappedTo !== undefined && options.perTestRun === true) {
-      try {
-        const { value } = parseCoverageReport(options.coverageReport, filePath, mappedTo);
-        evidence.line_coverage = makeEvidenceRecord({
-          type: 'line_coverage',
-          value: lineCount(value),
-          availability: Availability.KNOWN,
-          provenance: Provenance.DIRECT,
-          source: ANALYZER_ID,
-          collector_version: COLLECTOR_VERSION,
-          scope: ANALYSIS_SCOPE,
-          coverage: coverageBlock(CollectionStatus.COMPLETE),
-          reason: `coverage evidence mapped to ${mappedTo}`,
-        });
-        perDeclScoped = {
-          mode: 'scoped',
-          value: (lineCount(value) >= 1 ? 1 : 0) as 0 | 1,
-          testFile: basename(filePath),
-        };
-      } catch (error) {
-        const msg = (error as Error).message;
-        const missing = msg.includes(`no entry for ${mappedTo}`);
-        evidence.line_coverage = makeEvidenceRecord({
-          type: 'line_coverage',
-          value: undefined,
-          availability: Availability.UNKNOWN,
-          provenance: Provenance.DIRECT,
-          source: ANALYZER_ID,
-          collector_version: COLLECTOR_VERSION,
-          scope: ANALYSIS_SCOPE,
-          coverage: coverageBlock(CollectionStatus.UNAVAILABLE),
-          reason: missing ? `no coverage data for ${mappedTo}` : `${gapReason('unparseable-report')}: ${msg}`,
-        });
-      }
-    } else {
-      try {
-        const { value } = parseCoverageReport(options.coverageReport, filePath);
-        coveredLines = value;
-        evidence.line_coverage = makeEvidenceRecord({
-          type: 'line_coverage',
-          value,
-          availability: Availability.KNOWN,
-          provenance: Provenance.DIRECT,
-          source: ANALYZER_ID,
-          collector_version: COLLECTOR_VERSION,
-          scope: ANALYSIS_SCOPE,
-          coverage: coverageBlock(CollectionStatus.COMPLETE),
-          ...(mappedTo !== undefined
-            ? {
-                reason: 'coverage map supplied without --per-test-run attestation; mapped semantics not applied',
-              }
-            : {}),
-        });
-      } catch (error) {
-        evidence.line_coverage = makeEvidenceRecord({
-          type: 'line_coverage',
-          value: undefined,
-          availability: Availability.UNKNOWN,
-          provenance: Provenance.DIRECT,
-          source: ANALYZER_ID,
-          collector_version: COLLECTOR_VERSION,
-          scope: ANALYSIS_SCOPE,
-          coverage: coverageBlock(CollectionStatus.UNAVAILABLE),
-          reason: `${gapReason('unparseable-report')}: ${(error as Error).message}`,
-        });
-      }
-    }
-  }
+  const coverageResult = applyCoverageReport(evidence, options, filePath);
+  const covered = coverageResult.covered;
+  const perDeclScoped = coverageResult.perDeclScoped;
 
   return {
     subject: subject(filePath, declaredType, framework),
@@ -773,7 +995,7 @@ export function collectAnalysis(
         test.given ? Completeness.INCOMPLETE : Completeness.COMPLETE,
         declaredType,
       ),
-      evidence: testEvidence(filePath, test, coveredLines, perDeclScoped),
+      evidence: testEvidence(filePath, test, covered, perDeclScoped),
       declaration_gap: null,
     })),
   };

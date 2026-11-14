@@ -47,6 +47,37 @@ export const EVIDENCE_SCOPE_TEST_BODY = 'test-body';
 export const EVIDENCE_TYPES = ['assertion_count', 'line_coverage', 'mutation_score'] as const;
 export type EvidenceType = (typeof EVIDENCE_TYPES)[number];
 
+/**
+ * D10 — HOW an assertion was established, along the syntax→execution axis.
+ *
+ * Orthogonal to both other dimensions. It is not availability (a form can be
+ * fully classified and still be only observed, never executed) and it is not
+ * collection status. `Availability.UNKNOWN` stays UNKNOWN: nothing here promotes
+ * a value to a definite claim, and an observed form is never upgraded to
+ * execution-established by inference.
+ *
+ * Taxonomy (three levels, in decreasing strength):
+ *   EXECUTION_ESTABLISHED — a straight-line test-body assertion: execution of
+ *     the test proves the assertion itself ran. In Python, a unittest TestClass
+ *     method IS a straight-line test body; class-method containment is not
+ *     nesting.
+ *   SYNTAX_OBSERVED — the assertion FORM is visible in source, but execution
+ *     does not establish it (nested helper called from the body; assertion in a
+ *     conditional/loop branch). pytest `@given` properties are this level.
+ *   UNSUPPORTED — the form the adapter cannot classify at all.
+ *
+ * Classification is language-specific and therefore lives in the adapters
+ * (src/adapters/*); core only names the axis. Adapters do not populate it yet.
+ */
+export enum EvidenceStrength {
+  /** Form observed in source; execution does not establish it. */
+  SYNTAX_OBSERVED = 'SYNTAX_OBSERVED',
+  /** Straight-line test-body assertion: execution proves the assertion ran. */
+  EXECUTION_ESTABLISHED = 'EXECUTION_ESTABLISHED',
+  /** The adapter cannot classify this form at all. */
+  UNSUPPORTED = 'UNSUPPORTED',
+}
+
 /** SPEC:421 — what the collector examined and what it knows how to recognize. */
 export enum CollectionStatus {
   COMPLETE = 'COMPLETE',
@@ -165,6 +196,15 @@ export interface EvidenceRecord {
    * records never carry it.
    */
   per_test_run?: boolean;
+  /**
+   * D10 — how this assertion was established (see `EvidenceStrength`).
+   *
+   * Additive, optional: absent (undefined) means the producing adapter does not
+   * classify strength yet, which is every adapter today — so this field changes
+   * no existing value. It never substitutes for `availability`; the two are
+   * independent axes and a strength never turns UNKNOWN into KNOWN.
+   */
+  evidenceStrength?: EvidenceStrength;
 }
 
 /**
@@ -189,6 +229,7 @@ export type MakeEvidenceBaseParams = {
   conflicts?: EvidenceConflict[];
   unestablished_assertions?: { count: number; reasons: string[] };
   unclassified_constructs?: { count: number; reasons: string[] };
+  evidenceStrength?: EvidenceStrength;
 };
 
 export type MakeEvidenceDirectParams = MakeEvidenceBaseParams & {
@@ -238,6 +279,9 @@ export function makeEvidenceRecord(params: MakeEvidenceParams): EvidenceRecord {
   }
   if (params.unclassified_constructs !== undefined) {
     record.unclassified_constructs = params.unclassified_constructs;
+  }
+  if (params.evidenceStrength !== undefined) {
+    record.evidenceStrength = params.evidenceStrength;
   }
   if (params.provenance === Provenance.EXTERNAL) {
     const external = params as MakeEvidenceExternalParams;

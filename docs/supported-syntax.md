@@ -381,3 +381,34 @@ Every evidence record carries a `provenance` value (`src/core/evidence.ts:14-18`
 | `EXTERNAL` | `src/providers/coverage.ts:90` (Istanbul file record), `:146` (c8 file record), `:281` (missing-file fallback), `:331` (per-declaration record); `src/providers/mutation.ts:194` (unavailable revision), `:210` (scoring failure), `:225` (scored record), `:360` (missing-file fallback) | YES — reachable via the coverage provider (file-level + per-declaration, by line-range overlap) and the mutation provider (file-level only) |
 
 This is documentation of reachability, not a test guarantee: `DIRECT` and `DERIVED` are observed in the AST collector, and `EXTERNAL` is now observed reachable via the coverage provider (file-level + per-declaration by line-range overlap) and the mutation provider (file-level only). Neither provider populates `location`; mutation has no per-declaration attribution.
+
+---
+
+## Evidence Strength (D10)
+
+`evidenceStrength` on an `EvidenceRecord` records **how** an assertion was established, along the syntax → execution axis. It is orthogonal to `provenance` and `availability`. Full contract: [Limitations §24](../limitations.md#24-evidence-strength-contract-d10).
+
+### TypeScript (jest/vitest)
+
+Classification by `classifyFormStrength` (`src/adapters/typescript/regex-assertion-count.ts:69`) over per-declaration findings; weakest finding decides (file-level and per-declaration records both use it).
+
+| Construct                                                           | Strength                |
+| ------------------------------------------------------------------- | ----------------------- |
+| Straight-line module-level assertion (all 5 straight-line rules)    | `EXECUTION_ESTABLISHED` |
+| Assertion nested in helper/branch/callback, or modifier declaration | `SYNTAX_OBSERVED`       |
+| Unclassifiable matcher / gapped declaration with no classified form | `UNSUPPORTED`           |
+
+### Python (pytest/unittest)
+
+Classification in `countAsserts` (native `src/adapters/python/collector.ts:374-409`, and `AST_SCRIPT` `:136-156`); weakest-strength aggregation at subject level (`aggregateSubjectStrength`, `:752-768`).
+
+| Construct                                                                                 | Strength                                                   |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| pytest/unittest straight-line body assertion (class-method containment is NOT nesting)    | `EXECUTION_ESTABLISHED`                                    |
+| Assertion inside a helper called from the body, or inside `if`/`for`/`while`/`try` branch | `SYNTAX_OBSERVED`                                          |
+| `@given`-decorated test (all its assertions)                                              | `SYNTAX_OBSERVED` (`CollectionStatus.PARTIAL` retained)    |
+| Non-pytest `.raises` receiver form (`foo.raises(Exception)`, `self.assertRaises`)         | counted in `totalAsserts`, `UNSUPPORTED` (both substrates) |
+
+### Orthogonality
+
+`evidenceStrength` never turns `Availability.UNKNOWN` into `KNOWN`, and an observed form is never upgraded to execution-established by inference.

@@ -88,6 +88,23 @@ describe('CT-COV-001 verdicts (active: file-level mapped coverage)', () => {
     ).toBe(RuleResult.INDETERMINATE);
   });
 
+  // F3 fail-closed C8 shape: a missing/malformed `coveredLines` array yields
+  // availability UNKNOWN / status UNAVAILABLE / value [] — an empty value must
+  // not be thresholded as a measured zero, so the verdict stays INDETERMINATE.
+  it('active: UNKNOWN + UNAVAILABLE + value [] (fail-closed c8 record) -> INDETERMINATE, never FAIL', () => {
+    const result = resultOf({ availability: Availability.UNKNOWN, value: [], coverage: CollectionStatus.UNAVAILABLE });
+    expect(result).toBe(RuleResult.INDETERMINATE);
+    expect(result).not.toBe(RuleResult.FAIL);
+  });
+
+  it('active: KNOWN + COMPLETE + raw non-numeric array -> INDETERMINATE (arrays are never thresholded)', () => {
+    // Contrast row: even a KNOWN + COMPLETE array (the unmapped raw-array shape)
+    // cannot reach the numeric step, so a fail-closed [] can never become FAIL.
+    expect(resultOf({ availability: Availability.KNOWN, value: [], coverage: CollectionStatus.COMPLETE })).toBe(
+      RuleResult.INDETERMINATE,
+    );
+  });
+
   it('active: PARTIAL coverage -> INDETERMINATE (step 4 blocks before numeric)', () => {
     expect(resultOf({ coverage: CollectionStatus.PARTIAL, value: 0 })).toBe(RuleResult.INDETERMINATE);
     expect(resultOf({ coverage: CollectionStatus.PARTIAL, value: 1 })).toBe(RuleResult.INDETERMINATE);

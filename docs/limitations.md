@@ -451,3 +451,54 @@ Setup: run Stryker with a JSON reporter, then invoke
 - **Corpus-validated limit (static collection).** The pytest repo's unittest-form tests report `assertion_count = 0`, so CT-INT-001 returns FAIL — the honest verdict of static collection, pinned deliberately: pass 30 / fail 40 (`tests/integration/python-slice-corpus.test.ts:112-116`). Packaging pass 62 / fail 0 (`:103-106`), click pass 42 / fail 0 (`:107-110`).
 
 **Source:** `src/adapters/python/collector.ts:5-16, 217-245, 257-309, 441-465, 498, 500-510, 536-581, 601-602, 614-624, 644-655, 707-726`; `src/adapters/python/support.ts:40, 49, 52, 55`; `src/adapters/python/capabilities.ts:18, 24-34`; `src/adapters/python/adapter.ts:52`; `src/adapters/registry.ts:38-39, 90-112, 115`; `src/cli.ts:286-290, 329-331`; `tests/integration/python-slice-corpus.test.ts:88, 103-116`; DECISIONS.md `D-20261112-3` + addendum (main checkout `.opencode/progress/DECISIONS.md`); `docs/adr/ADR-033-per-language-adapter-modules-formal-contract.md` (accepted 2026-11-11).
+
+---
+
+## 24. Evidence Strength Contract (D10)
+
+`EvidenceStrength` (`src/core/evidence.ts:72-79`) is the third independent axis on an `EvidenceRecord`, alongside `provenance` and `availability`: **how** an assertion was established, along the syntax → execution axis. It is orthogonal to both other dimensions — a form can be fully classified and still be only observed, never executed, and `Availability.UNKNOWN` stays `UNKNOWN`: nothing here promotes a value to a definite claim. `UNKNOWN` is never promoted (roadmap §277).
+
+### 24.1 Taxonomy
+
+| Strength                | Definition                                                                                                                                                                                               |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EXECUTION_ESTABLISHED` | A straight-line test-body assertion: executing the test proves the assertion itself ran. In Python, a unittest `TestClass` method IS a straight-line test body; class-method containment is not nesting. |
+| `SYNTAX_OBSERVED`       | The assertion form is visible in source, but execution does not establish it (nested helper called from the body; assertion in a conditional/loop branch). pytest `@given` properties are this level.    |
+| `UNSUPPORTED`           | The adapter cannot classify this form at all.                                                                                                                                                            |
+
+Classification is language-specific and lives in the adapters (`src/adapters/*`); core only names the axis.
+
+### 24.2 Per-language mapping
+
+**TypeScript (jest/vitest)** — `src/adapters/typescript/regex-assertion-count.ts:69` (`classifyFormStrength`), `src/adapters/typescript/collector.ts:329` (file-level) / `:418` (per-declaration):
+
+| Construct                                                                                         | Strength                |
+| ------------------------------------------------------------------------------------------------- | ----------------------- |
+| Straight-line module-level assertion (all 5 straight-line rules hold)                             | `EXECUTION_ESTABLISHED` |
+| Assertion nested in a helper/branch/callback, or modifier declaration (`it.each`/`skip`/`only`/…) | `SYNTAX_OBSERVED`       |
+| Unclassifiable matcher, computed matcher, or gapped declaration with no classified form           | `UNSUPPORTED`           |
+
+Aggregation: weakest-finding-wins at file level and per-declaration (`classifyFormStrength`: an unclassifiable form outranks a classified-but-unestablished one, which outranks a straight-line one). A scan that found nothing is `EXECUTION_ESTABLISHED` — its value 0 is definite.
+
+**Python (pytest/unittest)** — `src/adapters/python/collector.ts` (`countAsserts` native + `AST_SCRIPT`):
+
+| Construct                                                                                 | Strength                                                             |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| pytest/unittest straight-line body assertion (class-method containment is NOT nesting)    | `EXECUTION_ESTABLISHED`                                              |
+| Assertion inside a helper called from the body, or inside `if`/`for`/`while`/`try` branch | `SYNTAX_OBSERVED`                                                    |
+| `@given`-decorated test (all its assertions)                                              | `SYNTAX_OBSERVED` with `CollectionStatus.PARTIAL` retained           |
+| Non-pytest `.raises` receiver form (e.g. `foo.raises(Exception)`, `self.assertRaises`)    | counted in `totalAsserts`, strength `UNSUPPORTED` on both substrates |
+
+Aggregation: weakest-strength at subject level (`aggregateSubjectStrength`); per-declaration uses the same weakest reduction over its asserts (see `testEvidence`).
+
+### 24.3 Orthogonality
+
+`evidenceStrength` is independent of `availability` and of `collection status`. A strength never turns `UNKNOWN` into `KNOWN`, and an observed form is never upgraded to execution-established by inference. `Availability.UNKNOWN` stays `UNKNOWN` regardless of strength.
+
+### 24.4 Report exposure (deferral — Package 6)
+
+`evidenceStrength` is recorded on the in-memory `EvidenceRecord` but is **not yet present in JSON or SARIF output**: `serializeEvidence` (`src/reporters/json.ts:77-130`) builds its field set explicitly and does not copy `evidenceStrength`, and the SARIF reporter (`src/reporters/sarif.ts`) does not reference it either. Report-visible exposure of `evidenceStrength` is implemented by tasks **6.1** and **6.2** (Package 6). Package 1 acceptance therefore does **not** count report exposure as satisfied: report-visible `evidenceStrength` lands in Package 6 by design.
+
+**Note (1.6b):** evidence/completeness state IS exposed in reports today via the existing `availability`/`coverage.status`/`completeness` fields; the D10 `evidenceStrength` dimension specifically lands in Package 6 by design (tasks 6.1/6.2). Package 1 must NOT be recorded as satisfying report exposure of `evidenceStrength` alone.
+
+**Source:** `src/core/evidence.ts:50-79` (enum + doc comments), `src/adapters/typescript/regex-assertion-count.ts:44-77` (`classifyFormStrength`), `src/adapters/typescript/collector.ts:323-331`, `:410-420`, `src/adapters/python/collector.ts:136-156` (`AST_SCRIPT` classify), `:374-409` (native `countAsserts`), `:635-644` (`testEvidence`), `:718-768` (`buildSubjectEvidence`/`aggregateSubjectStrength`), `src/reporters/json.ts:77-130` (`serializeEvidence`), `src/reporters/sarif.ts`.

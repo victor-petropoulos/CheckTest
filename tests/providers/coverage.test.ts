@@ -138,6 +138,14 @@ describe('parseC8 via parseCoverageReport', () => {
     expect(r.records.get('e.ts')!.value).toEqual([]);
     expect(r.records.get('a.ts')!.provider).toBe('c8');
     expect(r.records.get('a.ts')!.coverage.status).toBe(CollectionStatus.COMPLETE);
+    // Fail-closed (F3): entries without a valid coveredLines/covered array are
+    // UNKNOWN/UNAVAILABLE, never a measured zero.
+    for (const file of ['c.ts', 'd.ts', 'e.ts']) {
+      const rec = r.records.get(file)!;
+      expect(rec.availability).toBe(Availability.UNKNOWN);
+      expect(rec.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+      expect(rec.reason).toBe('missing or invalid coveredLines array');
+    }
   });
 
   it('malformed c8 entries degrade, missing files entry yields no-entries reason', () => {
@@ -150,8 +158,56 @@ describe('parseC8 via parseCoverageReport', () => {
     const bad = tmpFile('c8-malformed.json', JSON.stringify({ files: { 'a.ts': 42, 'b.ts': null } }));
     const r2 = parseCoverageReport(bad);
     expect(r2.records.size).toBe(2);
-    expect(r2.records.get('a.ts')!.value).toEqual([]);
-    expect(r2.records.get('b.ts')!.value).toEqual([]);
+    for (const file of ['a.ts', 'b.ts']) {
+      const rec = r2.records.get(file)!;
+      expect(rec.value).toEqual([]);
+      expect(rec.availability).toBe(Availability.UNKNOWN);
+      expect(rec.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+      expect(rec.reason).toBe('missing or invalid coveredLines array');
+    }
+  });
+
+  // F3 fail-closed matrix: missing array / malformed array / valid empty array
+  // (measured zero) / valid non-empty array.
+  it('c8 fail-closed: missing and malformed coveredLines are UNKNOWN, valid empty is measured zero', () => {
+    const p = tmpFile(
+      'c8-fail-closed.json',
+      JSON.stringify({
+        files: {
+          'missing.ts': {},
+          'missing-both.ts': { hits: 3 },
+          'malformed.ts': { coveredLines: 'nope' },
+          'malformed-object.ts': { covered: { '1': 1 } },
+          'valid-empty.ts': { coveredLines: [] },
+          'valid-empty-covered.ts': { covered: [] },
+          'valid-nonempty.ts': { coveredLines: [1, 4] },
+        },
+      }),
+    );
+    const r = parseCoverageReport(p, { provider_version: '9.9.9', source_revision: 'rev-c8' });
+
+    for (const file of ['missing.ts', 'missing-both.ts', 'malformed.ts', 'malformed-object.ts']) {
+      const rec = r.records.get(file)!;
+      expect(rec.value).toEqual([]);
+      expect(rec.availability).toBe(Availability.UNKNOWN);
+      expect(rec.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+      expect(rec.reason).toBe('missing or invalid coveredLines array');
+    }
+
+    // A valid empty array IS measured data: measured zero, not unknown.
+    for (const file of ['valid-empty.ts', 'valid-empty-covered.ts']) {
+      const rec = r.records.get(file)!;
+      expect(rec.value).toEqual([]);
+      expect(rec.availability).toBe(Availability.KNOWN);
+      expect(rec.coverage.status).toBe(CollectionStatus.COMPLETE);
+      expect(rec.reason).toBeUndefined();
+    }
+
+    const nonempty = r.records.get('valid-nonempty.ts')!;
+    expect(nonempty.value).toEqual([1, 4]);
+    expect(nonempty.availability).toBe(Availability.KNOWN);
+    expect(nonempty.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect(nonempty.reason).toBeUndefined();
   });
 
   it('c8 revision mismatch marks every record UNAVAILABLE with reason', () => {
@@ -700,6 +756,26 @@ describe('SP2.2-fix mapped file-level verdicts (TDD)', () => {
         'per-declaration attribution not supported for mapped coverage',
       );
     }
+  });
+
+  // CT-COV-001 verdict matrix after the F3 fail-closed fix (c8 input):
+  // valid empty array = measured zero -> FAIL; missing/malformed array -> UNKNOWN -> INDETERMINATE.
+  it('mapped c8 valid empty coveredLines (measured zero) -> subject-level FAIL', () => {
+    const p = tmpFile('sp2fix-c8-zero.json', JSON.stringify({ files: { 'to.ts': { coveredLines: [] } } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1]), p, { coverageMap: { 'from.ts': 'to.ts' } });
+    expect(out.evidence.line_coverage.availability).toBe(Availability.KNOWN);
+    expect(out.evidence.line_coverage.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect(out.evidence.line_coverage.value).toBe(0);
+    expect(evaluateRule(activeRule(), out).finding?.result).toBe(RuleResult.FAIL);
+  });
+
+  it('mapped c8 missing coveredLines -> UNKNOWN -> subject-level INDETERMINATE, never FAIL', () => {
+    const p = tmpFile('sp2fix-c8-missing.json', JSON.stringify({ files: { 'to.ts': {} } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1]), p, { coverageMap: { 'from.ts': 'to.ts' } });
+    expect(out.evidence.line_coverage.availability).toBe(Availability.UNKNOWN);
+    expect(out.evidence.line_coverage.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    expect(out.evidence.line_coverage.reason).toContain('missing or invalid coveredLines array');
+    expect(evaluateRule(activeRule(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
   });
 });
 

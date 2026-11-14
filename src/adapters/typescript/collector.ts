@@ -47,6 +47,7 @@ import {
 import {
   CollectionStatus,
   EvidenceRecord,
+  EvidenceStrength,
   Provenance,
   deriveAvailability,
   makeEvidenceRecord,
@@ -77,6 +78,7 @@ import {
   shortText,
   UNSUPPORTED_ASSERTION_NAMESPACES,
 } from './support';
+import { classifyFormStrength } from './regex-assertion-count';
 
 /** `parseDiagnostics` is internal to the compiler but stable across TS 5/6 releases. */
 interface SourceFileWithParseDiagnostics extends ts.SourceFile {
@@ -252,6 +254,8 @@ function failed(
     scope: ANALYSIS_SCOPE,
     coverage: coverage(CollectionStatus.UNAVAILABLE),
     reason,
+    // D10 — a file we never scanned produced no classified form at all.
+    evidenceStrength: EvidenceStrength.UNSUPPORTED,
   });
   return {
     subject: subject(filePath, declaredType, framework),
@@ -279,6 +283,8 @@ function unsupported(filePath: string, declaredType: TestType, framework: string
     scope: ANALYSIS_SCOPE,
     coverage: coverage(CollectionStatus.UNAVAILABLE),
     reason,
+    // D10 — an unsupported framework is never parsed, so no form is classified.
+    evidenceStrength: EvidenceStrength.UNSUPPORTED,
   });
   return {
     subject: subject(filePath, declaredType, framework),
@@ -319,6 +325,8 @@ function supported(
     collector_version: COLLECTOR_VERSION,
     scope: ANALYSIS_SCOPE,
     coverage: coverage(coverageStatus),
+    // D10 — weakest strength among this file's findings; never promotes availability.
+    evidenceStrength: classifyFormStrength(findings),
   });
 
   // Recognition completeness, reported separately from coverage status (SPEC:366).
@@ -404,6 +412,10 @@ function testScopeResult(filePath: string, declaredType: TestType, entry: Declar
     collector_version: COLLECTOR_VERSION,
     scope: ANALYSIS_SCOPE,
     coverage: coverage(coverageStatus),
+    // D10 — same weakest-finding rule, scoped to ONE declaration. A gapped
+    // declaration that produced no finding (e.g. `it.todo`) has no classified
+    // form to report, so it never claims a strength it did not observe.
+    evidenceStrength: gapped && findings.length === 0 ? EvidenceStrength.UNSUPPORTED : classifyFormStrength(findings),
   });
 
   // Phase 3 (Unit A) — additive per-declaration evidence, sourced from data

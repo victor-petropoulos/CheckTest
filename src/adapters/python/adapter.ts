@@ -19,7 +19,35 @@
 import { SUPPORTED_ASSERTION_FORMS, SUPPORTED_FRAMEWORKS } from './capabilities';
 import { collectAnalysis, type SubstrateProbe } from './collector';
 import { ANALYZER_ID, COLLECTOR_VERSION, PROVIDER_HINTS } from './support';
-import type { Adapter } from '../adapter';
+import type { Adapter, AdapterOptions } from '../adapter';
+
+type PythonOptions = AdapterOptions & { analyzedRevision?: string };
+
+function forwardDeclaredType(options: PythonOptions | undefined): { declaredType?: AdapterOptions['declaredType'] } {
+  return options?.declaredType !== undefined ? { declaredType: options.declaredType } : {};
+}
+
+function forwardCoverageReport(options: PythonOptions | undefined): { coverageReport?: string } {
+  return options?.coverageReport !== undefined ? { coverageReport: options.coverageReport } : {};
+}
+
+function forwardCoverageMap(options: PythonOptions | undefined): { coverageMap?: string[] } {
+  return options?.coverageMap !== undefined ? { coverageMap: options.coverageMap } : {};
+}
+
+function forwardPerTestRun(options: PythonOptions | undefined): { perTestRun?: boolean } {
+  return options?.perTestRun !== undefined ? { perTestRun: options.perTestRun } : {};
+}
+
+function forwardAnalyzedRevision(options: PythonOptions | undefined): { analyzedRevision?: string } {
+  return options?.analyzedRevision !== undefined ? { analyzedRevision: options.analyzedRevision } : {};
+}
+
+function forwardSubstrateProbe(options: PythonOptions | undefined): { substrateProbe?: SubstrateProbe } {
+  return typeof options?.substrateProbe === 'object' && options?.substrateProbe !== null
+    ? { substrateProbe: options.substrateProbe as SubstrateProbe }
+    : {};
+}
 
 export const pythonAdapter: Adapter = {
   /** The collector's evidence `source` id (support.ts ANALYZER_ID). */
@@ -54,15 +82,21 @@ export const pythonAdapter: Adapter = {
    * Delegates to the collector, forwarding declaredType and coverageReport
    * (D-20261112-5 Q2/Q1). The python collector's contract is
    * `collectAnalysis(filePath, { coverageReport?, declaredType? })`.
+   *
+   * Phase 9 (task 1.5): also forwards `analyzedRevision` (DPC-4 freshness).
+   * `AdapterOptions` (src/adapters/adapter.ts) does not yet declare the field, so
+   * it is read via a narrow intersection cast; the shared contract follow-up
+   * adds it to `AdapterOptions` itself.
    */
-  collectAnalysis: (filePath, options) =>
-    collectAnalysis(filePath, {
-      ...(options?.declaredType !== undefined ? { declaredType: options.declaredType } : {}),
-      ...(options?.coverageReport !== undefined ? { coverageReport: options.coverageReport } : {}),
-      ...(options?.coverageMap !== undefined ? { coverageMap: options.coverageMap } : {}),
-      ...(options?.perTestRun !== undefined ? { perTestRun: options.perTestRun } : {}),
-      ...(typeof options?.substrateProbe === 'object' && options?.substrateProbe !== null
-        ? { substrateProbe: options.substrateProbe as SubstrateProbe }
-        : {}),
-    }),
+  collectAnalysis: (filePath, options) => {
+    const pythonOptions = options as PythonOptions | undefined;
+    return collectAnalysis(filePath, {
+      ...forwardDeclaredType(pythonOptions),
+      ...forwardCoverageReport(pythonOptions),
+      ...forwardCoverageMap(pythonOptions),
+      ...forwardPerTestRun(pythonOptions),
+      ...forwardAnalyzedRevision(pythonOptions),
+      ...forwardSubstrateProbe(pythonOptions),
+    });
+  },
 };

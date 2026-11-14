@@ -210,18 +210,22 @@ function parseC8(
   const records = new Map<string, EvidenceRecord>();
   for (const [file, info] of Object.entries(files)) {
     const recInfo = (info ?? {}) as Record<string, unknown>;
+    // Fail closed (F3): a missing or non-array `coveredLines`/`covered` is NOT
+    // measured data — it must never read as a COMPLETE zero-coverage report. A
+    // valid array, including a valid empty one, is measured data (measured zero).
     const coveredLines = Array.isArray(recInfo.coveredLines)
       ? (recInfo.coveredLines as unknown[])
       : Array.isArray(recInfo.covered)
         ? (recInfo.covered as unknown[])
-        : [];
+        : undefined;
+    const malformed = coveredLines === undefined;
     const unknownRevision = revision === 'unknown' && analyzed !== undefined;
-    const unavailable = mismatch || unknownRevision;
+    const unavailable = mismatch || unknownRevision || malformed;
     const availability = unavailable ? Availability.UNKNOWN : Availability.KNOWN;
     const status = unavailable ? CollectionStatus.UNAVAILABLE : CollectionStatus.COMPLETE;
     const record = makeEvidenceRecord({
       type: 'line_coverage',
-      value: unavailable ? undefined : coveredLines,
+      value: malformed ? [] : unavailable ? undefined : coveredLines,
       availability,
       provenance: Provenance.EXTERNAL,
       source: provider,
@@ -231,6 +235,7 @@ function parseC8(
       provider,
       provider_version: version,
       source_revision: revision,
+      reason: malformed ? 'missing or invalid coveredLines array' : undefined,
     });
     records.set(file, record);
   }
@@ -308,14 +313,15 @@ export function parseCoverageReport(path: string, opts?: CoverageReportOptions):
   if (obj.files !== undefined && typeof obj.files === 'object' && obj.files !== null) {
     const provider = providerOverride ?? 'c8';
     const records = parseC8(obj.files as Record<string, unknown>, provider, version, revision, mismatch, analyzed);
-    // attach reason to records on mismatch (already handled in parseC8? no—fix here)
+    // attach reason to records on mismatch; a per-record fail-closed reason
+    // (e.g. malformed coveredLines) is kept rather than clobbered
     if (mismatch) {
       const reason =
         revision === 'unknown'
           ? 'report revision unknown; freshness cannot be established'
           : `source revision mismatch: report ${revision} != analyzed ${analyzed ?? ''}`.trim();
       for (const rec of records.values()) {
-        rec.reason = reason;
+        rec.reason = rec.reason !== undefined ? `${reason}; ${rec.reason}` : reason;
       }
     }
     const result: CoverageReportResult = {

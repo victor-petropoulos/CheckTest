@@ -3,7 +3,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 
 import { AnalysisStatus, AnalysisOutput, CapabilityStatus, Completeness, TestType } from '../../src/core/analysis';
-import { Availability, CollectionStatus, EvidenceRecord, Provenance } from '../../src/core/evidence';
+import { Availability, CollectionStatus, EvidenceRecord, EvidenceStrength, Provenance } from '../../src/core/evidence';
 import { collectAnalysis } from '../../src/adapters/typescript/collector';
 import { EVIDENCE_ASSERTION_COUNT } from '../../src/adapters/typescript/support';
 import { regexAssertionCount } from '../../src/adapters/typescript/regex-assertion-count';
@@ -53,6 +53,8 @@ describe('collectAnalysis — supported framework', () => {
     expect(record.coverage.status).toBe(CollectionStatus.COMPLETE);
     expect(record.value as number).toBeGreaterThanOrEqual(1);
     expect(record.provenance).toBe(Provenance.DIRECT);
+    // D10 — straight-line body: executing the test proves the assertion ran.
+    expect(record.evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
     expect(record.scope).toBe('test-body');
     expect(record.coverage.supported_frameworks).toEqual(['jest', 'vitest', 'mocha']);
     expect(output.subject.language).toBe('typescript');
@@ -75,6 +77,8 @@ describe('collectAnalysis — supported framework', () => {
     );
     expect(assertionCount(output).value).toBe(4);
     expect(assertionCount(output).availability).toBe(Availability.KNOWN);
+    // D10 — a mixed-form body is still straight-line.
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
   });
 
   it('counts an awaited rejects.toThrow as established', () => {
@@ -94,6 +98,9 @@ describe('collectAnalysis — supported framework', () => {
     expect(assertionCount(output).value).toBe(0);
     expect(assertionCount(output).availability).toBe(Availability.KNOWN);
     expect(assertionCount(output).reason).toBeUndefined();
+    // D10 — nothing unestablished sits under value 0, so the scan's own
+    // definiteness is the strength (per-declaration record likewise below).
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
   });
 
   it('does not count expect() written in a comment', () => {
@@ -129,8 +136,8 @@ describe('collectAnalysis — unsupported framework', () => {
     expect(output.subject.framework).toBe('vitest');
     expect(assertionCount(output).availability).toBe(Availability.KNOWN);
     expect(assertionCount(output).value).toBe(1);
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
   });
-
   it('derives jest from a bare-global declaration plus a bare expect() call (P1.3)', () => {
     const output = collectAnalysis(writeFixture('it("x", () => { expect(1).toBe(1); });\n'), TestType.UNIT);
     expect(output.analysis.status).toBe(AnalysisStatus.SUCCESS);
@@ -139,6 +146,7 @@ describe('collectAnalysis — unsupported framework', () => {
     // evidence reason names the inference (docs/limitations.md §4).
     expect(output.capabilities.framework_detection).toBe(CapabilityStatus.PARTIAL);
     expect(assertionCount(output).reason).toContain('derived from bare-global');
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
   });
 
   it('derives mocha from a bare declaration without a bare expect() call (SP2)', () => {
@@ -165,6 +173,8 @@ describe('collectAnalysis — unsupported framework', () => {
     expect(assertionCount(output).availability).toBe(Availability.UNKNOWN);
     expect(assertionCount(output).value).toBeUndefined();
     expect(assertionCount(output).reason).toContain("framework 'mixed' is outside the supported framework list");
+    // D10 — nothing was parsed, so no form was classified.
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
   });
 });
 
@@ -181,12 +191,14 @@ describe('collectAnalysis — collector failure', () => {
     expect(assertionCount(output).value).toBeUndefined();
     expect(assertionCount(output).reason).toContain('parse diagnostics');
     expect(assertionCount(output).reason).toMatch(/TS\d+/);
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
   });
 
   it('reports FAILED when the file cannot be read', () => {
     const output = collectAnalysis(join(tmpdir(), 'checktest-does-not-exist-12345.ts'), TestType.UNIT);
     expect(output.analysis.status).toBe(AnalysisStatus.FAILED);
     expect(assertionCount(output).reason).toContain('unable to read test file');
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
   });
 });
 
@@ -202,6 +214,8 @@ describe('collectAnalysis — unclassifiable constructs', () => {
     expect(record.availability).toBe(Availability.UNKNOWN);
     expect(output.analysis.completeness).toBe(Completeness.INCOMPLETE);
     expect(record.reason).toContain('computed matcher');
+    // D10 — the form cannot be classified at all.
+    expect(record.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
   });
 
   it('reports an unsupported assertion API as INCOMPLETE with a reason', () => {
@@ -214,6 +228,7 @@ describe('collectAnalysis — unclassifiable constructs', () => {
     expect(output.analysis.completeness).toBe(Completeness.INCOMPLETE);
     expect(record.availability).toBe(Availability.UNKNOWN);
     expect(record.reason).toContain('not a supported assertion form');
+    expect(record.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
   });
 
   it('records an unresolvable custom assertion helper instead of dropping it', () => {
@@ -229,6 +244,7 @@ describe('collectAnalysis — unclassifiable constructs', () => {
     expect(record.availability).toBe(Availability.UNKNOWN);
     expect(record.reason).toContain('custom assertion helper');
     expect(record.reason).toContain('expectValidUser');
+    expect(record.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
   });
 
   it('records an unsupported expect matcher rather than ignoring it', () => {
@@ -238,6 +254,7 @@ describe('collectAnalysis — unclassifiable constructs', () => {
     );
     expect(assertionCount(output).availability).toBe(Availability.UNKNOWN);
     expect(assertionCount(output).reason).toContain('not one of the supported assertion forms');
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
   });
 });
 
@@ -254,6 +271,8 @@ describe('collectAnalysis — executability (A7)', () => {
     // The scan itself completed: recognition completeness stays COMPLETE.
     expect(output.analysis.completeness).toBe(Completeness.COMPLETE);
     expect(record.reason).toContain('after an unconditional return/throw');
+    // D10 — the form is visible in source, but execution never reaches it.
+    expect(record.evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
   });
 
   it('does not treat a conditional return as a halt', () => {
@@ -265,6 +284,7 @@ describe('collectAnalysis — executability (A7)', () => {
     );
     expect(assertionCount(output).availability).toBe(Availability.KNOWN);
     expect(assertionCount(output).value).toBe(1);
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
   });
 
   it('marks an assertion inside a callback as unestablished', () => {
@@ -279,6 +299,7 @@ describe('collectAnalysis — executability (A7)', () => {
     expect(record.availability).toBe(Availability.UNKNOWN);
     expect(record.reason).toContain('inside a callback');
     expect(output.analysis.completeness).toBe(Completeness.COMPLETE);
+    expect(record.evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
   });
 
   it('counts only the established assertions when the body mixes both', () => {
@@ -297,6 +318,8 @@ describe('collectAnalysis — executability (A7)', () => {
     expect(record.value).toBe(1);
     expect(record.availability).toBe(Availability.UNKNOWN);
     expect(record.reason).toContain('1 of 2 recognized assertion(s)');
+    // D10 — one unestablished finding makes the whole record SYNTAX_OBSERVED.
+    expect(record.evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
   });
 
   it('ignores assertions outside test bodies (scope is test-body only)', () => {
@@ -325,6 +348,7 @@ describe('collectAnalysis — executability (A7)', () => {
     expect(record.reason).toContain('unestablished executability');
     // Recognition itself completed — the construct was classified, not missed.
     expect(output.analysis.completeness).toBe(Completeness.COMPLETE);
+    expect(record.evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
   });
 });
 
@@ -378,6 +402,11 @@ describe('collectAnalysis — per-test records (plan task 1)', () => {
     const output = collectAnalysis(writeFixture(TWO_ASSERTED), TestType.UNIT);
     expect(output.tests).toHaveLength(2);
     expect(output.tests!.map((t) => t.evidence[EVIDENCE_ASSERTION_COUNT].value)).toEqual([1, 1]);
+    // D10 — both bodies are straight-line, each record says so.
+    expect(output.tests!.map((t) => t.evidence[EVIDENCE_ASSERTION_COUNT].evidenceStrength)).toEqual([
+      EvidenceStrength.EXECUTION_ESTABLISHED,
+      EvidenceStrength.EXECUTION_ESTABLISHED,
+    ]);
   });
 
   it('REGRESSION D1: [empty, asserted] gives per-test values [0, 1] while the file-level record stays an aggregate of 1', () => {
@@ -396,6 +425,12 @@ describe('collectAnalysis — per-test records (plan task 1)', () => {
     expect(empty.evidence[EVIDENCE_ASSERTION_COUNT].availability).toBe(Availability.KNOWN);
     expect(empty.evidence[EVIDENCE_ASSERTION_COUNT].coverage.status).toBe(CollectionStatus.COMPLETE);
     expect(empty.declaration_gap).toBeNull();
+    // D10 — per-declaration strength is scoped to this body alone: the empty
+    // test and the asserted test each carry their own, and neither inherits.
+    expect(empty.evidence[EVIDENCE_ASSERTION_COUNT].evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
+    expect(output.tests![1].evidence[EVIDENCE_ASSERTION_COUNT].evidenceStrength).toBe(
+      EvidenceStrength.EXECUTION_ESTABLISHED,
+    );
   });
 
   it('locates a describe-nested test with its own identity', () => {
@@ -427,6 +462,8 @@ describe('collectAnalysis — per-test records (plan task 1)', () => {
     expect(record.value).toBeUndefined();
     expect(record.availability).toBe(Availability.UNKNOWN);
     expect(record.reason).toContain("'it.todo' declares no executable test body");
+    // D10 — no body, no classified form: the record never claims a strength.
+    expect(record.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
     // The sibling test's record is untouched by the gap.
     expect(output.tests![0].evidence[EVIDENCE_ASSERTION_COUNT].value).toBe(1);
     expect(output.tests![0].declaration_gap).toBeNull();
@@ -662,6 +699,10 @@ describe('collectAnalysis — declaration boundary coverage (WP1.3)', () => {
     const pendingRecord = pending!.evidence[EVIDENCE_ASSERTION_COUNT];
     expect(pendingRecord.value).toBeUndefined();
     expect(pendingRecord.availability).toBe(Availability.UNKNOWN);
+    // D10 — `it.skip` DOES scan its body, so the form is observed; only the
+    // execution is not established. Each record's strength stays its own.
+    expect(pendingRecord.evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
+    expect(realRecord.evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
   });
 });
 
@@ -679,6 +720,9 @@ describe('regex stub provider (M3)', () => {
     // A text scan cannot establish executability — it must not claim KNOWN.
     expect(stub.availability).toBe(Availability.UNKNOWN);
     expect(stub.coverage.status).toBe(CollectionStatus.PARTIAL);
+    // D10 — a text scan classifies no form at all, so it can never claim
+    // execution-established strength.
+    expect(stub.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
   });
 
   it('agrees when no assertion is hidden in a comment', () => {
@@ -689,6 +733,50 @@ describe('regex stub provider (M3)', () => {
 
   it('reports zero for a source with no expect call', () => {
     expect(regexAssertionCount('const x = 1;').value).toBe(0);
+  });
+});
+
+describe('D10 evidenceStrength — every shipped assertion form', () => {
+  // One straight-line body per form, each carrying exactly one assertion.
+  const FORMS: Array<[string, string]> = [
+    ['expect-to-be', 'expect(1).toBe(1);'],
+    ['expect-to-equal', 'expect([1]).toEqual([1]);'],
+    ['expect-to-be-truthy', 'expect(1).toBeTruthy();'],
+    ['expect-to-be-falsy', 'expect(0).toBeFalsy();'],
+    ['expect-to-throw', 'expect(() => { throw new Error("x"); }).toThrow();'],
+    ['expect-rejects-to-throw', 'await expect(Promise.reject(new Error("x"))).rejects.toThrow();'],
+    ['expect-to-match-snapshot', 'expect("x").toMatchSnapshot();'],
+    ['expect-to-contain', 'expect([1]).toContain(1);'],
+    ['expect-matcher-utils', 'expect.any(String);'],
+    ['expect-to-match-object', 'expect({ a: 1 }).toMatchObject({ a: 1 });'],
+    ['expect-to-have-been-called-times', 'expect(jest.fn()).toHaveBeenCalledTimes(1);'],
+  ];
+
+  it.each(FORMS)('straight-line %s is EXECUTION_ESTABLISHED', (_form, statement) => {
+    const output = collectAnalysis(
+      writeFixture(`${JEST_IMPORT}it('form', async () => { ${statement} });\n`),
+      TestType.UNIT,
+    );
+    const record = assertionCount(output);
+    expect(record.value).toBe(1);
+    expect(record.availability).toBe(Availability.KNOWN);
+    expect(record.evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
+  });
+
+  it('an assertion inside a nested helper is SYNTAX_OBSERVED', () => {
+    const output = collectAnalysis(
+      writeFixture(`${JEST_IMPORT}it('helper', (done) => { setTimeout(() => { expect(1).toBe(1); done(); }, 1); });\n`),
+      TestType.UNIT,
+    );
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
+  });
+
+  it('an unsupported matcher form is UNSUPPORTED', () => {
+    const output = collectAnalysis(
+      writeFixture(`${JEST_IMPORT}it('nope', () => { expect(1).toBeGreaterThan(0); });\n`),
+      TestType.UNIT,
+    );
+    expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
   });
 });
 
