@@ -21,6 +21,9 @@ import {
 import { Availability, CollectionStatus, EvidenceRecord, Provenance } from '../../src/core/evidence';
 import { RuleMetadata } from '../../src/core/rule';
 import { EvaluationStatus, RuleResult } from '../../src/core/result';
+import { collectAnalysis } from '../../src/adapters/typescript/collector';
+import { CT_INT_001 } from '../../src/rules/ct-int-001';
+import { join } from 'path';
 
 const RULE: RuleMetadata = {
   id: 'CT-TEST-000',
@@ -227,12 +230,16 @@ describe('toJson — evaluation status', () => {
   });
 });
 
-/** One declaration record with its own value, so each test stands on its own evidence. */
+/**
+ * One declaration record with its own value, so each test stands on its own
+ * evidence. The id carries the NEW format `<file>#<declaration>@<line>:<index>`
+ * (docs/limitations.md §26) — the reporter never rewrites it.
+ */
 function testScope(name: string, line: number, value: number): TestScopeResult {
   const base = analysis(AnalysisStatus.SUCCESS);
   return {
     test: {
-      id: `sample.test.ts#it@${line}`,
+      id: `sample.test.ts#it@${line}:0`,
       name,
       line,
       declaration: 'it',
@@ -260,7 +267,7 @@ describe('toJson — per-test records', () => {
     const json = perTestReport(twoTestAnalysis());
     expect(json.testResults).toHaveLength(2);
     expect(json.testResults[0].test).toEqual({
-      id: 'sample.test.ts#it@2',
+      id: 'sample.test.ts#it@2:0',
       name: 'has an assertion',
       line: 2,
       declaration: 'it',
@@ -278,15 +285,15 @@ describe('toJson — per-test records', () => {
     const results = json.testResults.map((entry: any) => entry.ruleResults[0].result);
     expect(results).toEqual([RuleResult.PASS, RuleResult.FAIL]);
     // Every finding names the test it belongs to.
-    expect(json.testResults[1].ruleResults[0].test_id).toBe('sample.test.ts#it@5');
-    expect(json.testResults[0].ruleResults[0].test_id).toBe('sample.test.ts#it@2');
+    expect(json.testResults[1].ruleResults[0].test_id).toBe('sample.test.ts#it@5:0');
+    expect(json.testResults[0].ruleResults[0].test_id).toBe('sample.test.ts#it@2:0');
   });
 
   it('flattens ruleResults in scope order and counts them in summary', () => {
     const json = perTestReport(twoTestAnalysis());
     expect(json.ruleResults.map((finding: any) => [finding.test_id, finding.result])).toEqual([
-      ['sample.test.ts#it@2', RuleResult.PASS],
-      ['sample.test.ts#it@5', RuleResult.FAIL],
+      ['sample.test.ts#it@2:0', RuleResult.PASS],
+      ['sample.test.ts#it@5:0', RuleResult.FAIL],
     ]);
     expect(json.summary).toEqual({
       total: 2,
@@ -382,6 +389,33 @@ describe('toJson — per-test records', () => {
     expect(json.analysisStatus).toBe(AnalysisStatus.SUCCESS);
   });
 });
+describe('toJson — new test id format (phase9 4.4)', () => {
+  it('emits the per-line index in every test_id and in testResults[].test.id', () => {
+    const json = perTestReport(twoTestAnalysis());
+    expect(json.ruleResults.map((finding: any) => finding.test_id)).toEqual([
+      'sample.test.ts#it@2:0',
+      'sample.test.ts#it@5:0',
+    ]);
+    expect(json.testResults.map((entry: any) => entry.test.id)).toEqual([
+      'sample.test.ts#it@2:0',
+      'sample.test.ts#it@5:0',
+    ]);
+  });
+
+  it('round-trips the REAL collector id (case-24) unchanged — the reporter never rewrites it', () => {
+    const file = join(__dirname, '..', 'fixtures', 'ct-int-001', 'case-24-vitest-standard', 'sample.test.ts');
+    const output = collectAnalysis(file, TestType.UNIT);
+    const json = JSON.parse(
+      toJson(output, evaluateRule(CT_INT_001, output), evaluateTests(CT_INT_001, output)),
+    ) as Record<string, any>;
+    const id = output.tests![0].test.id;
+    // The new format the collectors emit: <file>#<declaration>@<line>:<index>.
+    expect(id).toMatch(/#it@4:0$/);
+    expect(json.ruleResults[0].test_id).toBe(id);
+    expect(json.testResults[0].test.id).toBe(id);
+  });
+});
+
 describe('toJson — finding location (B7 prerequisite)', () => {
   it('serializes a finding location when the evidence record carries one', () => {
     const location = { file: 'sample.test.ts', line: 7, column: 3 };

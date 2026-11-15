@@ -469,11 +469,11 @@ describe('collectAnalysis — per-test records (plan task 1)', () => {
     expect(output.tests![0].declaration_gap).toBeNull();
   });
 
-  it('ids follow <file>#<declaration>@<line> and are stable across two runs', () => {
+  it('ids follow <file>#<declaration>@<line>:<index> and are stable across two runs', () => {
     const file = writeFixture(TWO_ASSERTED);
     const first = collectAnalysis(file, TestType.UNIT);
     const second = collectAnalysis(file, TestType.UNIT);
-    expect(first.tests!.map((t) => t.test.id)).toEqual([`${file}#it@2`, `${file}#it@3`]);
+    expect(first.tests!.map((t) => t.test.id)).toEqual([`${file}#it@2:0`, `${file}#it@3:0`]);
     expect(first.tests!.map((t) => t.test.id)).toEqual(second.tests!.map((t) => t.test.id));
   });
 });

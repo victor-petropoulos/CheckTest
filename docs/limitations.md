@@ -289,11 +289,17 @@ WP4.3 audit's first gap (rule findings had no direct location).
 json` remains the default and is byte-unchanged. Known limitations of the SARIF
 output:
 
-- **Locations are partial and line-only.** A result carries `locations[]` only
-  when its finding carries a source location (the evidence record that produced
-  the verdict has one — e.g. an assertion-bearing test). Findings with no
-  location get NO `locations` key; no position is fabricated. `column` is never
-  populated by any producer, so `region.startColumn` is effectively absent.
+- **Locations are line-only, and a test-scoped result carries its TEST's position.**
+  A result that belongs to a test declares that test in `results[].properties.testId`
+  and reports the location the test id encodes
+  (`<file>#<declaration>@<line>:<index>` -> `artifactLocation.uri` = the file,
+  `region.startLine` = the declaration line), so a SARIF consumer can attribute
+  the verdict to the exact declaration (phase 9 package 4, task 4.4). A
+  subject-level result (no test) keeps the finding's own source location (the
+  evidence record that produced the verdict has one — e.g. an assertion-bearing
+  test) and gets NO `locations` key when it has none; no position is fabricated.
+  `column` is never populated by any producer, so `region.startColumn` is
+  effectively absent.
 - **Coverage records lack a location.** The external coverage provider
   (`src/providers/coverage.ts`) keys records by file in a map and never sets
   `location`, so a verdict resting on coverage evidence cannot point at a source
@@ -517,3 +523,17 @@ The TypeScript external coverage provider accepts only explicitly shaped JSON re
 **File identity matching.** Exact normalized path match is preferred. Explicit mapping uses `--coverage-map <from>=<to>`; a mapped-missing target yields reason `no coverage data for <mappedTo>`, optionally prefixed with the mapping reason. Without mapping, an exact miss with multiple basename collisions fails closed with reason `ambiguous basename match: <sorted colliding paths>`, availability `UNKNOWN`, coverage status `UNAVAILABLE`, no numeric value (undefined, or the c8 fail-closed empty array); never wrong-file selection.
 
 Cross-reference: [§14](../limitations.md) and ADR-031 for mapped semantics; do not duplicate.
+
+## 26. Test Identity Contract (Phase 9 Package 4)
+
+- **Scope**: `TestIdentity` is unique within ONE analysis run (per-analysis), covering the recognized per-test slices emitted by that run.
+- **Determinism**: identical input → identical ids; no clock, no randomness; source-order counter. See `src/core/analysis.ts:73-91`, `src/adapters/typescript/collector.ts:652-655` + `:670-672`, and `src/adapters/python/collector.ts:977-983` + `:994-996`.
+- **Format**: `<file>#<declaration>@<line>:<index>`.
+  - TS: `sample.test.ts#it@2:0`, `sample.test.ts#it@2:1` (two `it` on one line); `it.each` token: `sample.test.ts#it.each@2:1`.
+  - Python: `pytest_sample.py#test_add@4:0`; same-line index always 0 in valid Python because a `def` owns its logical line (collision structurally impossible; guard exists anyway).
+- **Explicit non-promise (locked ruling D8)**: ids are NOT stable across edits — inserting a declaration earlier in a file shifts subsequent per-line indices and line numbers. Consumers must not persist ids across runs/edits as foreign keys.
+- **Type check**: docs-only; no TS source changed, so `tsc` is not affected (acceptance: tsc clean).
+
+**Source:** `src/core/analysis.ts:73-91` (`TestIdentity`); `src/adapters/typescript/collector.ts:458` (id), `:652-655` + `:670-672` (index); `src/adapters/python/collector.ts:1001` (id), `:977-983` + `:994-996` (index); tests: `tests/adapters/typescript/collector.test.ts:31-90`, `tests/adapters/python/collector.test.ts:636-760`.
+
+Cross-reference: Coverage-input file identity is in §25; declaration/test identity is scoped here, not duplicated.

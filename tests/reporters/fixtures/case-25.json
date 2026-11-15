@@ -64,7 +64,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5",
+      "test_id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5:0",
       "location": {
         "file": "<fixture-root>/case-25-vitest-aliased/sample.test.ts",
         "line": 6
@@ -77,7 +77,7 @@
   "testResults": [
     {
       "test": {
-        "id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5",
+        "id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5:0",
         "name": "aliased",
         "line": 5,
         "declaration": "it.aliased"
@@ -135,7 +135,7 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5",
+          "test_id": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5:0",
           "location": {
             "file": "<fixture-root>/case-25-vitest-aliased/sample.test.ts",
             "line": 6

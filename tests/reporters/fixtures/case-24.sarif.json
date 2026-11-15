@@ -34,7 +34,8 @@
             "text": "CT-INT-001: assertion_count=1 >= 1"
           },
           "properties": {
-            "result": "PASS"
+            "result": "PASS",
+            "testId": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0"
           },
           "locations": [
             {
@@ -43,7 +44,7 @@
                   "uri": "<fixture-root>/case-24-vitest-standard/sample.test.ts"
                 },
                 "region": {
-                  "startLine": 5
+                  "startLine": 4
                 }
               }
             }

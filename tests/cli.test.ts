@@ -310,12 +310,17 @@ describe('CLI --format sarif (WP4.3)', () => {
     expect(stderr).toBe('');
   });
 
-  it('--format sarif carries the real finding location (case-24 assertion line 5)', () => {
+  it('--format sarif carries the test location from the test id (case-24 declaration line 4)', () => {
     const code = main(['--test', fixture('case-24-vitest-standard'), '--type', 'UNIT', '--format', 'sarif']);
     expect(code).toBe(0);
     const log = report();
-    const loc = log.runs[0].results[0].locations[0].physicalLocation;
-    expect(loc.region.startLine).toBe(5);
+    const result = log.runs[0].results[0];
+    // The result names the test it belongs to…
+    expect(result.properties.testId).toMatch(/#it@4:0$/);
+    // …and its location is the file:line THAT ID encodes (the declaration),
+    // never a fabricated position.
+    const loc = result.locations[0].physicalLocation;
+    expect(loc.region.startLine).toBe(4);
     expect(loc.artifactLocation.uri).toContain('sample.test.ts');
   });
 

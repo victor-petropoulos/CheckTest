@@ -27,17 +27,21 @@
  *   and `results[]` carries exactly the engine's rule findings (empty when the
  *   engine reached no verdict). No diagnostic is ever emitted as a result.
  *
- *   locations are honest. A result carries `locations[]` only when its finding
- *   carries a source location — copied from the evidence record that produced
- *   the verdict (B7 prerequisite, commit 347a04f). A finding with no location
- *   gets NO `locations` key; a precise position is never fabricated.
+ *   locations are honest AND carry the test identity. A result that belongs to
+ *   a test declares that test in `results[].properties.testId` and reports the
+ *   location the TEST ID encodes (`<file>#<declaration>@<line>:<index>` ->
+ *   `artifactLocation.uri` = file, `region.startLine` = line), so a consumer can
+ *   attribute the verdict to the exact declaration. A subject-level result (no
+ *   test) keeps the finding's own source location — copied from the evidence
+ *   record that produced the verdict (B7 prerequisite, commit 347a04f). A
+ *   position is never fabricated: no location means no `locations` key.
  *
  * Determinism (plan §1, D9): no clock, no timestamps, no environment reads.
  * `JSON.stringify` preserves the literal construction order below, so the same
  * input always serializes byte-identically.
  */
 
-import { AnalysisOutput } from '../core/analysis';
+import { AnalysisOutput, TestIdentity } from '../core/analysis';
 import { EvidenceLocation } from '../core/evidence';
 import { EvaluationResult, EvaluationStatus, RuleFinding, RuleResult, TestEvaluation } from '../core/result';
 import { RuleMetadata } from '../core/rule';
@@ -95,17 +99,59 @@ function physicalLocation(location: EvidenceLocation): Json {
   };
 }
 
-/** One finding → one SARIF result. Location present only when the finding has one. */
-function serializeResult(finding: RuleFinding): Json {
+/**
+ * The test-id contract (docs/limitations.md §26): `<file>#<declaration>@<line>:<index>`.
+ *
+ * A SARIF result's location is the id's OWN file:line — the DECLARATION the
+ * result belongs to — so the standard `locations` field identifies the test,
+ * not merely the assertion the evidence happened to point at. The file is
+ * everything before the first '#'; the line is the number the trailing
+ * `@<line>:<index>` carries (the LAST such pair, so a test name containing '@'
+ * still parses). An id that does not match yields undefined: the caller then
+ * falls back to the finding's own location, and no position is ever fabricated.
+ */
+const TEST_ID_LOCATION = /^([^#]*)#.*@(\d+):\d+$/;
+
+/** The id's own file:line as a SARIF physicalLocation; undefined when unparsable. */
+function identityLocation(id: string): Json | undefined {
+  const match = TEST_ID_LOCATION.exec(id);
+  if (match === null) {
+    return undefined;
+  }
+  return {
+    physicalLocation: {
+      artifactLocation: { uri: match[1] },
+      region: { startLine: Number(match[2]) },
+    },
+  };
+}
+
+/**
+ * One finding → one SARIF result.
+ *
+ * @param finding the engine's verdict for this scope
+ * @param test the scope's test identity; null for the subject-level fallback
+ */
+function serializeResult(finding: RuleFinding, test: TestIdentity | null): Json {
+  // The raw RuleResult, preserved un-conflated with `level`.
+  const properties: Json = { result: finding.result };
+  // The test identity travels WITH the result (F8): a SARIF consumer can
+  // attribute the verdict to the exact declaration it belongs to.
+  if (test !== null) {
+    properties.testId = test.id;
+  }
   const result: Json = {
     ruleId: finding.rule_id,
     level: SARIF_LEVEL_BY_RESULT[finding.result],
     message: { text: finding.reason },
-    // The raw RuleResult, preserved un-conflated with `level`.
-    properties: { result: finding.result },
+    properties,
   };
-  // Appended LAST and ONLY when known: an unknown position is never fabricated.
-  if (finding.location !== undefined) {
+  // Appended LAST: the test's own position when its id carries one, else the
+  // finding's evidence location. A position is never fabricated.
+  const identity = test !== null ? identityLocation(test.id) : undefined;
+  if (identity !== undefined) {
+    result.locations = [identity];
+  } else if (finding.location !== undefined) {
     result.locations = [physicalLocation(finding.location)];
   }
   return result;
@@ -139,7 +185,9 @@ export function toSarif(
   evaluations: readonly TestEvaluation[] = [],
 ): string {
   const scopes = evaluationScopes(analysis, evaluation, evaluations);
-  const findings = scopes.flatMap((scope) => (scope.finding === null ? [] : [scope.finding]));
+  const results = scopes.flatMap((scope) =>
+    scope.finding === null ? [] : [serializeResult(scope.finding, scope.test)],
+  );
   const evaluationStatus = scopes.some((scope) => scope.status === EvaluationStatus.EVALUATED)
     ? EvaluationStatus.EVALUATED
     : EvaluationStatus.FAILED;
@@ -163,7 +211,7 @@ export function toSarif(
           completeness: analysis.analysis.completeness,
         },
         // Exactly the engine's findings: empty when it reached no verdict.
-        results: findings.map(serializeResult),
+        results,
       },
     ],
   };

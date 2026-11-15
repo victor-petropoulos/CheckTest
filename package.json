@@ -1,6 +1,6 @@
 {
   "name": "checktest-cli",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Static test-quality analysis: deterministic evidence collector + rule engine",
   "license": "MIT",
   "bin": {

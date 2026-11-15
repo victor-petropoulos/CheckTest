@@ -2,7 +2,13 @@ import { join } from 'path';
 import { mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 
-import { AnalysisStatus, ClassificationSource, Completeness, TestType } from '../../../src/core/analysis';
+import {
+  AnalysisStatus,
+  AnalysisOutput,
+  ClassificationSource,
+  Completeness,
+  TestType,
+} from '../../../src/core/analysis';
 import { Availability, CollectionStatus, EvidenceStrength, Provenance } from '../../../src/core/evidence';
 import { collectAnalysis, type SubstrateProbe } from '../../../src/adapters/python/collector';
 
@@ -629,5 +635,199 @@ describe('Phase 9 task 1.3 — evidenceStrength (D10)', () => {
       expect(scope.evidence['assertion_count'].value).toBe(1);
       expect(scope.evidence['assertion_count'].evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
     }
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * Test id uniqueness — per-line declaration index (plan task 4.2)
+ * ------------------------------------------------------------------ */
+
+describe('collectAnalysis — python test id uniqueness (plan task 4.2)', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'py-id-'));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function write(src: string): string {
+    const file = join(dir, 'case.py');
+    writeFileSync(file, src, 'utf8');
+    return file;
+  }
+
+  function ids(output: AnalysisOutput): string[] {
+    return (output.tests ?? []).map((scope) => scope.test.id);
+  }
+
+  /**
+   * Module tree with TWO `def test_dup()` declarations reported on the SAME
+   * source row. Valid Python cannot produce this — a `def` is a compound
+   * statement and owns its logical line (`def a(): pass; def b(): pass` is a
+   * SyntaxError) — so the shape is reachable only through the fake
+   * tree-sitter seam. The collector must still hand out two distinct ids.
+   */
+  function fakeSameLineTree(): FakeNode {
+    const declaration = (): FakeNode => {
+      const name = fakeNode({ type: 'identifier', text: 'test_dup', row: 0 });
+      const assertion = fakeNode({ type: 'assert_statement', text: 'assert 1', row: 1 });
+      const body = fakeNode({ type: 'block', text: '    assert 1', row: 1, children: [assertion] });
+      return fakeNode({
+        type: 'function_definition',
+        text: 'def test_dup():',
+        row: 0,
+        endRow: 1,
+        children: [name, body],
+        fields: { name, body },
+      });
+    };
+    return fakeNode({
+      type: 'module',
+      text: '',
+      row: 0,
+      endRow: 1,
+      children: [declaration(), declaration()],
+    });
+  }
+
+  /** Same tree, but the two declarations sit on DIFFERENT rows. */
+  function fakeTwoLineTree(): FakeNode {
+    const declaration = (row: number): FakeNode => {
+      const name = fakeNode({ type: 'identifier', text: 'test_dup', row });
+      const assertion = fakeNode({ type: 'assert_statement', text: 'assert 1', row: row + 1 });
+      const body = fakeNode({ type: 'block', text: '    assert 1', row: row + 1, children: [assertion] });
+      return fakeNode({
+        type: 'function_definition',
+        text: 'def test_dup():',
+        row,
+        endRow: row + 1,
+        children: [name, body],
+        fields: { name, body },
+      });
+    };
+    return fakeNode({
+      type: 'module',
+      text: '',
+      row: 0,
+      endRow: 3,
+      children: [declaration(0), declaration(2)],
+    });
+  }
+
+  function treeProbe(tree: () => FakeNode): SubstrateProbe {
+    class TreeParser {
+      setLanguage(_language: unknown): void {}
+      parse(_src: string): { rootNode: FakeNode | undefined } {
+        return { rootNode: tree() };
+      }
+    }
+    return {
+      require(id: string): unknown {
+        if (id === 'tree-sitter') return TreeParser;
+        if (id === 'tree-sitter-python') return { name: 'fake-python' };
+        throw new Error(`unexpected native module ${id}`);
+      },
+    };
+  }
+
+  it('gives two same-name declarations on one line distinct ids', () => {
+    const file = write('def test_dup():\n    assert 1\n');
+    const output = collectAnalysis(file, { substrateProbe: treeProbe(fakeSameLineTree) });
+
+    expect(ids(output)).toEqual([`${file}#test_dup@1:0`, `${file}#test_dup@1:1`]);
+  });
+
+  it('numbers each line independently — a declaration on a new line starts at index 0', () => {
+    const file = write('def test_dup():\n    assert 1\n');
+    const output = collectAnalysis(file, { substrateProbe: treeProbe(fakeTwoLineTree) });
+
+    expect(ids(output)).toEqual([`${file}#test_dup@1:0`, `${file}#test_dup@3:0`]);
+  });
+
+  it('ids follow <file>#<name>@<line>:<index> on a real python file', () => {
+    const file = write('def test_a():\n    assert 1\n\ndef test_b():\n    assert 2\n');
+    const output = collectAnalysis(file);
+
+    expect(ids(output)).toEqual([`${file}#test_a@1:0`, `${file}#test_b@4:0`]);
+  });
+
+  it('keeps ids unique within one analysis and identical across two runs', () => {
+    const file = write('def test_dup():\n    assert 1\n');
+    const first = ids(collectAnalysis(file, { substrateProbe: treeProbe(fakeSameLineTree) }));
+    const second = ids(collectAnalysis(file, { substrateProbe: treeProbe(fakeSameLineTree) }));
+
+    expect(first).toHaveLength(2);
+    expect(new Set(first).size).toBe(first.length);
+    expect(first).toEqual(second);
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * pytest parametrize — declaration identity (plan task 4.5)
+ *
+ * The collector does STATIC analysis: it records one declaration per `def`,
+ * NOT one entry per parametrize case. `@pytest.mark.parametrize` decorators
+ * do not expand into multiple test entries and do not add a `[param]` suffix
+ * to the test name (verified against the real collector 2026-11-15). The id
+ * therefore stays `<file>#<name>@<line>:<index>` with the bare def name.
+ * ------------------------------------------------------------------ */
+
+describe('collectAnalysis — pytest parametrize declaration identity (plan task 4.5)', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'py-param-'));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function write(src: string): string {
+    const file = join(dir, 'case.py');
+    writeFileSync(file, src, 'utf8');
+    return file;
+  }
+
+  function ids(output: AnalysisOutput): string[] {
+    return (output.tests ?? []).map((scope) => scope.test.id);
+  }
+
+  it('single @parametrize: one declaration entry, bare name, no [param] suffix', () => {
+    const file = write('import pytest\n\n@pytest.mark.parametrize("x", [1, 2])\ndef test_p(x):\n    assert x > 0\n');
+    const output = collectAnalysis(file);
+    const scopes = output.tests ?? [];
+
+    expect(scopes).toHaveLength(1);
+    expect(scopes[0].test.name).toBe('test_p');
+    expect(ids(output)).toEqual([`${file}#test_p@4:0`]);
+  });
+
+  it('two stacked @parametrize decorators on one def: still one entry, both decorators ignored for identity', () => {
+    const file = write(
+      'import pytest\n\n@pytest.mark.parametrize("y", [3])\n@pytest.mark.parametrize("z", [4])\ndef test_multi(y, z):\n    assert y + z > 0\n',
+    );
+    const output = collectAnalysis(file);
+    const scopes = output.tests ?? [];
+
+    expect(scopes).toHaveLength(1);
+    expect(scopes[0].test.name).toBe('test_multi');
+    expect(ids(output)).toEqual([`${file}#test_multi@5:0`]);
+  });
+
+  it('parametrize + plain def: ids unique within analysis and deterministic across runs', () => {
+    const src =
+      'import pytest\n\n@pytest.mark.parametrize("x", [1, 2])\ndef test_p(x):\n    assert x > 0\n\ndef test_plain():\n    assert True\n';
+    const file = write(src);
+    const first = ids(collectAnalysis(file));
+    const second = ids(collectAnalysis(file));
+
+    expect(first).toHaveLength(2);
+    expect(new Set(first).size).toBe(first.length);
+    expect(first).toEqual(second);
+    expect(first).toEqual([`${file}#test_p@4:0`, `${file}#test_plain@7:0`]);
   });
 });

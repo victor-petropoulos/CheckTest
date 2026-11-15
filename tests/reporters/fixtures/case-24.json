@@ -63,7 +63,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4",
+      "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0",
       "location": {
         "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
         "line": 5
@@ -76,7 +76,7 @@
   "testResults": [
     {
       "test": {
-        "id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4",
+        "id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0",
         "name": "adds two numbers",
         "line": 4,
         "declaration": "it"
@@ -127,7 +127,7 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4",
+          "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0",
           "location": {
             "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
             "line": 5

@@ -974,6 +974,14 @@ export function collectAnalysis(
   const covered = coverageResult.covered;
   const perDeclScoped = coverageResult.perDeclScoped;
 
+  // Per-line declaration index — two declarations on the SAME line would
+  // otherwise share an id. Valid python cannot produce that (a `def` owns its
+  // logical line), so the index is 0 in practice; it keeps the python id
+  // shape identical to the typescript adapter's. ponytail: one counter per
+  // line, incremented in source order (`parsed.tests` is already in source
+  // order).
+  const perLine = new Map<number, number>();
+
   return {
     subject: subject(filePath, declaredType, framework),
     analysis: summary(
@@ -983,21 +991,27 @@ export function collectAnalysis(
     ),
     evidence,
     capabilities: capabilitiesOf(coverageStatus),
-    tests: parsed.tests.map((test) => ({
-      test: {
-        id: `${filePath}#${test.name}@${test.line}`,
-        name: test.name,
-        line: test.line,
-        declaration: 'def',
-      },
-      analysis: summary(
-        AnalysisStatus.SUCCESS,
-        test.given ? Completeness.INCOMPLETE : Completeness.COMPLETE,
-        declaredType,
-      ),
-      evidence: testEvidence(filePath, test, covered, perDeclScoped),
-      declaration_gap: null,
-    })),
+    tests: parsed.tests.map((test) => {
+      const index = perLine.get(test.line) ?? 0;
+      perLine.set(test.line, index + 1);
+      return {
+        test: {
+          // Deterministic: file + test name + source line + per-line
+          // declaration index. No clock, no randomness.
+          id: `${filePath}#${test.name}@${test.line}:${index}`,
+          name: test.name,
+          line: test.line,
+          declaration: 'def',
+        },
+        analysis: summary(
+          AnalysisStatus.SUCCESS,
+          test.given ? Completeness.INCOMPLETE : Completeness.COMPLETE,
+          declaredType,
+        ),
+        evidence: testEvidence(filePath, test, covered, perDeclScoped),
+        declaration_gap: null,
+      };
+    }),
   };
 }
 

@@ -74,11 +74,13 @@ export enum CapabilityStatus {
  * Identity of one test declaration site (plan task 1; per-test scope).
  *
  * One test = one `it`/`test` declaration in source order. The id is
- * deterministic — `<file>#<declaration>@<line>` — with no counters, no clock
- * and no randomness, so two runs over the same file produce identical ids.
+ * deterministic — `<file>#<declaration>@<line>:<index>` — with no clock and no
+ * randomness, so two runs over the same file produce identical ids. The
+ * index numbers the declarations that share one line, so two declarations on
+ * the same line can never collide.
  */
 export interface TestIdentity {
-  /** `<file>#<declaration>@<line>`, e.g. `sample.test.ts#it@2`. */
+  /** `<file>#<declaration>@<line>:<index>`, e.g. `sample.test.ts#it@2:0`. */
   id: string;
   /** Test name as written in the declaration. */
   name: string;

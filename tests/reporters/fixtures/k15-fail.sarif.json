@@ -34,8 +34,21 @@
             "text": "CT-INT-001: assertion_count=0 <= 0"
           },
           "properties": {
-            "result": "FAIL"
-          }
+            "result": "FAIL",
+            "testId": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts#it@12:0"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts"
+                },
+                "region": {
+                  "startLine": 12
+                }
+              }
+            }
+          ]
         }
       ]
     }

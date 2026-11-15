@@ -34,7 +34,8 @@
             "text": "CT-INT-001: coverage.status PARTIAL for 'assertion_count' is below required COMPLETE ('it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs)"
           },
           "properties": {
-            "result": "INDETERMINATE"
+            "result": "INDETERMINATE",
+            "testId": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5:0"
           },
           "locations": [
             {
@@ -43,7 +44,7 @@
                   "uri": "<fixture-root>/case-25-vitest-aliased/sample.test.ts"
                 },
                 "region": {
-                  "startLine": 6
+                  "startLine": 5
                 }
               }
             }

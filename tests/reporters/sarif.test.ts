@@ -32,6 +32,7 @@ import {
   CapabilityStatus,
   ClassificationSource,
   Completeness,
+  TestScopeResult,
   TestType,
 } from '../../src/core/analysis';
 import { Availability, CollectionStatus, EvidenceLocation, EvidenceRecord, Provenance } from '../../src/core/evidence';
@@ -226,6 +227,102 @@ describe('toSarif — locations', () => {
   it('emits NO locations key when the finding has none (never fabricated)', () => {
     const r = result(analysis(AnalysisStatus.SUCCESS));
     expect(r).not.toHaveProperty('locations');
+  });
+});
+
+describe('toSarif — test identity (F8: SARIF loses test identity)', () => {
+  /**
+   * One declaration's scope, carrying the NEW test-id format
+   * `<file>#<declaration>@<line>:<index>` (docs/limitations.md §26).
+   */
+  function testScope(
+    id: string,
+    name: string,
+    line: number,
+    value: number,
+    location?: EvidenceLocation,
+  ): TestScopeResult {
+    const base = analysis(AnalysisStatus.SUCCESS);
+    const record = { ...base.evidence.assertion_count, value };
+    if (location !== undefined) {
+      record.location = location;
+    }
+    return {
+      test: { id, name, line, declaration: 'it' },
+      analysis: base.analysis,
+      evidence: { ...base.evidence, assertion_count: record },
+      declaration_gap: null,
+    };
+  }
+
+  /** Two declarations in one file, each with the new-format id. */
+  function perTestAnalysis(
+    ids: readonly string[] = ['sample.test.ts#it@2:0', 'sample.test.ts#it@5:0'],
+  ): AnalysisOutput {
+    return {
+      ...analysis(AnalysisStatus.SUCCESS),
+      tests: [testScope(ids[0], 'has an assertion', 2, 1), testScope(ids[1], 'has none', 5, 0)],
+    };
+  }
+
+  it('carries the test id in result.properties.testId', () => {
+    const r = result(perTestAnalysis());
+    expect(r.properties.testId).toBe('sample.test.ts#it@2:0');
+    // The new format round-trips: the per-line index survives.
+    expect(r.properties.testId).toMatch(/#it@2:0$/);
+  });
+
+  it('gives EVERY per-test result its own testId', () => {
+    const log = sarif(perTestAnalysis());
+    expect(log.runs[0].results.map((r: any) => r.properties.testId)).toEqual([
+      'sample.test.ts#it@2:0',
+      'sample.test.ts#it@5:0',
+    ]);
+  });
+
+  it('maps the location FROM THE ID: uri = file, region.startLine = line', () => {
+    const r = result(perTestAnalysis());
+    expect(r.locations).toEqual([
+      {
+        physicalLocation: {
+          artifactLocation: { uri: 'sample.test.ts' },
+          region: { startLine: 2 },
+        },
+      },
+    ]);
+  });
+
+  it('leaves a subject-level result free of testId and of an id-derived location', () => {
+    const r = result(analysis(AnalysisStatus.SUCCESS, { location: { file: 'sample.test.ts', line: 7 } }));
+    expect(r.properties.testId).toBeUndefined();
+    expect(r.locations[0].physicalLocation.region).toEqual({ startLine: 7 });
+  });
+
+  it('falls back to the finding location when the id carries no file:line (never fabricated)', () => {
+    const output = {
+      ...analysis(AnalysisStatus.SUCCESS),
+      tests: [testScope('sample.test.ts#it@2', 'legacy id', 2, 1, { file: 'sample.test.ts', line: 9 })],
+    };
+    const r = result(output);
+    expect(r.properties.testId).toBe('sample.test.ts#it@2');
+    expect(r.locations[0].physicalLocation.artifactLocation.uri).toBe('sample.test.ts');
+    expect(r.locations[0].physicalLocation.region).toEqual({ startLine: 9 });
+  });
+
+  it('round-trips the REAL collector id (case-24): the id and the location agree', () => {
+    const root = join(__dirname, '..', 'fixtures', 'ct-int-001');
+    const file = join(root, 'case-24-vitest-standard', 'sample.test.ts');
+    const output = collectAnalysis(file, TestType.UNIT);
+    const log = JSON.parse(
+      toSarif(output, evaluateRule(CT_INT_001, output), CT_INT_001, evaluateTests(CT_INT_001, output)),
+    ) as Record<string, any>;
+    const r = log.runs[0].results[0];
+    // The collector's new format reaches the SARIF result verbatim.
+    expect(r.properties.testId).toBe(output.tests![0].test.id);
+    expect(r.properties.testId).toMatch(/#it@4:0$/);
+    // The location comes from that same id: file + declaration line.
+    expect(r.locations[0].physicalLocation.artifactLocation.uri).toBe(file);
+    expect(r.locations[0].physicalLocation.region.startLine).toBe(output.tests![0].test.line);
   });
 });
 

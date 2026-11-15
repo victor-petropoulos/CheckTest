@@ -87,7 +87,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_basic_functionality@12"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_basic_functionality@12:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -96,7 +96,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_param_named_help@46"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_param_named_help@46:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -105,7 +105,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_param_squatting_help_option_name@71"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_param_squatting_help_option_name@71:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -114,7 +114,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_option_reusing_help_flag@88"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_option_reusing_help_flag@88:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -123,7 +123,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_repr@109"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_repr@109:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -132,7 +132,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_return_values@127"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_return_values@127:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -141,7 +141,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_basic_group@137"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_basic_group@137:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -150,7 +150,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_group_commands_dict@163"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_group_commands_dict@163:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -159,7 +159,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_group_from_list@175"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_group_from_list@175:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -168,7 +168,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_string_option@197"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_string_option@197:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -177,7 +177,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_int_option@220"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_int_option@220:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -186,7 +186,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_uuid_option@246"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_uuid_option@246:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -195,7 +195,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_float_option@271"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_float_option@271:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -204,7 +204,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_switch@303"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_switch@303:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -213,7 +213,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_flag@325"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_flag@325:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -222,7 +222,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_conversion@342"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_conversion@342:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -231,7 +231,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_flag_value_dual_options@390"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_flag_value_dual_options@390:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -240,7 +240,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_file_option@410"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_file_option@410:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -249,7 +249,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_file_lazy_mode@431"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_file_lazy_mode@431:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -258,7 +258,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_path_option@471"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_path_option@471:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -267,7 +267,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_option@515"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_option@515:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -276,7 +276,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument@536"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument@536:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -285,7 +285,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_enum@557"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_enum@557:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -294,7 +294,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_custom_type@584"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_custom_type@584:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -303,7 +303,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_none@615"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_none@615:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -312,7 +312,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_optional_metavar@643"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_optional_metavar@643:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -321,7 +321,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_argument_optional_metavar@670"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_argument_optional_metavar@670:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -330,7 +330,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_default@683"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_default@683:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -339,7 +339,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_custom@710"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_custom@710:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -348,7 +348,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_required_option@721"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_required_option@721:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -357,7 +357,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_evaluation_order@732"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_evaluation_order@732:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -366,7 +366,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_option@775"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_option@775:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -375,7 +375,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_command@786"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_command@786:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -384,7 +384,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_group@800"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_group@800:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -393,7 +393,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_summary_line@819"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_summary_line@819:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -402,7 +402,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_help_invalid_default@838"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_help_invalid_default@838:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -411,7 +411,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_resolves_import_name_to_distribution@855"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_resolves_import_name_to_distribution@855:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -420,7 +420,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_ambiguous_import_name_errors@885"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_ambiguous_import_name_errors@885:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -429,7 +429,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_unknown_package_errors@914"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_unknown_package_errors@914:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -438,7 +438,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option@935"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option@935:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -447,7 +447,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option_receives_context@946"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option_receives_context@946:0"
     },
     {
       "rule_id": "CT-INT-001",
@@ -456,7 +456,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<corpus-root>/click/tests/test_basic.py#test_cast_multi_default@969"
+      "test_id": "<corpus-root>/click/tests/test_basic.py#test_cast_multi_default@969:0"
     }
   ],
   "schemaVersion": "0.5",
@@ -465,7 +465,7 @@
   "testResults": [
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_basic_functionality@12",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_basic_functionality@12:0",
         "name": "test_basic_functionality",
         "line": 12,
         "declaration": "def"
@@ -536,13 +536,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_basic_functionality@12"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_basic_functionality@12:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_param_named_help@46",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_param_named_help@46:0",
         "name": "test_param_named_help",
         "line": 46,
         "declaration": "def"
@@ -613,13 +613,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_param_named_help@46"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_param_named_help@46:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_param_squatting_help_option_name@71",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_param_squatting_help_option_name@71:0",
         "name": "test_param_squatting_help_option_name",
         "line": 71,
         "declaration": "def"
@@ -690,13 +690,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_param_squatting_help_option_name@71"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_param_squatting_help_option_name@71:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_option_reusing_help_flag@88",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_option_reusing_help_flag@88:0",
         "name": "test_option_reusing_help_flag",
         "line": 88,
         "declaration": "def"
@@ -767,13 +767,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_option_reusing_help_flag@88"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_option_reusing_help_flag@88:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_repr@109",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_repr@109:0",
         "name": "test_repr",
         "line": 109,
         "declaration": "def"
@@ -844,13 +844,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_repr@109"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_repr@109:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_return_values@127",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_return_values@127:0",
         "name": "test_return_values",
         "line": 127,
         "declaration": "def"
@@ -921,13 +921,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_return_values@127"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_return_values@127:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_basic_group@137",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_basic_group@137:0",
         "name": "test_basic_group",
         "line": 137,
         "declaration": "def"
@@ -998,13 +998,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_basic_group@137"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_basic_group@137:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_group_commands_dict@163",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_group_commands_dict@163:0",
         "name": "test_group_commands_dict",
         "line": 163,
         "declaration": "def"
@@ -1075,13 +1075,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_group_commands_dict@163"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_group_commands_dict@163:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_group_from_list@175",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_group_from_list@175:0",
         "name": "test_group_from_list",
         "line": 175,
         "declaration": "def"
@@ -1152,13 +1152,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_group_from_list@175"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_group_from_list@175:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_string_option@197",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_string_option@197:0",
         "name": "test_string_option",
         "line": 197,
         "declaration": "def"
@@ -1229,13 +1229,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_string_option@197"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_string_option@197:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_int_option@220",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_int_option@220:0",
         "name": "test_int_option",
         "line": 220,
         "declaration": "def"
@@ -1306,13 +1306,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_int_option@220"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_int_option@220:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_uuid_option@246",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_uuid_option@246:0",
         "name": "test_uuid_option",
         "line": 246,
         "declaration": "def"
@@ -1383,13 +1383,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_uuid_option@246"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_uuid_option@246:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_float_option@271",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_float_option@271:0",
         "name": "test_float_option",
         "line": 271,
         "declaration": "def"
@@ -1460,13 +1460,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_float_option@271"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_float_option@271:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_boolean_switch@303",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_boolean_switch@303:0",
         "name": "test_boolean_switch",
         "line": 303,
         "declaration": "def"
@@ -1537,13 +1537,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_switch@303"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_switch@303:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_boolean_flag@325",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_boolean_flag@325:0",
         "name": "test_boolean_flag",
         "line": 325,
         "declaration": "def"
@@ -1614,13 +1614,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_flag@325"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_flag@325:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_boolean_conversion@342",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_boolean_conversion@342:0",
         "name": "test_boolean_conversion",
         "line": 342,
         "declaration": "def"
@@ -1691,13 +1691,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_conversion@342"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_boolean_conversion@342:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_flag_value_dual_options@390",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_flag_value_dual_options@390:0",
         "name": "test_flag_value_dual_options",
         "line": 390,
         "declaration": "def"
@@ -1768,13 +1768,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_flag_value_dual_options@390"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_flag_value_dual_options@390:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_file_option@410",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_file_option@410:0",
         "name": "test_file_option",
         "line": 410,
         "declaration": "def"
@@ -1845,13 +1845,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_file_option@410"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_file_option@410:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_file_lazy_mode@431",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_file_lazy_mode@431:0",
         "name": "test_file_lazy_mode",
         "line": 431,
         "declaration": "def"
@@ -1922,13 +1922,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_file_lazy_mode@431"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_file_lazy_mode@431:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_path_option@471",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_path_option@471:0",
         "name": "test_path_option",
         "line": 471,
         "declaration": "def"
@@ -1999,13 +1999,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_path_option@471"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_path_option@471:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_option@515",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_option@515:0",
         "name": "test_choice_option",
         "line": 515,
         "declaration": "def"
@@ -2076,13 +2076,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_option@515"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_option@515:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument@536",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument@536:0",
         "name": "test_choice_argument",
         "line": 536,
         "declaration": "def"
@@ -2153,13 +2153,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument@536"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument@536:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_enum@557",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_enum@557:0",
         "name": "test_choice_argument_enum",
         "line": 557,
         "declaration": "def"
@@ -2230,13 +2230,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_enum@557"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_enum@557:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_custom_type@584",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_custom_type@584:0",
         "name": "test_choice_argument_custom_type",
         "line": 584,
         "declaration": "def"
@@ -2307,13 +2307,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_custom_type@584"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_custom_type@584:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_none@615",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_none@615:0",
         "name": "test_choice_argument_none",
         "line": 615,
         "declaration": "def"
@@ -2384,13 +2384,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_none@615"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_none@615:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_optional_metavar@643",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_optional_metavar@643:0",
         "name": "test_choice_argument_optional_metavar",
         "line": 643,
         "declaration": "def"
@@ -2461,13 +2461,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_optional_metavar@643"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_choice_argument_optional_metavar@643:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_datetime_argument_optional_metavar@670",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_datetime_argument_optional_metavar@670:0",
         "name": "test_datetime_argument_optional_metavar",
         "line": 670,
         "declaration": "def"
@@ -2538,13 +2538,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_argument_optional_metavar@670"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_argument_optional_metavar@670:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_default@683",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_default@683:0",
         "name": "test_datetime_option_default",
         "line": 683,
         "declaration": "def"
@@ -2615,13 +2615,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_default@683"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_default@683:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_custom@710",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_custom@710:0",
         "name": "test_datetime_option_custom",
         "line": 710,
         "declaration": "def"
@@ -2692,13 +2692,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_custom@710"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_datetime_option_custom@710:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_required_option@721",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_required_option@721:0",
         "name": "test_required_option",
         "line": 721,
         "declaration": "def"
@@ -2769,13 +2769,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_required_option@721"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_required_option@721:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_evaluation_order@732",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_evaluation_order@732:0",
         "name": "test_evaluation_order",
         "line": 732,
         "declaration": "def"
@@ -2846,13 +2846,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_evaluation_order@732"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_evaluation_order@732:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_hidden_option@775",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_hidden_option@775:0",
         "name": "test_hidden_option",
         "line": 775,
         "declaration": "def"
@@ -2923,13 +2923,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_option@775"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_option@775:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_hidden_command@786",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_hidden_command@786:0",
         "name": "test_hidden_command",
         "line": 786,
         "declaration": "def"
@@ -3000,13 +3000,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_command@786"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_command@786:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_hidden_group@800",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_hidden_group@800:0",
         "name": "test_hidden_group",
         "line": 800,
         "declaration": "def"
@@ -3077,13 +3077,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_group@800"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_hidden_group@800:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_summary_line@819",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_summary_line@819:0",
         "name": "test_summary_line",
         "line": 819,
         "declaration": "def"
@@ -3154,13 +3154,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_summary_line@819"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_summary_line@819:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_help_invalid_default@838",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_help_invalid_default@838:0",
         "name": "test_help_invalid_default",
         "line": 838,
         "declaration": "def"
@@ -3231,13 +3231,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_help_invalid_default@838"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_help_invalid_default@838:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_version_option_resolves_import_name_to_distribution@855",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_version_option_resolves_import_name_to_distribution@855:0",
         "name": "test_version_option_resolves_import_name_to_distribution",
         "line": 855,
         "declaration": "def"
@@ -3308,13 +3308,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_resolves_import_name_to_distribution@855"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_resolves_import_name_to_distribution@855:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_version_option_ambiguous_import_name_errors@885",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_version_option_ambiguous_import_name_errors@885:0",
         "name": "test_version_option_ambiguous_import_name_errors",
         "line": 885,
         "declaration": "def"
@@ -3385,13 +3385,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_ambiguous_import_name_errors@885"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_ambiguous_import_name_errors@885:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_version_option_unknown_package_errors@914",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_version_option_unknown_package_errors@914:0",
         "name": "test_version_option_unknown_package_errors",
         "line": 914,
         "declaration": "def"
@@ -3462,13 +3462,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_unknown_package_errors@914"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_version_option_unknown_package_errors@914:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option@935",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option@935:0",
         "name": "test_custom_version_option",
         "line": 935,
         "declaration": "def"
@@ -3539,13 +3539,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option@935"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option@935:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option_receives_context@946",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option_receives_context@946:0",
         "name": "test_custom_version_option_receives_context",
         "line": 946,
         "declaration": "def"
@@ -3616,13 +3616,13 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option_receives_context@946"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_custom_version_option_receives_context@946:0"
         }
       ]
     },
     {
       "test": {
-        "id": "<corpus-root>/click/tests/test_basic.py#test_cast_multi_default@969",
+        "id": "<corpus-root>/click/tests/test_basic.py#test_cast_multi_default@969:0",
         "name": "test_cast_multi_default",
         "line": 969,
         "declaration": "def"
@@ -3693,7 +3693,7 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<corpus-root>/click/tests/test_basic.py#test_cast_multi_default@969"
+          "test_id": "<corpus-root>/click/tests/test_basic.py#test_cast_multi_default@969:0"
         }
       ]
     }

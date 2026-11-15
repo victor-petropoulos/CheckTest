@@ -122,6 +122,8 @@ interface AssertionFinding {
 interface DeclarationFindings {
   site: DeclarationSite;
   findings: AssertionFinding[];
+  /** 0-based index of this declaration among the declarations sharing its line. */
+  index: number;
 }
 
 /** Phase 6 decision B — .js/.jsx files whose source carries a likely JSX tag
@@ -383,7 +385,7 @@ function supported(
  * FAIL (KickOff:72 — never let a gap read as an absent value).
  */
 function testScopeResult(filePath: string, declaredType: TestType, entry: DeclarationFindings): TestScopeResult {
-  const { site, findings } = entry;
+  const { site, findings, index } = entry;
   const recognized = findings.filter((finding) => finding.form !== null);
   const unclassified = findings.filter((finding) => finding.form === null);
   const established = recognized.filter((finding) => finding.established);
@@ -451,8 +453,9 @@ function testScopeResult(filePath: string, declaredType: TestType, entry: Declar
   const name = declarationName(site.declaration);
   return {
     test: {
-      // Deterministic: file + declaration form + source line. No counters, no clock.
-      id: `${filePath}#${name}@${site.line}`,
+      // Deterministic: file + declaration form + source line + per-line
+      // declaration index. No clock, no randomness.
+      id: `${filePath}#${name}@${site.line}:${index}`,
       name: site.name,
       line: site.line,
       declaration: name,
@@ -646,6 +649,10 @@ function collectTestBodyFindings(
   // can belong to at most one declaration (plan task 7, hardening c).
   const declarations = new Set<ts.Node>(sites.map((site) => site.node));
   const perDeclaration: DeclarationFindings[] = [];
+  // Per-line declaration index — two declarations on the SAME line would
+  // otherwise share an id. ponytail: one counter per line, incremented in
+  // source order (`sites` is already in source order).
+  const perLine = new Map<number, number>();
   for (const site of sites) {
     // Findings land in THIS site's own array — never in a shared one, so an
     // assertion in one declaration's body cannot be counted for a sibling.
@@ -660,7 +667,9 @@ function collectTestBodyFindings(
           : undefined;
       scanTestBody(sourceFile, site.body, declarationReason, declarations, findings);
     }
-    perDeclaration.push({ site, findings });
+    const index = perLine.get(site.line) ?? 0;
+    perLine.set(site.line, index + 1);
+    perDeclaration.push({ site, findings, index });
   }
   return perDeclaration;
 }

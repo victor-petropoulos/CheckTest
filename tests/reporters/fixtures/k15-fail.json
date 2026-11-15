@@ -59,7 +59,7 @@
       "evidence": [
         "assertion_count"
       ],
-      "test_id": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts#it@12"
+      "test_id": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts#it@12:0"
     }
   ],
   "schemaVersion": "0.5",
@@ -68,7 +68,7 @@
   "testResults": [
     {
       "test": {
-        "id": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts#it@12",
+        "id": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts#it@12:0",
         "name": "y",
         "line": 12,
         "declaration": "it"
@@ -115,7 +115,7 @@
           "evidence": [
             "assertion_count"
           ],
-          "test_id": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts#it@12"
+          "test_id": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts#it@12:0"
         }
       ]
     }
