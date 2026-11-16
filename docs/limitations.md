@@ -518,6 +518,8 @@ Aggregation: weakest-strength at subject level (`aggregateSubjectStrength`); per
 
 The TypeScript external coverage provider accepts only explicitly shaped JSON reports for the supported coverage inputs.
 
+Raw Vitest `coverage-final.json` is not parsed; convert it to a supported shape first (Istanbul `covered`, or the derived c8 `files.<path>.coveredLines`) before passing `--coverage-report`.
+
 | Format                                        | Provenance | Freshness check                                                                                                                                          | Example                                                       |
 | --------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | Istanbul JSON                                 | `EXTERNAL` | source revision must be declared and equal the analyzed revision for a `KNOWN` freshness claim; mismatch or unknown revision → `UNKNOWN` / `UNAVAILABLE` | `{ "covered": { "/abs/file.js": [null, 1, 0] } }`             |

@@ -69,5 +69,6 @@ export const CT_INT_001: RuleMetadata = {
     'A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).',
   limitations:
     'Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.',
-  docsUrl: 'docs/CHECKTEST_SPEC_v0.3.md#rule-ct-int-001',
+  docsUrl:
+    'https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9',
 };

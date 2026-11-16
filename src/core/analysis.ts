@@ -88,6 +88,8 @@ export interface TestIdentity {
   line: number;
   /** Source form, e.g. 'it' or 'it.each'. */
   declaration: string;
+  /** Detected framework for this declaration (Python adapter: pytest vs unittest). Optional. */
+  framework?: string;
 }
 
 /**
@@ -102,6 +104,8 @@ export interface TestScopeResult {
   evidence: Record<string, EvidenceRecord>;
   /** Why this declaration was not fully analyzed; null when fully scanned. */
   declaration_gap: string | null;
+  /** Detected framework for this declaration (Python adapter: pytest vs unittest). Optional. */
+  framework?: string;
 }
 
 /** Top-level envelope handed from collector to engine to reporter. */

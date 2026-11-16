@@ -203,6 +203,16 @@ Supported frameworks: **pytest** and **unittest**. Both are statically collected
 
 **Source:** `src/adapters/python/capabilities.ts:18` (`SUPPORTED_FRAMEWORKS = ['pytest', 'unittest']`), `src/adapters/python/collector.ts:430-432` (both capabilities `UNAVAILABLE`).
 
+### Framework attribution (7.11)
+
+Per-test framework labels come from declaration shape, not raw text:
+
+- `class Test*` methods → `unittest` (class-membership rule).
+- Module-level `def test_*` → `unittest` only if the body contains an actual `self.assert*(...)` **call node** (tree-sitter call walk; `ast.Call` attribute walk in the stdlib-ast fallback). String literals, docstrings and snippet text are never inspected, so a `pytester.makepyfile("…self.assertEqual…")` snippet stays `pytest`.
+- Subject-level `test.framework` uses pytest-first precedence: any pytest-labeled test → `pytest`; else any unittest-labeled test → `unittest`; a file with no collected tests keeps the default attribution (`src/adapters/python/collector.ts:1004-1006`). A pytest file that merely contains a `class Test*` helper is attributed `pytest`.
+
+Per-test framework labels are internal to the analysis envelope; the JSON report serializes the subject-level `framework` only (`src/reporters/json.ts:308`).
+
 ### Test declaration forms
 
 | Form                                | Example                                                                         | Recognized |
@@ -232,9 +242,11 @@ These are the verbatim elements of `SUPPORTED_ASSERTION_FORMS` in `src/adapters/
 
 ### Coverage formats
 
-Auto-detected: **coverage.py JSON** (`--cov-report=json`, parsed for `files.<name>.executed_lines`) and **lcov** (`--cov-report=lcov`, parsed via `SF:`/`DA:` records). TypeScript/Jest/Vitest supported coverage inputs: Istanbul JSON (`covered`) and c8 JSON (`files`); raw Vitest `coverage-final.json` is unsupported with reason `unsupported coverage report format`. See [Limitations §25](../limitations.md). The report must contain an entry for the analyzed test file itself — matching is by **basename** (`collector.ts:444`); a report that lacks the file raises `no entry for <name> in ... report` (`:453`, `:464`).
+Auto-detected for Python: **coverage.py JSON** (`--cov-report=json`, parsed for `files.<name>.executed_lines`) and **lcov** (`--cov-report=lcov`, parsed via `SF:`/`DA:` records). For TypeScript/Jest/Vitest, supported coverage inputs are **Istanbul JSON** (`covered`), **c8 JSON** (`files.<path>.coveredLines`), and the **per-test-run derived shape**; raw Vitest `coverage-final.json` is NOT supported (reason `unsupported coverage report format`). See [Limitations §25](../limitations.md).
 
-**Source:** `src/adapters/python/collector.ts:441-465` (`parseCoverageReport` — lcov branch `:446-453`, coverage.py JSON branch `:456-464`), `tests/adapters/python/fixtures/coverage.json`, `tests/adapters/python/fixtures/coverage.lcov`.
+File identity matching differs by adapter. **Python:** the report must contain an entry for the analyzed test file itself, matched by **basename** (`collector.ts:444`); a report lacking it raises `no entry for <name> in ... report` (`:453`, `:464`). **TypeScript:** the provider matches the exact normalized path first (`coverage.ts:348-353`, `:545-547`); on an exact miss, multiple basename candidates fail closed with `ambiguous basename match: <sorted paths>` (`:553-554`), while zero or one candidate yields `no coverage data for <file>` (`:556`). Basename is never accepted as a substitute for an exact match; no wrong-file selection.
+
+**Source:** `src/adapters/python/collector.ts:441-465` (`parseCoverageReport` — lcov branch `:446-453`, coverage.py JSON branch `:456-464`), `src/providers/coverage.ts:292/313/338-343` (format detection), `:348-353/545-556` (file identity matching), `tests/adapters/python/fixtures/coverage.json`, `tests/adapters/python/fixtures/coverage.lcov`.
 
 ### Mutation
 

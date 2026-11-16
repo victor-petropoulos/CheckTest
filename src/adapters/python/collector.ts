@@ -118,6 +118,8 @@ interface PythonTest {
   end: number;
   given: boolean;
   asserts: AssertCount;
+  /** Framework inferred from this declaration's syntax (pytest vs unittest). */
+  framework: string;
 }
 
 /** stdlib-ast fallback script: emits the SAME JSON shape the tree-sitter walk builds. */
@@ -132,6 +134,21 @@ const AST_SCRIPT = [
   '        out.append(name)',
   '    return out',
   'HELPERS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)',
+  'def has_self_assert(fn):',
+  '    # ponytail: node-walk body; skip strings/nested defs so snippet literals do not false-positive',
+  '    def walk(node):',
+  '        if isinstance(node, ast.Constant):',
+  '            return False',
+  '        if isinstance(node, HELPERS) and node is not fn:',
+  '            return False',
+  '        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):',
+  '            if node.func.attr.startswith("assert") and isinstance(node.func.value, ast.Name) and node.func.value.id == "self":',
+  '                return True',
+  '        for child in ast.iter_child_nodes(node):',
+  '            if walk(child):',
+  '                return True',
+  '        return False',
+  '    return walk(fn)',
   'BRANCHES = tuple(getattr(ast, n) for n in ("If", "For", "AsyncFor", "While", "Try", "TryStar", "Match", "match_case", "ExceptHandler", "comprehension", "IfExp") if hasattr(ast, n))',
   'def count_asserts(fn):',
   '    out = {"total": 0, "strength": []}',
@@ -162,9 +179,9 @@ const AST_SCRIPT = [
   '    return isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name.startswith("test_")',
   'for node in tree.body:',
   '    if isinstance(node, ast.ClassDef) and node.name.startswith("Test"):',
-  '        tests += [{"name": s.name, "line": s.lineno, "end": getattr(s, "end_lineno", None) or s.lineno, "given": "given" in decs(s), "asserts": count_asserts(s)} for s in node.body if is_test(s)]',
+  '        tests += [{"name": s.name, "line": s.lineno, "end": getattr(s, "end_lineno", None) or s.lineno, "given": "given" in decs(s), "asserts": count_asserts(s), "framework": "unittest"} for s in node.body if is_test(s)]',
   '    if is_test(node):',
-  '        tests.append({"name": node.name, "line": node.lineno, "end": getattr(node, "end_lineno", None) or node.lineno, "given": "given" in decs(node), "asserts": count_asserts(node)})',
+  '        tests.append({"name": node.name, "line": node.lineno, "end": getattr(node, "end_lineno", None) or node.lineno, "given": "given" in decs(node), "asserts": count_asserts(node), "framework": ("unittest" if has_self_assert(node) else "pytest")})',
   'print(json.dumps({"tests": tests, "totalAsserts": sum(t["asserts"]["total"] for t in tests)}))',
 ].join('\n');
 
@@ -410,9 +427,43 @@ function countAsserts(node: StNode): AssertCount {
   return { total, strength };
 }
 
+function hasSelfAssertCall(node: StNode): boolean {
+  // ponytail: tree-sitter body walk, skip string nodes so snippet literals cannot false-positive
+  if (node.type === 'call') {
+    const fn = node.childForFieldName('function');
+    if (fn !== null && fn.type === 'attribute') {
+      const attr = fn.childForFieldName('attribute');
+      const receiver = fn.childForFieldName('object');
+      if (
+        attr !== null &&
+        attr.text.startsWith('assert') &&
+        receiver !== null &&
+        receiver.type === 'identifier' &&
+        receiver.text === 'self'
+      ) {
+        return true;
+      }
+    }
+  }
+  if (node.type === 'string' || node.type === 'concatenated_string') return false;
+  if (PYTHON_NESTED_DEF_TYPES.has(node.type)) return false;
+  for (let i = 0; i < node.childCount; i += 1) {
+    const child = node.child(i);
+    if (child !== null && hasSelfAssertCall(child)) return true;
+  }
+  return false;
+}
+
+function inferPythonFramework(node: StNode, inClass: boolean): string {
+  if (inClass) return 'unittest';
+  const body = node.childForFieldName('body');
+  if (body !== null && hasSelfAssertCall(body)) return 'unittest';
+  return 'pytest';
+}
+
 function walkNative(root: StNode): ParsedPython {
   const tests: PythonTest[] = [];
-  const addTest = (node: StNode): void => {
+  const addTest = (node: StNode, inClass: boolean): void => {
     const nameNode = node.childForFieldName('name');
     if (nameNode === null) return;
     tests.push({
@@ -424,21 +475,22 @@ function walkNative(root: StNode): ParsedPython {
       end: node.endPosition.row + 1,
       given: decoratedWithGiven(node),
       asserts: countAsserts(node.childForFieldName('body') ?? node),
+      framework: inferPythonFramework(node, inClass),
     });
   };
   for (const node of root.children ?? []) {
     if (node.type === 'decorated_definition') {
       const fn = (node.children ?? []).find((child) => child.type === 'function_definition');
-      if (fn !== undefined && isTestFunction(fn)) addTest(fn);
+      if (fn !== undefined && isTestFunction(fn)) addTest(fn, false);
     } else if (isTestFunction(node)) {
-      addTest(node);
+      addTest(node, false);
     } else if (node.type === 'class_definition') {
       const nameNode = node.childForFieldName('name');
       const className = nameNode === null ? '' : nameNode.text;
       const body = node.childForFieldName('body');
       if (className.startsWith('Test') && body !== null) {
         for (const member of body.children ?? []) {
-          if (isTestFunction(member)) addTest(member);
+          if (isTestFunction(member)) addTest(member, true);
         }
       }
     }
@@ -949,7 +1001,9 @@ export function collectAnalysis(
     return unsupportedParser(filePath, declaredType, failure.message);
   }
 
-  const framework = SUPPORTED_FRAMEWORKS[0];
+  const hasPytest = parsed.tests.some((test) => test.framework === 'pytest');
+  const hasUnittest = parsed.tests.some((test) => test.framework === 'unittest');
+  const framework = hasPytest ? 'pytest' : hasUnittest ? 'unittest' : SUPPORTED_FRAMEWORKS[0];
   const anyGiven = parsed.tests.some((test) => test.given);
   const coverageStatus = anyGiven ? CollectionStatus.PARTIAL : CollectionStatus.COMPLETE;
 
@@ -1002,7 +1056,9 @@ export function collectAnalysis(
           name: test.name,
           line: test.line,
           declaration: 'def',
+          framework: test.framework,
         },
+        framework: test.framework,
         analysis: summary(
           AnalysisStatus.SUCCESS,
           test.given ? Completeness.INCOMPLETE : Completeness.COMPLETE,

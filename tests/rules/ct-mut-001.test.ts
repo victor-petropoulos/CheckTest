@@ -110,8 +110,10 @@ describe('CT-MUT-001 metadata', () => {
     expect(blob).toMatch(/0\.5/);
   });
 
-  it('docsUrl points at the mutation contract doc', () => {
-    expect(CT_MUT_001.docsUrl).toBe('docs/rules/ct-mut-001-contract.md');
+  it('docsUrl points at a public mutation provider doc', () => {
+    expect(CT_MUT_001.docsUrl).toBe(
+      'https://github.com/victor-petropoulos/CheckTest/blob/main/docs/limitations.md#19-external-mutation-provider--parse-only-file-level-p23-2026-11-02',
+    );
   });
 });
 

@@ -32,5 +32,6 @@ export const CT_COV_001: RuleMetadata = {
     'When coverage is mapped from a test file to a production file, CT-COV-001 reports whether that production file was exercised (any covered line). It does not claim a specific test body executed: per-declaration attribution is not supported for ordinary mapped coverage, but a report produced by a run scoped to that test file (--per-test-run) with a KNOWN + COMPLETE mapped target yields numeric per-declaration verdicts carrying the file-level claim.',
   limitations:
     'Depends entirely on an externally produced coverage report; a missing, stale, partial or mismatched report yields INDETERMINATE rather than FAIL. In --per-test-run mode a mapped-pair contradiction (other PARTIAL report entries) only prepends veto-WARN to the subject reason and never changes a verdict.',
-  docsUrl: 'docs/limitations.md#14-external-coverage-provider-wp41-task-56b',
+  docsUrl:
+    'https://github.com/victor-petropoulos/CheckTest/blob/main/docs/limitations.md#14-external-coverage-provider-wp41-task-56b',
 };

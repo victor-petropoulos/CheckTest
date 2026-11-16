@@ -86,5 +86,6 @@ export const CT_INT_003: RuleMetadata = {
     'A recognized assertion inside a callback, nested block, or after an unconditional halt is not proven to execute by the static test-body shape, so its verification is unestablished (SPEC:490-525; collector.ts:85-89).',
   limitations:
     'Does not claim the assertion never runs: no dataflow, branch-condition, loop-trip or exception-path analysis is performed. Only static shape is reported.',
-  docsUrl: 'docs/rules/ct-int-003-proposal.md',
+  docsUrl:
+    'https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#executability-establishment-rule-a7',
 };

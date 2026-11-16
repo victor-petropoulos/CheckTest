@@ -86,5 +86,6 @@ export const CT_INT_004: RuleMetadata = {
     'CheckTest cannot inspect every assertion form statically; reporting the constructs it could not classify keeps the verdict honest instead of silently treating them as absent (collector.ts:612-679; KickOff:72).',
   limitations:
     'Does not claim the unclassified construct is wrong or unused. It reports only that static analysis cannot classify it; no runtime behaviour is observed.',
-  docsUrl: 'docs/rules/ct-int-004-proposal.md',
+  docsUrl:
+    'https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#not-recognized-recorded-as-unsupported-forms',
 };

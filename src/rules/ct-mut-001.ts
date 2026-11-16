@@ -89,5 +89,6 @@ export const CT_MUT_001: RuleMetadata = {
     'A mutation report gives a file-level mutation score (detected/valid). CT-MUT-001 reports whether that score meets the fixed 0.5 threshold. It is file-level only: no per-declaration attribution is derived from a mutation report.',
   limitations:
     'Depends entirely on an externally produced Stryker mutation report. A missing, unreadable, malformed, revision-mismatched or zero-valid-mutants report yields INDETERMINATE rather than FAIL ("no report != zero mutants"). Coverage is always COMPLETE on a scored record, UNKNOWN otherwise.',
-  docsUrl: 'docs/rules/ct-mut-001-contract.md',
+  docsUrl:
+    'https://github.com/victor-petropoulos/CheckTest/blob/main/docs/limitations.md#19-external-mutation-provider--parse-only-file-level-p23-2026-11-02',
 };

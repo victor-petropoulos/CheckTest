@@ -20,28 +20,33 @@ npm run build
 ## Usage
 
 ```
-checktest check --test <file> [--type UNIT|COMPONENT|INTEGRATION|CONTRACT|E2E] [--rule <id>] [--format json|sarif] [--coverage-report <path>] [--source-revision <rev>] [--mutation-report <path>] [--mutation-source-revision <rev>]
+checktest [check] --test <path> [--type <TYPE>] [--adapter <id>] [--rule <id>] [--format <fmt>] [--coverage-report <path>] [--coverage-map <from>=<to>] [--per-test-run] [--source-revision <rev>] [--mutation-report <path>] [--mutation-source-revision <rev>] [--config <path>]
 ```
 
 Full `--help` output (verified live):
 
 ```
-Usage: checktest [check] --test <path> [--type <TYPE>] [--rule <id>] [--format <fmt>]
+Usage: checktest [check] --test <path> [--type <TYPE>] [--rule <id>] [--format <fmt>] [--config <path>]
 
   --test <path>   test file to analyze (required)
   --type <TYPE>   declared test type: UNIT | COMPONENT | INTEGRATION | CONTRACT | E2E | UNKNOWN
                   (default UNKNOWN; never inferred from the file)
+  --adapter <id>  adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034)
   --rule <id>     rule to evaluate (default CT-INT-001); DRAFT rules are opt-in via --rule; DEPRECATED rules run by default
   --format <fmt>  report format: 'json' | 'sarif' (default json)
   --coverage-report <path>  external Istanbul/c8 coverage report to attach
+  --coverage-map <from>=<to>  map analyzed file path to report key (repeatable)
+  --per-test-run            mark the coverage report as a single-test-file run (CT-COV-001)
   --source-revision <rev>   declared revision the coverage report was produced against
   --mutation-report <path>  external Stryker mutation report to attach
   --mutation-source-revision <rev>  declared revision the mutation report was produced against (valid git rev or unknown)
+  --config <path>           explicit config file (checktest.config.json); no implicit discovery
 
 Writes the report (JSON by default, SARIF 2.1.0 with --format sarif) to
-stdout. Exits 0 when the rule was evaluated (any rule result, including FAIL,
-and any UNSUPPORTED analysis), 2 when the engine reached no verdict (including
-a file that declares no tests), and 1 on a usage error or a failed run.
+stdout. Exits 0 when the rule was evaluated (any
+rule result, including FAIL, and any UNSUPPORTED analysis), 2 when the engine
+reached no verdict (including a file that declares no tests), and 1 on a usage
+error or a failed run.
 ```
 
 ### Flags
@@ -50,14 +55,16 @@ a file that declares no tests), and 1 on a usage error or a failed run.
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `--test <path>`                    | Path to the test file to analyze (required)                                                              |
 | `--type <TYPE>`                    | Declared test type: `UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`, `UNKNOWN` (default `UNKNOWN`) |
+| `--adapter <id>`                   | Adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034)                    |
 | `--rule <id>`                      | Rule ID to evaluate (default `CT-INT-001`)                                                               |
 | `--format <fmt>`                   | Report format: `json` or `sarif` (default `json`)                                                        |
 | `--coverage-report <path>`         | External Istanbul/c8 coverage report JSON to attach                                                      |
+| `--coverage-map <from>=<to>`       | Map analyzed file path to report key (repeatable; expects `<from>=<to>`)                                 |
+| `--per-test-run`                   | Mark the coverage report as a single-test-file run (CT-COV-001)                                          |
 | `--source-revision <rev>`          | Declared revision the coverage report was produced against (CLI beats config `sourceRevision`)           |
 | `--mutation-report <path>`         | External Stryker mutation report JSON to attach                                                          |
-| `--mutation-source-revision <rev>` | Declared revision the mutation report was produced against (valid git rev or `unknown`)                  |     |
-
-| `--adapter <id>` | Adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034); explicit id wins (`python-pytest-adapter` for Python test files)
+| `--mutation-source-revision <rev>` | Declared revision the mutation report was produced against (valid git rev or `unknown`)                  |
+| `--config <path>`                  | Explicit config file (`checktest.config.json`); no implicit discovery                                    |
 
 ### Mutation Testing
 
@@ -72,6 +79,10 @@ checktest check --test <file> --mutation-report <path> --mutation-source-revisio
 - `--mutation-source-revision <rev>` declares the revision the mutation report was produced against (valid git rev or `unknown`).
 - Freshness: report usable when declared revision matches analyzed git HEAD; mismatch or missing flag → INDETERMINATE (CT-MUT-001), never FAIL from stale/missing report.
 - CT-MUT-001: PASS ≥ 0.5 / FAIL < 0.5 on mutation_score, only when freshness established. The verdict is file-level (mutation evidence is never per-declaration): it appears as a `ruleResults` entry with no `test_id`, alongside any per-test findings, and its `rationale` states that no per-declaration attribution is claimed.
+
+### Coverage
+
+Supported: Istanbul JSON, c8 JSON, per-test-run derived shape. Raw vitest coverage-final.json is NOT supported. See [docs/limitations.md](./docs/limitations.md) §25 for accepted shapes, freshness, and file-identity matching, and [supported syntax](./docs/supported-syntax.md#coverage-formats) for adapter-specific matching rules.
 
 ### Exit Codes
 
@@ -108,7 +119,7 @@ Jest and Vitest are supported natively. Mocha-class bare-global derivations and 
 
 - **Python**: `pytest` and `unittest`, statically collected (the file is never executed) → adapter id `python-pytest-adapter` ([supported-syntax Python section](./docs/supported-syntax.md#python); [limitations §23](./docs/limitations.md)). Example: `checktest check --test test_sample.py --adapter python-pytest-adapter`
 
-See [docs/ and framework-detection rules. See [docs/limitations.md](./docs/limitations.md) for declared gaps. Coverage rule CT-COV-001 is Active (activated 2026-11-07 via ADR-031); with an explicit `--coverage-map` it evaluates mapped coverage — see [docs/limitations.md](./docs/limitations.md) §14.
+See [supported syntax](./docs/supported-syntax.md) for assertion forms and [framework detection](./docs/supported-syntax.md#framework-detection) rules. See [docs/limitations.md](./docs/limitations.md) for declared gaps. Coverage rule CT-COV-001 is Active (activated 2026-11-07 via ADR-031); with an explicit `--coverage-map` it evaluates mapped coverage — see [docs/limitations.md](./docs/limitations.md) §14.
 
 ## Example Output
 

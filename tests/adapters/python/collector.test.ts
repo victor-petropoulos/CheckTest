@@ -831,3 +831,133 @@ describe('collectAnalysis — pytest parametrize declaration identity (plan task
     expect(first).toEqual([`${file}#test_p@4:0`, `${file}#test_plain@7:0`]);
   });
 });
+
+describe('Phase 9 task 7.1 — framework attribution (F1)', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'py-fw-'));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+  function write(src: string): string {
+    const file = join(dir, 'case.py');
+    writeFileSync(file, src, 'utf8');
+    return file;
+  }
+
+  it('pytest-shaped file -> subject.framework pytest', () => {
+    const output = collectAnalysis(join(FIXTURES, 'pytest_sample.py'));
+    expect(output.subject.framework).toBe('pytest');
+  });
+
+  it('unittest-shaped file -> subject.framework unittest', () => {
+    const output = collectAnalysis(join(FIXTURES, 'unittest_sample.py'));
+    expect(output.subject.framework).toBe('unittest');
+  });
+
+  it('mixed file -> per-test attribution (pytest + unittest), analysis SUCCESS, subject pytest-first', () => {
+    const file = write(
+      'import pytest\n\ndef test_py():\n    assert True\n\nimport unittest\n\nclass TestMixed(unittest.TestCase):\n    def test_un(self):\n        self.assertEqual(1, 1)\n',
+    );
+    const output = collectAnalysis(file);
+    expect(output.analysis.status).toBe(AnalysisStatus.SUCCESS);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    expect(byName.get('test_py')?.test.framework).toBe('pytest');
+    expect(byName.get('test_un')?.test.framework).toBe('unittest');
+    expect(byName.get('test_py')?.framework).toBe('pytest');
+    expect(byName.get('test_un')?.framework).toBe('unittest');
+    expect(output.subject.framework).toBe('pytest');
+  });
+});
+
+describe('Phase 9 task 7.11 — framework attribution hot-fix (AST walk, no string-literal FPs)', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'py-fw711-'));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+  function write(src: string): string {
+    const file = join(dir, 'case.py');
+    writeFileSync(file, src, 'utf8');
+    return file;
+  }
+
+  it('(a) pytester-style triple-quoted unittest snippet in module-level def test_x -> per-test pytest (native)', () => {
+    const file = write(
+      'def test_x(pytester):\n    pytester.makepyfile("""\nimport unittest\nclass MyTestCase(unittest.TestCase):\n    def test_inner(self):\n        self.assertEqual(1, 1)\n""")\n    assert True\n',
+    );
+    const output = collectAnalysis(file);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    expect(byName.get('test_x')?.test.framework).toBe('pytest');
+    expect(byName.get('test_x')?.framework).toBe('pytest');
+    expect(output.subject.framework).toBe('pytest');
+  });
+
+  it('(b) module-level def test_y with ACTUAL self.assertEqual call in body -> unittest (native)', () => {
+    const file = write('def test_y():\n    self.assertEqual(1, 1)\n');
+    const output = collectAnalysis(file);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    expect(byName.get('test_y')?.test.framework).toBe('unittest');
+    expect(byName.get('test_y')?.framework).toBe('unittest');
+    expect(output.subject.framework).toBe('unittest');
+  });
+
+  it('(c) string-only "self.assertEqual(" mention inside normal call arg -> pytest (native)', () => {
+    const file = write('def test_z():\n    note("self.assertEqual(1, 1)")\n    assert True\n');
+    const output = collectAnalysis(file);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    expect(byName.get('test_z')?.test.framework).toBe('pytest');
+    expect(output.subject.framework).toBe('pytest');
+  });
+
+  it('(d) Test* class method -> unittest (regression pin, native)', () => {
+    const file = write(
+      'import unittest\n\nclass TestMixed(unittest.TestCase):\n    def test_un(self):\n        self.assertEqual(1, 1)\n',
+    );
+    const output = collectAnalysis(file);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    expect(byName.get('test_un')?.test.framework).toBe('unittest');
+    expect(output.subject.framework).toBe('unittest');
+  });
+
+  it('(e) mixed file (pytest-labeled module def + unittest class): subject pytest-first (native)', () => {
+    const file = write(
+      'def test_x(pytester):\n    pytester.makepyfile("""\nimport unittest\nclass MyTestCase(unittest.TestCase):\n    def test_inner(self):\n        self.assertEqual(1, 1)\n""")\n    assert True\n\nimport unittest\n\nclass TestMixed(unittest.TestCase):\n    def test_un(self):\n        self.assertEqual(1, 1)\n',
+    );
+    const output = collectAnalysis(file);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    expect(byName.get('test_x')?.test.framework).toBe('pytest');
+    expect(byName.get('test_un')?.test.framework).toBe('unittest');
+    expect(output.subject.framework).toBe('pytest');
+  });
+
+  it('(f) AST fallback: triple-quoted unittest snippet in module def -> pytest, subject pytest-first', () => {
+    const file = write(
+      'def test_x(pytester):\n    pytester.makepyfile("""\nimport unittest\nclass MyTestCase(unittest.TestCase):\n    def test_inner(self):\n        self.assertEqual(1, 1)\n""")\n    assert True\n\nimport unittest\n\nclass TestMixed(unittest.TestCase):\n    def test_un(self):\n        self.assertEqual(1, 1)\n',
+    );
+    const output = collectAnalysis(file, { substrateProbe: fakeProbe(fakeTreeSitter(true)) } as any);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    expect(byName.get('test_x')?.test.framework).toBe('pytest');
+    expect(byName.get('test_un')?.test.framework).toBe('unittest');
+    expect(output.subject.framework).toBe('pytest');
+  });
+
+  it('(f) AST fallback: actual self.assert call in module def -> unittest', () => {
+    const file = write('def test_y():\n    self.assertEqual(1, 1)\n');
+    const output = collectAnalysis(file, { substrateProbe: fakeProbe(fakeTreeSitter(true)) } as any);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    expect(byName.get('test_y')?.test.framework).toBe('unittest');
+    expect(output.subject.framework).toBe('unittest');
+  });
+
+  it('(f) AST fallback: string-only self.assert mention in call arg -> pytest', () => {
+    const file = write('def test_z():\n    note("self.assertEqual(1, 1)")\n    assert True\n');
+    const output = collectAnalysis(file, { substrateProbe: fakeProbe(fakeTreeSitter(true)) } as any);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    expect(byName.get('test_z')?.test.framework).toBe('pytest');
+    expect(output.subject.framework).toBe('pytest');
+  });
+});

@@ -3,6 +3,10 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   passWithNoTests: true, // M4: jest exits 1 on zero tests without this; task 1 ships 0 test files
+  // D12: print an explicit SKIPPED SUITES manifest (corpus suites skip when the
+  // machine-local validation/ manifest is absent). Reporter derives the list from
+  // real runtime results; 'default' keeps jest's own summary.
+  reporters: ['default', '<rootDir>/jest.skipped-suites-reporter.js'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/', // tsc emits compiled copies to dist; don't run them twice
