@@ -79,7 +79,9 @@ const USAGE = [
   '  --type <TYPE>   declared test type: ' + Object.values(TestType).join(' | '),
   '                  (default UNKNOWN; never inferred from the file)',
   '  --adapter <id>  adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034)',
-  '  --rule <id>     rule to evaluate (default ' + CT_INT_001.id + ')',
+  '  --rule <id>     rule to evaluate (default ' +
+    CT_INT_001.id +
+    '); DRAFT rules are opt-in via --rule; DEPRECATED rules run by default',
   "  --format <fmt>  report format: 'json' | 'sarif' (default json)",
   '  --coverage-report <path>  external Istanbul/c8 coverage report to attach',
   '  --coverage-map <from>=<to>  map analyzed file path to report key (repeatable)',
@@ -118,6 +120,10 @@ export interface Options {
   /** Explicit adapter id (--adapter); beats manifest/extension layers (ADR-034). */
   adapter?: string;
   config?: CheckTestConfig;
+  /**
+   * The rule was named EXPLICITLY on the command line (--rule). A DRAFT rule
+   * is evaluated only when this is true (D6).
+   */
   ruleExplicit?: boolean;
 }
 
@@ -420,14 +426,19 @@ export function runAnalysis(options: Options): { report: string; exitCode: numbe
         : {}),
     });
   }
+  // D6 (plan task 5.3): the rule ids the user named EXPLICITLY. A DRAFT rule
+  // is evaluated only when its id is in this set; the default run names none,
+  // so a draft rule stays excluded unless --rule opts in.
+  const explicitRuleIds: ReadonlySet<string> =
+    options.ruleExplicit === true ? new Set([options.rule]) : new Set<string>();
   // The engine reports whether a verdict was reached at all; an aborted
   // evaluation (FAILED analysis) yields status FAILED with no finding, so the
   // report carries an empty ruleResults array rather than a fabricated verdict.
-  const evaluation = evaluateRule(rule, analysis);
+  const evaluation = evaluateRule(rule, analysis, explicitRuleIds);
   // The SAME rule over every scope: one entry per located declaration, or a
   // single subject-level entry when the collector produced none. These are the
   // per-test records the report serializes.
-  const scopes = evaluateTests(rule, analysis);
+  const scopes = evaluateTests(rule, analysis, explicitRuleIds);
   // Format selection is a pure serialization choice on the SAME evaluation:
   // SARIF is additive, JSON remains the default and byte-unchanged.
   const report =

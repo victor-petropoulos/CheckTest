@@ -233,7 +233,7 @@ describe('DPC-4 external provenance fields', () => {
     const json = JSON.parse(
       toJson(output, {
         status: EvaluationStatus.FAILED,
-        finding: { rule_id: 'r', result: 'INDETERMINATE' as never, reason: 'x', evidence: [] },
+        finding: { rule_id: 'r', result: 'INDETERMINATE' as never, reason: 'x', evidence: [], ruleStatus: 'active' },
       }),
     ) as { schemaVersion: string; evidence: { assertion_count: Record<string, unknown> } };
     expect(json.evidence.assertion_count.provider).toBe('coverage-tool');
@@ -267,7 +267,7 @@ describe('DPC-4 external provenance fields', () => {
     const json = JSON.parse(
       toJson(output, {
         status: EvaluationStatus.FAILED,
-        finding: { rule_id: 'r', result: 'INDETERMINATE' as never, reason: 'x', evidence: [] },
+        finding: { rule_id: 'r', result: 'INDETERMINATE' as never, reason: 'x', evidence: [], ruleStatus: 'active' },
       }),
     ) as { schemaVersion: string; evidence: { assertion_count: Record<string, unknown> } };
     expect(json.evidence.assertion_count.provider).toBeUndefined();

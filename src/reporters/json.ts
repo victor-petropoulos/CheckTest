@@ -125,6 +125,12 @@ function serializeFinding(finding: RuleFinding, testId: string | null): Json {
     result: finding.result,
     reason: finding.reason,
     evidence: [...finding.evidence],
+    // 5.6: the rule's lifecycle status travels WITH the finding. The JSON
+    // report carries no rule descriptor of its own, so this is where a consumer
+    // learns whether the verdict came from an active, draft or deprecated rule.
+    // Appended AFTER the four original keys, so their order — and the bytes a
+    // consumer reading them sees — is unchanged.
+    ruleStatus: finding.ruleStatus,
   };
   // Appended LAST and ONLY for a per-test scope: a subject-level (synthetic)
   // envelope keeps its exact four-key finding, byte for byte.
@@ -166,6 +172,10 @@ function serializeTestResult(scope: TestScopeResult, evaluation: TestEvaluation)
       Object.entries(scope.evidence).map(([type, record]) => [type, serializeEvidence(record)]),
     ),
     ruleResults: serializeFindings(evaluation.finding, evaluation.test?.id ?? null),
+    // D7 (reviewer C1): the scope envelope carries the rule's deprecation
+    // version, so the JSON report states it too. Present ONLY when the rule
+    // declares one — the key is omitted, never an empty string.
+    ...(evaluation.deprecatedSince !== undefined ? { deprecatedSince: evaluation.deprecatedSince } : {}),
   };
 }
 
@@ -287,6 +297,11 @@ export function toJson(
     // reading the original keys still sees them in the same order.
     ...(analysis.adapter !== undefined ? { adapter: analysis.adapter } : {}),
     ...(analysis.decidedBy !== undefined ? { decidedBy: analysis.decidedBy } : {}),
+    // D7 (reviewer C1): the SUBJECT envelope's deprecation version, on the
+    // report envelope. JSON has no rule descriptor, so this is the JSON-native
+    // home of the rule's deprecation version (SARIF puts the same fact on its
+    // rule descriptor). Present ONLY when the evaluated rule declares one.
+    ...(evaluation.deprecatedSince !== undefined ? { deprecatedSince: evaluation.deprecatedSince } : {}),
     testResults,
     summary: summarize(scopes),
   };

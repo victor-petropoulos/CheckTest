@@ -15,8 +15,11 @@
  *   - throwaway rule: the untouched engine decides it without per-rule code
  *   - task 66: the six validateRule error branches that had no coverage, plus
  *     the behaviour-parity pin of the full, ordered error list
+ *   - task 5.4: the RuleStatus lifecycle contract — enum membership for
+ *     `status`, and the DEPRECATED ⇒ deprecatedSince requirement
  *
- * CT-INT-001 and CT-DEMO-001 must both pass validateRule.
+ * CT-INT-001 and CT-DEMO-001 must both pass validateRule; so must every
+ * other shipped rule.
  */
 
 import { join } from 'path';
@@ -32,14 +35,21 @@ import {
 } from '../../src/core/analysis';
 import { Availability, CollectionStatus, EvidenceRecord, EvidenceType, Provenance } from '../../src/core/evidence';
 import { EvaluationStatus, RuleResult } from '../../src/core/result';
-import { RuleEvaluation, RuleMetadata } from '../../src/core/rule';
+import { RuleEvaluation, RuleMetadata, RuleStatus } from '../../src/core/rule';
 import { CT_INT_001 } from '../../src/rules/ct-int-001';
+import { CT_INT_003 } from '../../src/rules/ct-int-003';
+import { CT_INT_004 } from '../../src/rules/ct-int-004';
+import { CT_COV_001 } from '../../src/rules/ct-cov-001';
+import { CT_MUT_001 } from '../../src/rules/ct-mut-001';
 import { CT_DEMO_001 } from '../../src/rules/ct-demo-001';
 import { getRule, registerRule, validateRule } from '../../src/rules/registry';
 
 /** Every rule in this repo's rule set. CT-DEMO-001 is demo-only; CT-INT-001 is
  * the only rule src/cli.ts registers into the production CLI. */
 const CONTRACT_RULES: RuleMetadata[] = [CT_INT_001, CT_DEMO_001];
+
+/** Every rule shipped in src/rules — all six must pass validateRule. */
+const SHIPPED_RULES: RuleMetadata[] = [CT_INT_001, CT_INT_003, CT_INT_004, CT_COV_001, CT_MUT_001, CT_DEMO_001];
 
 const FIXTURE = join(__dirname, '..', 'fixtures', 'ct-int-001', 'case-01-standard-assertion', 'sample.test.ts');
 
@@ -452,4 +462,66 @@ describe('validateRule — remaining value-shape branches', () => {
     }
     expect(thrown?.message).toBe('Invalid rule definition: id must match ^CT-[A-Z]+-[0-9]{3}$ (got 42)');
   });
+});
+
+/**
+ * Plan task 5.4 — the RuleStatus lifecycle contract, enforced by
+ * validateRule/registerRule. `status` is OPERATIONAL, not advisory: a DRAFT
+ * rule is excluded from the default run and is evaluated only when it is named
+ * via --rule; a DEPRECATED rule still runs until removal and must name the
+ * version it was deprecated in.
+ */
+describe('validateRule — RuleStatus lifecycle contract (plan task 5.4)', () => {
+  const DEPRECATED_SINCE_ERROR = 'deprecatedSince must be a non-empty string when status is deprecated';
+
+  const base = (): RuleMetadata => ({ ...CT_INT_001 });
+
+  const deprecated = (overrides: Partial<RuleMetadata> = {}): RuleMetadata => ({
+    ...base(),
+    status: RuleStatus.DEPRECATED,
+    ...overrides,
+  });
+
+  it('rejects a DEPRECATED rule with no deprecatedSince', () => {
+    expect(validateRule(deprecated())).toEqual([DEPRECATED_SINCE_ERROR]);
+  });
+
+  it('rejects a DEPRECATED rule with an empty deprecatedSince', () => {
+    expect(validateRule(deprecated({ deprecatedSince: '' }))).toEqual([DEPRECATED_SINCE_ERROR]);
+  });
+
+  it('rejects a DEPRECATED rule with a whitespace-only deprecatedSince', () => {
+    expect(validateRule(deprecated({ deprecatedSince: '   ' }))).toEqual([DEPRECATED_SINCE_ERROR]);
+  });
+
+  it('accepts a DEPRECATED rule that carries deprecatedSince', () => {
+    expect(validateRule(deprecated({ deprecatedSince: '1.11.0' }))).toEqual([]);
+  });
+
+  it('registerRule throws for a DEPRECATED rule with no deprecatedSince', () => {
+    expect(() => registerRule({ ...deprecated(), id: 'CT-DEPRECATED-001' })).toThrow(
+      /Invalid rule definition CT-DEPRECATED-001/,
+    );
+    expect(() => registerRule({ ...deprecated(), id: 'CT-DEPRECATED-001' })).toThrow(DEPRECATED_SINCE_ERROR);
+  });
+
+  it('rejects a status outside the RuleStatus enum', () => {
+    const errors = validateRule({ ...base(), status: 'bogus' as unknown as RuleStatus });
+    expect(errors).toEqual(['status must be active|draft|deprecated (got bogus)']);
+  });
+
+  it('accepts every RuleStatus member that carries its required metadata', () => {
+    expect(validateRule({ ...base(), status: RuleStatus.ACTIVE })).toEqual([]);
+    expect(validateRule({ ...base(), status: RuleStatus.DRAFT })).toEqual([]);
+    expect(validateRule(deprecated({ deprecatedSince: '1.11.0' }))).toEqual([]);
+  });
+});
+
+describe('all shipped rules validate cleanly', () => {
+  it.each(SHIPPED_RULES.map((rule) => [rule.id, rule] as [string, RuleMetadata]))(
+    '%s passes validateRule with no errors',
+    (_id, rule) => {
+      expect(validateRule(rule)).toEqual([]);
+    },
+  );
 });

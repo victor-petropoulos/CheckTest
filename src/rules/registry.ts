@@ -11,7 +11,7 @@
 
 import { TestType } from '../core/analysis';
 import { CollectionStatus } from '../core/evidence';
-import { hasLocalDecisionHook, RuleMetadata } from '../core/rule';
+import { hasLocalDecisionHook, RuleMetadata, RuleStatus } from '../core/rule';
 import { RuleResult } from '../core/result';
 
 const rules = new Map<string, RuleMetadata>();
@@ -128,8 +128,15 @@ function guardEvaluationLifecycle(rule: RuleMetadata): string[] {
     errors.push(`severity must be error|warning|info (got ${String(rule.severity)})`);
   }
 
-  if (!['active', 'draft', 'deprecated'].includes(rule.status)) {
-    errors.push(`status must be active|draft|deprecated (got ${String(rule.status)})`);
+  const statusValues = Object.values(RuleStatus);
+  if (!statusValues.includes(rule.status)) {
+    errors.push(`status must be ${statusValues.join('|')} (got ${String(rule.status)})`);
+  }
+  if (
+    rule.status === RuleStatus.DEPRECATED &&
+    (typeof rule.deprecatedSince !== 'string' || rule.deprecatedSince.trim() === '')
+  ) {
+    errors.push('deprecatedSince must be a non-empty string when status is deprecated');
   }
 
   for (const field of ADVISORY_FIELDS) {
@@ -153,11 +160,13 @@ function guardEvaluationLifecycle(rule: RuleMetadata): string[] {
  * prior ten-validator implementation produced. Grouping keeps each guard under
  * the change-quality CRAP threshold (task 66).
  *
- * Deliberately NOT enforced here, and deliberately NOT implemented anywhere
- * else either: `status`. It is recorded, advisory metadata — a `draft` or
- * `deprecated` rule is still evaluated and reported when requested (see the
- * `status` comment in src/core/rule.ts). Adding lifecycle filtering would be a
- * contract change this task does not own.
+ * `status` IS enforced here (plan task 5.4): it must be a `RuleStatus` member,
+ * and a DEPRECATED rule must carry a non-empty `deprecatedSince` version (D7).
+ *
+ * The status values are OPERATIONAL, not advisory metadata: a DRAFT rule is
+ * excluded from the default run and is evaluated only when it is named
+ * explicitly via --rule; a DEPRECATED rule still runs and is reported until
+ * the version named by `deprecatedSince` is removed.
  */
 export function validateRule(rule: RuleMetadata): string[] {
   return [...guardIdentity(rule), ...guardClassification(rule), ...guardEvaluationLifecycle(rule)];

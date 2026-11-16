@@ -7,6 +7,12 @@
 
 import { TestIdentity } from './analysis';
 import { EvidenceLocation } from './evidence';
+// The lifecycle status of the rule a finding came from (plan task 5.6).
+//
+// TYPE-ONLY import, deliberately: src/core/rule.ts imports THIS module, so a
+// value import would close a runtime cycle (result -> rule -> result).
+// `import type` is erased at compile time, so the cycle stays type-level.
+import type { RuleStatus } from './rule';
 
 export enum RuleResult {
   PASS = 'PASS',
@@ -39,6 +45,12 @@ export interface EvaluationResult {
   status: EvaluationStatus;
   /** Non-null exactly when `status` is EVALUATED; never a fabricated verdict. */
   finding: RuleFinding | null;
+  /**
+   * The version in which the evaluated rule was deprecated, when the rule
+   * declares one (D7). Absent for every rule that does not — the key is
+   * omitted, never an empty string.
+   */
+  deprecatedSince?: string;
 }
 
 /**
@@ -54,6 +66,12 @@ export interface TestEvaluation {
   status: EvaluationStatus;
   /** Non-null exactly when `status` is EVALUATED; never a fabricated verdict. */
   finding: RuleFinding | null;
+  /**
+   * The version in which the evaluated rule was deprecated, when the rule
+   * declares one (D7). Absent for every rule that does not — the key is
+   * omitted, never an empty string.
+   */
+  deprecatedSince?: string;
 }
 
 /** One rule's verdict for one subject. Reason is always present — no silent verdicts. */
@@ -63,6 +81,17 @@ export interface RuleFinding {
   reason: string;
   /** Evidence types the rule consulted, in evaluation order. */
   evidence: string[];
+  /**
+   * The lifecycle status of the rule that produced this finding (plan task 5.6;
+   * the RuleStatus contract of src/core/rule.ts).
+   *
+   * REQUIRED, never optional: a finding IS one rule's verdict, so the rule's
+   * lifecycle state is part of that verdict's identity. A consumer reading a
+   * finding can then tell an active rule's verdict from a deprecated rule's
+   * without resolving the rule registry. One of 'active' | 'draft' |
+   * 'deprecated' — never an empty string, never absent.
+   */
+  ruleStatus: RuleStatus;
   /** Source location copied from the evidence record when one exists (null-able; never fabricated). */
   location?: EvidenceLocation;
 }

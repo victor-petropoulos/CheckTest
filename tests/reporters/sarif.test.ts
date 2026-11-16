@@ -135,7 +135,7 @@ describe('toSarif — envelope', () => {
       {
         id: RULE.id,
         shortDescription: { text: RULE.name },
-        properties: { severity: 'error', category: 'integrity' },
+        properties: { severity: 'error', category: 'integrity', status: 'active' },
       },
     ]);
   });
@@ -399,5 +399,34 @@ describe('toSarif — representative golden (case-24, real collector pipeline)',
       .join('<fixture-root>');
     const golden = readFileSync(join(__dirname, 'fixtures', 'case-24.sarif.json'), 'utf8');
     expect(actual).toBe(golden);
+  });
+});
+
+describe('toSarif — rule lifecycle status (plan 5.6)', () => {
+  /** A DEPRECATED rule: it names the version it was deprecated in (D7). */
+  const DEPRECATED_RULE: RuleMetadata = {
+    ...RULE,
+    id: 'CT-TEST-001',
+    status: 'deprecated',
+    deprecatedSince: '1.11.0',
+  };
+
+  it('emits the lifecycle status on the rule descriptor', () => {
+    const properties = sarif(analysis(AnalysisStatus.SUCCESS)).runs[0].tool.driver.rules[0].properties;
+    expect(properties.status).toBe('active');
+    // Never an empty string, never absent.
+    expect(properties.status).not.toBe('');
+    expect(properties.status).toBeTruthy();
+  });
+
+  it('reports a DEPRECATED rule as deprecated and keeps its deprecatedSince', () => {
+    const properties = sarif(analysis(AnalysisStatus.SUCCESS), DEPRECATED_RULE).runs[0].tool.driver.rules[0].properties;
+    expect(properties.status).toBe('deprecated');
+    expect(properties.deprecatedSince).toBe('1.11.0');
+  });
+
+  it('omits deprecatedSince for a rule that declares none (never an empty string)', () => {
+    const properties = sarif(analysis(AnalysisStatus.SUCCESS)).runs[0].tool.driver.rules[0].properties;
+    expect(properties.deprecatedSince).toBeUndefined();
   });
 });

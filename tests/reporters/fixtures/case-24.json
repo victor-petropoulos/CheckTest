@@ -63,6 +63,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0",
       "location": {
         "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
@@ -127,6 +128,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0",
           "location": {
             "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",

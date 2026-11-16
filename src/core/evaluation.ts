@@ -35,6 +35,11 @@
  * declare COMPLETE, so neither reaches that branch; the guard is what makes the
  * engine correct for any rule that lowers its minimum.
  *
+ * LIFECYCLE (plan task 5.3; D6/D7): a DRAFT rule is EXCLUDED from evaluation
+ * unless the caller named it EXPLICITLY (the CLI's `--rule`); a DEPRECATED rule
+ * is evaluated by default, exactly like an ACTIVE one, and carries its
+ * `deprecatedSince` version on the evaluation envelope.
+ *
  * Core is language-agnostic: this module imports enums and shapes only, never
  * `typescript` and never an adapter (KickOff:134, plan §1).
  *
@@ -46,7 +51,7 @@
 import { AnalysisOutput, AnalysisStatus, AnalysisSummary, CapabilityStatus, TestIdentity, TestType } from './analysis';
 import { Availability, CollectionStatus, EvidenceLocation, EvidenceRecord } from './evidence';
 import { EvaluationResult, EvaluationStatus, RuleFinding, RuleResult, TestEvaluation } from './result';
-import { localDecisionHookFor, RuleLocalDecisionHook, RuleMetadata } from './rule';
+import { localDecisionHookFor, RuleLocalDecisionHook, RuleMetadata, RuleStatus } from './rule';
 
 /** Ordering used only to compare collection statuses against the rule minimum. */
 const COVERAGE_RANK: Readonly<Record<CollectionStatus, number>> = {
@@ -55,12 +60,31 @@ const COVERAGE_RANK: Readonly<Record<CollectionStatus, number>> = {
   [CollectionStatus.UNAVAILABLE]: 1,
 };
 
+/**
+ * The rule ids the caller named EXPLICITLY (the CLI's `--rule` flags).
+ *
+ * D6 (plan task 5.3): a DRAFT rule is evaluated ONLY when its id is in this
+ * set. Every other rule is evaluated by default, so the default set is empty.
+ */
+export type ExplicitRuleIds = ReadonlySet<string>;
+
+/** No rule was named explicitly — the default for every non-CLI caller. */
+const NO_EXPLICIT_RULES: ExplicitRuleIds = new Set<string>();
+
 function finding(rule: RuleMetadata, result: RuleResult, reason: string, location?: EvidenceLocation): RuleFinding {
   // ponytail: reason is mandatory (result.ts) — a verdict without a reason is not
   // reportable, so every return path below builds one instead of defaulting to ''.
   // Location is appended LAST and only when an evidence record carries one, so
   // no verdict ever fabricates a source position (B7 prerequisite).
-  const out: RuleFinding = { rule_id: rule.id, result, reason, evidence: [...rule.required_evidence] };
+  // 5.6: the finding carries the lifecycle status of the rule that produced
+  // it, so every consumer of a finding knows which rule state it came from.
+  const out: RuleFinding = {
+    rule_id: rule.id,
+    result,
+    reason,
+    evidence: [...rule.required_evidence],
+    ruleStatus: rule.status,
+  };
   if (location !== undefined) {
     out.location = location;
   }
@@ -167,11 +191,16 @@ function subjectScope(analysis: AnalysisOutput): ScopeView {
  * reportable through `analysisStatus` plus the collector diagnostics on the
  * evidence records — this layer never invents a verdict to cover the abort.
  */
-export function evaluateRule(rule: RuleMetadata, analysis: AnalysisOutput): EvaluationResult {
-  const finding = decide(rule, subjectScope(analysis));
+export function evaluateRule(
+  rule: RuleMetadata,
+  analysis: AnalysisOutput,
+  explicitRuleIds: ExplicitRuleIds = NO_EXPLICIT_RULES,
+): EvaluationResult {
+  const finding = decide(rule, subjectScope(analysis), explicitRuleIds);
   return {
     status: finding === null ? EvaluationStatus.FAILED : EvaluationStatus.EVALUATED,
     finding,
+    ...(rule.deprecatedSince !== undefined ? { deprecatedSince: rule.deprecatedSince } : {}),
   };
 }
 
@@ -195,7 +224,11 @@ export function evaluateRule(rule: RuleMetadata, analysis: AnalysisOutput): Eval
  * abort (step 0) and every evidence guard apply per test, never laundered
  * across declarations.
  */
-export function evaluateTests(rule: RuleMetadata, analysis: AnalysisOutput): TestEvaluation[] {
+export function evaluateTests(
+  rule: RuleMetadata,
+  analysis: AnalysisOutput,
+  explicitRuleIds: ExplicitRuleIds = NO_EXPLICIT_RULES,
+): TestEvaluation[] {
   const tests = analysis.tests;
   // Framework detection is file-scoped (plan task 7): every test scope of one
   // UNSUPPORTED file shares the subject-level capabilities description.
@@ -214,11 +247,12 @@ export function evaluateTests(rule: RuleMetadata, analysis: AnalysisOutput): Tes
         }));
 
   return scopes.map(({ test, scope }) => {
-    const finding = decide(rule, scope);
+    const finding = decide(rule, scope, explicitRuleIds);
     return {
       test,
       status: finding === null ? EvaluationStatus.FAILED : EvaluationStatus.EVALUATED,
       finding,
+      ...(rule.deprecatedSince !== undefined ? { deprecatedSince: rule.deprecatedSince } : {}),
     };
   });
 }
@@ -228,10 +262,13 @@ export function evaluateTests(rule: RuleMetadata, analysis: AnalysisOutput): Tes
  * (analysis FAILED, SPEC:374,405) — the only path that produces no verdict,
  * and the one both public seams map onto EvaluationStatus.FAILED.
  */
-function decide(rule: RuleMetadata, scope: ScopeView): RuleFinding | null {
-  // WP1.3: draft rules are registered (and their evidence stays wired) but
-  // produce no verdict — they short-circuit before any evidence guard.
-  if (rule.status === 'draft') return null;
+function decide(rule: RuleMetadata, scope: ScopeView, explicitRuleIds: ExplicitRuleIds): RuleFinding | null {
+  // D6 (plan task 5.3): a DRAFT rule is EXCLUDED unless the caller named it
+  // EXPLICITLY (the CLI's --rule). Naming it IS the opt-in: the rule is then
+  // evaluated like an ACTIVE one and produces a real verdict. Not naming it
+  // keeps the WP1.3 suppression — no verdict, no evidence wiring — and
+  // short-circuits before any evidence guard.
+  if (rule.status === RuleStatus.DRAFT && !explicitRuleIds.has(rule.id)) return null;
   const { applies_to, required_evidence } = rule;
 
   // Step 0 — FAILED abort. FIRST, before applicability (plan task 4, D2):

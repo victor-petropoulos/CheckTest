@@ -150,10 +150,11 @@ describe('RuleFinding + RuleMetadata (M2)', () => {
     result: RuleResult.INDETERMINATE,
     reason: 'conflicting evidence for assertion_count',
     evidence: ['assertion_count'],
+    ruleStatus: 'active',
   };
 
-  it('finding carries rule_id, result, reason and consulted evidence', () => {
-    expect(Object.keys(finding).sort()).toEqual(['evidence', 'reason', 'result', 'rule_id']);
+  it('finding carries rule_id, result, reason, consulted evidence and the rule status', () => {
+    expect(Object.keys(finding).sort()).toEqual(['evidence', 'reason', 'result', 'ruleStatus', 'rule_id']);
   });
 
   it('RuleMetadata is importable from core and shape-checks', () => {

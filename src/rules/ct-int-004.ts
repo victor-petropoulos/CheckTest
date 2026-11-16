@@ -32,7 +32,7 @@
 import { TestType } from '../core/analysis';
 import { CollectionStatus } from '../core/evidence';
 import { RuleResult } from '../core/result';
-import { RuleMetadata } from '../core/rule';
+import { RuleMetadata, RuleStatus } from '../core/rule';
 
 export const CT_INT_004: RuleMetadata = {
   id: 'CT-INT-004',
@@ -56,7 +56,7 @@ export const CT_INT_004: RuleMetadata = {
   // registry only requires pass_at_least > fail_at_most.
   evaluation: { metric: 'assertion_count', pass_at_least: 0, fail_at_most: -1 },
   severity: 'info',
-  status: 'active',
+  status: RuleStatus.ACTIVE,
   local_decision: (context) => {
     const record = context.record ?? context;
     const unclassified = record.unclassified_constructs;

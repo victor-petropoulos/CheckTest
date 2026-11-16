@@ -59,6 +59,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts#it@12:0"
     }
   ],
@@ -115,6 +116,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<fixture-root>/case-27-k15-describe-fail/sample.test.ts#it@12:0"
         }
       ]

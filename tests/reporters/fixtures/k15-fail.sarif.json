@@ -15,7 +15,8 @@
               },
               "properties": {
                 "severity": "error",
-                "category": "integrity"
+                "category": "integrity",
+                "status": "active"
               }
             }
           ]

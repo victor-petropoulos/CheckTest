@@ -87,6 +87,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_parse@39:0"
     },
     {
@@ -96,6 +97,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_parse_raises@43:0"
     },
     {
@@ -105,6 +107,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_match_args@173:0"
     },
     {
@@ -114,6 +117,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_rc_and_c_equals@415:0"
     },
     {
@@ -123,6 +127,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_hash_with_warm_key_cache@422:0"
     },
     {
@@ -132,6 +137,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_base_version_hash@915:0"
     },
     {
@@ -141,6 +147,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_base_version_ne_with_base_version@920:0"
     },
     {
@@ -150,6 +157,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_gt_with_cached_other@926:0"
     },
     {
@@ -159,6 +167,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_compare_with_base_version_subclass@934:0"
     },
     {
@@ -168,6 +177,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_ne_with_uncached_keys@952:0"
     },
     {
@@ -177,6 +187,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_le_with_uncached_keys@971:0"
     },
     {
@@ -186,6 +197,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_major_version@985:0"
     },
     {
@@ -195,6 +207,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_minor_version@988:0"
     },
     {
@@ -204,6 +217,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_micro_version@992:0"
     },
     {
@@ -213,6 +227,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_unknown_argument@998:0"
     },
     {
@@ -222,6 +237,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_no_args@1004:0"
     },
     {
@@ -231,6 +247,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_epoch@1011:0"
     },
     {
@@ -240,6 +257,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_release_tuple@1020:0"
     },
     {
@@ -249,6 +267,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_release_none@1026:0"
     },
     {
@@ -258,6 +277,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_alpha@1030:0"
     },
     {
@@ -267,6 +287,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_alpha_none@1036:0"
     },
     {
@@ -276,6 +297,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_beta@1040:0"
     },
     {
@@ -285,6 +307,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_beta_none@1046:0"
     },
     {
@@ -294,6 +317,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_rc@1050:0"
     },
     {
@@ -303,6 +327,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_rc_none@1055:0"
     },
     {
@@ -312,6 +337,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_post@1059:0"
     },
     {
@@ -321,6 +347,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_post_none@1064:0"
     },
     {
@@ -330,6 +357,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_dev@1068:0"
     },
     {
@@ -339,6 +367,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_dev_none@1073:0"
     },
     {
@@ -348,6 +377,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_local_string@1077:0"
     },
     {
@@ -357,6 +387,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_local_none@1083:0"
     },
     {
@@ -366,6 +397,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_multiple_components@1087:0"
     },
     {
@@ -375,6 +407,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_clear_all_optional@1093:0"
     },
     {
@@ -384,6 +417,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_preserves_comparison@1098:0"
     },
     {
@@ -393,6 +427,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_preserves_hash@1107:0"
     },
     {
@@ -402,6 +437,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_returns_same_instance_when_unchanged@1115:0"
     },
     {
@@ -411,6 +447,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_change_pre_type@1126:0"
     },
     {
@@ -420,6 +457,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_epoch_type@1135:0"
     },
     {
@@ -429,6 +467,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_post_type@1140:0"
     },
     {
@@ -438,6 +477,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_dev_type@1145:0"
     },
     {
@@ -447,6 +487,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_epoch_negative@1150:0"
     },
     {
@@ -456,6 +497,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_release_empty@1155:0"
     },
     {
@@ -465,6 +507,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_release_tuple_content@1160:0"
     },
     {
@@ -474,6 +517,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_pre_negative@1167:0"
     },
     {
@@ -483,6 +527,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_pre_type@1172:0"
     },
     {
@@ -492,6 +537,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_pre_format@1177:0"
     },
     {
@@ -501,6 +547,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_post_negative@1186:0"
     },
     {
@@ -510,6 +557,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_dev_negative@1191:0"
     },
     {
@@ -519,6 +567,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_local_string@1196:0"
     },
     {
@@ -528,6 +577,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_deprecated__version@1229:0"
     },
     {
@@ -537,6 +587,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_hatchling_usage__version@1235:0"
     },
     {
@@ -546,6 +597,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_from_parts@1277:0"
     },
     {
@@ -555,6 +607,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_from_parts_rejects_non_str_pre_letter@1282:0"
     },
     {
@@ -564,6 +617,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_roundtrip@1302:0"
     },
     {
@@ -573,6 +627,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_old_format_loads@1333:0"
     },
     {
@@ -582,6 +637,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_old_format_re_pickled_is_clean@1350:0"
     },
     {
@@ -591,6 +647,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_26_0_slots_format_loads@1376:0"
     },
     {
@@ -600,6 +657,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_26_2_tuple_getstate_loads@1397:0"
     },
     {
@@ -609,6 +667,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_setstate_rejects_invalid_state@1412:0"
     },
     {
@@ -618,6 +677,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_structures_shim_repr@1429:0"
     },
     {
@@ -627,6 +687,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_trimmed_release_hash_from_unhashed_version@1435:0"
     },
     {
@@ -636,6 +697,7 @@
       "evidence": [
         "assertion_count"
       ],
+      "ruleStatus": "active",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_trimmed_release_hash_from_prehashed_version@1443:0"
     }
   ],
@@ -716,6 +778,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_parse@39:0"
         }
       ]
@@ -793,6 +856,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_parse_raises@43:0"
         }
       ]
@@ -870,6 +934,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_match_args@173:0"
         }
       ]
@@ -947,6 +1012,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_rc_and_c_equals@415:0"
         }
       ]
@@ -1024,6 +1090,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_hash_with_warm_key_cache@422:0"
         }
       ]
@@ -1101,6 +1168,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_base_version_hash@915:0"
         }
       ]
@@ -1178,6 +1246,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_base_version_ne_with_base_version@920:0"
         }
       ]
@@ -1255,6 +1324,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_gt_with_cached_other@926:0"
         }
       ]
@@ -1332,6 +1402,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_compare_with_base_version_subclass@934:0"
         }
       ]
@@ -1409,6 +1480,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_ne_with_uncached_keys@952:0"
         }
       ]
@@ -1486,6 +1558,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_le_with_uncached_keys@971:0"
         }
       ]
@@ -1563,6 +1636,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_major_version@985:0"
         }
       ]
@@ -1640,6 +1714,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_minor_version@988:0"
         }
       ]
@@ -1717,6 +1792,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_micro_version@992:0"
         }
       ]
@@ -1794,6 +1870,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_unknown_argument@998:0"
         }
       ]
@@ -1871,6 +1948,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_no_args@1004:0"
         }
       ]
@@ -1948,6 +2026,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_epoch@1011:0"
         }
       ]
@@ -2025,6 +2104,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_release_tuple@1020:0"
         }
       ]
@@ -2102,6 +2182,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_release_none@1026:0"
         }
       ]
@@ -2179,6 +2260,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_alpha@1030:0"
         }
       ]
@@ -2256,6 +2338,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_alpha_none@1036:0"
         }
       ]
@@ -2333,6 +2416,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_beta@1040:0"
         }
       ]
@@ -2410,6 +2494,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_beta_none@1046:0"
         }
       ]
@@ -2487,6 +2572,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_rc@1050:0"
         }
       ]
@@ -2564,6 +2650,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_rc_none@1055:0"
         }
       ]
@@ -2641,6 +2728,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_post@1059:0"
         }
       ]
@@ -2718,6 +2806,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_post_none@1064:0"
         }
       ]
@@ -2795,6 +2884,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_dev@1068:0"
         }
       ]
@@ -2872,6 +2962,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_dev_none@1073:0"
         }
       ]
@@ -2949,6 +3040,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_local_string@1077:0"
         }
       ]
@@ -3026,6 +3118,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_local_none@1083:0"
         }
       ]
@@ -3103,6 +3196,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_multiple_components@1087:0"
         }
       ]
@@ -3180,6 +3274,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_clear_all_optional@1093:0"
         }
       ]
@@ -3257,6 +3352,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_preserves_comparison@1098:0"
         }
       ]
@@ -3334,6 +3430,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_preserves_hash@1107:0"
         }
       ]
@@ -3411,6 +3508,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_returns_same_instance_when_unchanged@1115:0"
         }
       ]
@@ -3488,6 +3586,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_change_pre_type@1126:0"
         }
       ]
@@ -3565,6 +3664,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_epoch_type@1135:0"
         }
       ]
@@ -3642,6 +3742,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_post_type@1140:0"
         }
       ]
@@ -3719,6 +3820,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_dev_type@1145:0"
         }
       ]
@@ -3796,6 +3898,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_epoch_negative@1150:0"
         }
       ]
@@ -3873,6 +3976,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_release_empty@1155:0"
         }
       ]
@@ -3950,6 +4054,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_release_tuple_content@1160:0"
         }
       ]
@@ -4027,6 +4132,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_pre_negative@1167:0"
         }
       ]
@@ -4104,6 +4210,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_pre_type@1172:0"
         }
       ]
@@ -4181,6 +4288,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_pre_format@1177:0"
         }
       ]
@@ -4258,6 +4366,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_post_negative@1186:0"
         }
       ]
@@ -4335,6 +4444,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_dev_negative@1191:0"
         }
       ]
@@ -4412,6 +4522,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_local_string@1196:0"
         }
       ]
@@ -4489,6 +4600,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_deprecated__version@1229:0"
         }
       ]
@@ -4566,6 +4678,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_hatchling_usage__version@1235:0"
         }
       ]
@@ -4643,6 +4756,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_from_parts@1277:0"
         }
       ]
@@ -4720,6 +4834,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_from_parts_rejects_non_str_pre_letter@1282:0"
         }
       ]
@@ -4797,6 +4912,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_roundtrip@1302:0"
         }
       ]
@@ -4874,6 +4990,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_old_format_loads@1333:0"
         }
       ]
@@ -4951,6 +5068,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_old_format_re_pickled_is_clean@1350:0"
         }
       ]
@@ -5028,6 +5146,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_26_0_slots_format_loads@1376:0"
         }
       ]
@@ -5105,6 +5224,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_26_2_tuple_getstate_loads@1397:0"
         }
       ]
@@ -5182,6 +5302,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_setstate_rejects_invalid_state@1412:0"
         }
       ]
@@ -5259,6 +5380,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_structures_shim_repr@1429:0"
         }
       ]
@@ -5336,6 +5458,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_trimmed_release_hash_from_unhashed_version@1435:0"
         }
       ]
@@ -5413,6 +5536,7 @@
           "evidence": [
             "assertion_count"
           ],
+          "ruleStatus": "active",
           "test_id": "<corpus-root>/packaging/tests/test_version.py#test_trimmed_release_hash_from_prehashed_version@1443:0"
         }
       ]

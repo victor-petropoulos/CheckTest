@@ -31,7 +31,7 @@ Usage: checktest [check] --test <path> [--type <TYPE>] [--rule <id>] [--format <
   --test <path>   test file to analyze (required)
   --type <TYPE>   declared test type: UNIT | COMPONENT | INTEGRATION | CONTRACT | E2E | UNKNOWN
                   (default UNKNOWN; never inferred from the file)
-  --rule <id>     rule to evaluate (default CT-INT-001)
+  --rule <id>     rule to evaluate (default CT-INT-001); DRAFT rules are opt-in via --rule; DEPRECATED rules run by default
   --format <fmt>  report format: 'json' | 'sarif' (default json)
   --coverage-report <path>  external Istanbul/c8 coverage report to attach
   --source-revision <rev>   declared revision the coverage report was produced against
@@ -81,6 +81,21 @@ checktest check --test <file> --mutation-report <path> --mutation-source-revisio
 | `1`  | Usage error or runtime crash                                            |
 | `2`  | No verdict — engine reached no conclusion (e.g. file declares no tests) |
 
+### Rule Lifecycle
+
+- `CT-INT-001` — **Active**
+- `CT-INT-003` — **Active**
+- `CT-INT-004` — **Active**
+- `CT-COV-001` — **Active**
+- `CT-MUT-001` — **Active**
+- `CT-DEMO-001` — **Active**
+
+- **Active** — evaluated by default; verdicts produced like any rule.
+- **Draft** — excluded by default; opt in via `--rule <id>`.
+- **Deprecated** — still evaluated and reported until removal; reports carry `deprecatedSince`.
+
+No Draft or Deprecated rules are registered today; all six shipped rules are Active.
+
 ## Supported Frameworks
 
 Jest and Vitest are supported natively. Mocha-class bare-global derivations and Supertest HTTP assertion chains also produce evidence. JSX in `.js` test files parses.
@@ -93,7 +108,7 @@ Jest and Vitest are supported natively. Mocha-class bare-global derivations and 
 
 - **Python**: `pytest` and `unittest`, statically collected (the file is never executed) → adapter id `python-pytest-adapter` ([supported-syntax Python section](./docs/supported-syntax.md#python); [limitations §23](./docs/limitations.md)). Example: `checktest check --test test_sample.py --adapter python-pytest-adapter`
 
-See [docs/ and framework-detection rules. See [docs/limitations.md](./docs/limitations.md) for declared gaps. Coverage rule CT-COV-001 is currently a draft rule: it reports (and attaches) coverage evidence but produces no verdicts; see [docs/limitations.md](./docs/limitations.md) §14.
+See [docs/ and framework-detection rules. See [docs/limitations.md](./docs/limitations.md) for declared gaps. Coverage rule CT-COV-001 is Active (activated 2026-11-07 via ADR-031); with an explicit `--coverage-map` it evaluates mapped coverage — see [docs/limitations.md](./docs/limitations.md) §14.
 
 ## Example Output
 

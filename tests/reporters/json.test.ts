@@ -85,6 +85,7 @@ describe('toJson — evaluation status', () => {
         result: RuleResult.PASS,
         reason: expect.stringContaining('assertion_count=1 >= 1'),
         evidence: ['assertion_count'],
+        ruleStatus: 'active',
       },
     ]);
   });
@@ -199,10 +200,11 @@ describe('toJson — evaluation status', () => {
     expect(second).toBe(first);
   });
 
-  it('adds no test_id to a subject-level (synthetic) finding — exact four keys', () => {
+  it('adds no test_id to a subject-level (synthetic) finding — exact five keys', () => {
     const json = report(AnalysisStatus.SUCCESS);
     const finding = (json.ruleResults as Array<Record<string, unknown>>)[0];
-    expect(Object.keys(finding).sort()).toEqual(['evidence', 'reason', 'result', 'rule_id']);
+    // ruleStatus (5.6) joins the four original keys; test_id stays absent.
+    expect(Object.keys(finding).sort()).toEqual(['evidence', 'reason', 'result', 'ruleStatus', 'rule_id']);
     expect(finding.test_id).toBeUndefined();
   });
 
@@ -439,5 +441,51 @@ describe('toJson — finding location (B7 prerequisite)', () => {
     const json = JSON.parse(toJson(output, evaluateRule(RULE, output))) as Record<string, any>;
     const keys = Object.keys(json.ruleResults[0]);
     expect(keys[keys.length - 1]).toBe('location');
+  });
+});
+
+describe('toJson — rule lifecycle status (plan 5.6)', () => {
+  /** A DEPRECATED rule: evaluated by default, and it names its removal version (D7). */
+  const DEPRECATED_RULE: RuleMetadata = {
+    ...RULE,
+    id: 'CT-TEST-001',
+    status: 'deprecated',
+    deprecatedSince: '1.11.0',
+  };
+
+  it('emits the rule lifecycle status on every finding', () => {
+    const json = report(AnalysisStatus.SUCCESS);
+    const finding = (json.ruleResults as Array<Record<string, unknown>>)[0];
+    expect(finding.ruleStatus).toBe('active');
+    // Never an empty string, never absent.
+    expect(finding.ruleStatus).not.toBe('');
+    expect(finding.ruleStatus).toBeTruthy();
+  });
+
+  it('reports a DEPRECATED rule as deprecated and carries its deprecatedSince on the envelope', () => {
+    const output = analysis(AnalysisStatus.SUCCESS);
+    const json = JSON.parse(toJson(output, evaluateRule(DEPRECATED_RULE, output))) as Record<string, any>;
+    expect(json.ruleResults[0].ruleStatus).toBe('deprecated');
+    // D7 (reviewer C1): the JSON report states the deprecation version too.
+    expect(json.deprecatedSince).toBe('1.11.0');
+    expect(json.deprecatedSince).not.toBe('');
+  });
+
+  it('carries deprecatedSince on the per-test envelope as well', () => {
+    const output = twoTestAnalysis();
+    const json = JSON.parse(
+      toJson(output, evaluateRule(DEPRECATED_RULE, output), evaluateTests(DEPRECATED_RULE, output)),
+    ) as Record<string, any>;
+    expect(json.deprecatedSince).toBe('1.11.0');
+    for (const entry of json.testResults) {
+      expect(entry.deprecatedSince).toBe('1.11.0');
+      expect(entry.ruleResults[0].ruleStatus).toBe('deprecated');
+    }
+  });
+
+  it('omits deprecatedSince entirely for a rule that declares none (never an empty string)', () => {
+    const json = report(AnalysisStatus.SUCCESS);
+    expect('deprecatedSince' in json).toBe(false);
+    expect(json.deprecatedSince).toBeUndefined();
   });
 });

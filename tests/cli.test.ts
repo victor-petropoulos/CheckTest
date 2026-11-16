@@ -24,14 +24,16 @@ import { join } from 'path';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 
-import { main } from '../src/cli';
+import { main, runAnalysis } from '../src/cli';
 import { UsageError } from '../src/cli';
-import { getRule } from '../src/rules/registry';
+import { getRule, registerRule } from '../src/rules/registry';
 import { collectAnalysis } from '../src/adapters/typescript/collector';
 import { applyMutationReport } from '../src/providers/mutation';
 import { evaluateRule } from '../src/core/evaluation';
 import { TestType } from '../src/core/analysis';
 import { CT_MUT_001 } from '../src/rules/ct-mut-001';
+import { CT_INT_001 } from '../src/rules/ct-int-001';
+import { RuleMetadata, RuleStatus } from '../src/core/rule';
 
 const CASE_ROOT = join(__dirname, 'fixtures', 'ct-int-001');
 
@@ -870,5 +872,77 @@ describe('CLI --mutation-source-revision (phase9 3.1)', () => {
       REV,
     ]);
     expect(code).toBe(0);
+  });
+});
+
+/**
+ * Rule lifecycle at the CLI seam (plan task 5.3; D6 draft opt-in, D7
+ * deprecated-until-removal).
+ *
+ * DRAFT — excluded unless the rule is named EXPLICITLY with --rule; naming it
+ *         IS the opt-in, and the rule then produces a real verdict.
+ * DEPRECATED — evaluated by default, like an ACTIVE rule, and its deprecation
+ *         version is reported as rule metadata.
+ */
+describe('CLI --rule lifecycle (D6/D7)', () => {
+  // CT-INT-001 declares no local_decision hook and no thresholds_inert flag,
+  // so registering these clones adds nothing to the config-rejection sets.
+  const DRAFT_RULE: RuleMetadata = { ...CT_INT_001, id: 'CT-DRAFT-001', status: RuleStatus.DRAFT };
+  const DEPRECATED_RULE: RuleMetadata = {
+    ...CT_INT_001,
+    id: 'CT-DEPRECATED-001',
+    status: RuleStatus.DEPRECATED,
+    deprecatedSince: '1.11.0',
+  };
+
+  beforeAll(() => {
+    registerRule(DRAFT_RULE);
+    registerRule(DEPRECATED_RULE);
+  });
+
+  it('a DRAFT rule named via --rule is evaluated (opt-in) -> exit 0, verdict present', () => {
+    const code = main(['--test', fixture('case-01-standard-assertion'), '--type', 'UNIT', '--rule', DRAFT_RULE.id]);
+    expect(code).toBe(0);
+    const json = report();
+    expect(json.evaluationStatus).toBe('EVALUATED');
+    expect(json.ruleResults).toHaveLength(1);
+    expect(json.ruleResults[0].rule_id).toBe(DRAFT_RULE.id);
+    expect(json.ruleResults[0].result).toBe('PASS');
+  });
+
+  it('a DRAFT rule that is NOT named explicitly is skipped: no verdict, exit 2', () => {
+    const { report: json, exitCode } = runAnalysis({
+      test: fixture('case-01-standard-assertion'),
+      type: TestType.UNIT,
+      rule: DRAFT_RULE.id,
+      format: 'json',
+    });
+    expect(exitCode).toBe(2);
+    const parsed = JSON.parse(json);
+    expect(parsed.ruleResults).toEqual([]);
+    expect(parsed.evaluationStatus).toBe('FAILED');
+  });
+
+  it('the default run names no rule, so a DRAFT rule is never reported', () => {
+    const code = main(['--test', fixture('case-01-standard-assertion'), '--type', 'UNIT']);
+    expect(code).toBe(0);
+    const json = report();
+    expect(json.ruleResults.some((r: { rule_id: string }) => r.rule_id === DRAFT_RULE.id)).toBe(false);
+  });
+
+  it('a DEPRECATED rule is evaluated by default and reports its deprecation version', () => {
+    const code = main([
+      '--test',
+      fixture('case-01-standard-assertion'),
+      '--type',
+      'UNIT',
+      '--rule',
+      DEPRECATED_RULE.id,
+      '--format',
+      'sarif',
+    ]);
+    expect(code).toBe(0);
+    const sarif = JSON.parse(stdout);
+    expect(sarif.runs[0].tool.driver.rules[0].properties.deprecatedSince).toBe('1.11.0');
   });
 });

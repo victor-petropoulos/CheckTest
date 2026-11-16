@@ -47,7 +47,7 @@
 import { TestType } from '../core/analysis';
 import { CollectionStatus } from '../core/evidence';
 import { RuleResult } from '../core/result';
-import { RuleMetadata } from '../core/rule';
+import { RuleMetadata, RuleStatus } from '../core/rule';
 
 export const CT_INT_001: RuleMetadata = {
   id: 'CT-INT-001',
@@ -62,7 +62,7 @@ export const CT_INT_001: RuleMetadata = {
   conflicting_evidence_policy: RuleResult.INDETERMINATE,
   evaluation: { metric: 'assertion_count', pass_at_least: 1, fail_at_most: 0 },
   severity: 'error',
-  status: 'active',
+  status: RuleStatus.ACTIVE,
   // Advisory, milestone-1 only (validated as non-empty by registry.validateRule,
   // otherwise unused by the engine).
   rationale:

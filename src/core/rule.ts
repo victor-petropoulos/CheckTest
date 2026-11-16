@@ -12,6 +12,78 @@ import { CollectionStatus, EvidenceLocation, EvidenceRecord, EvidenceType } from
 import { RuleFinding, RuleResult } from './result';
 
 /**
+ * Rule lifecycle status — the CLOSED SET of lifecycle states a rule may be in
+ * (plan task 5.1; D6 draft opt-in, D7 deprecated-until-removal).
+ *
+ * WHY A CONST OBJECT + DERIVED UNION AND NOT A TS `enum`:
+ * the house pattern in this codebase (src/core/evidence.ts `Provenance`,
+ * `Availability`, `CollectionStatus`) is a plain TS `enum`, and a TS string
+ * enum is NOMINAL — `status: 'active'` stops compiling the moment the field
+ * is typed with it (verified against tsc 6.0.3: `error TS2322: Type
+ * '"active"' is not assignable to type 'RuleStatusEnum'`). Every rule file
+ * (src/rules/ct-*.ts) and the rule contract tests spell the status as a bare
+ * string literal today, and src/core/evaluation.ts:234 compares the field
+ * against the literal `'draft'`. Typing the field with a nominal enum here
+ * would therefore break consumers that live OUTSIDE this task's scope (rule
+ * files are migrated in task 5.2, the engine in task 5.3) and would silently
+ * change the recorded wire value of every rule.
+ *
+ * This shape keeps the wire values EXACTLY as they are ('active' | 'draft' |
+ * 'deprecated'), makes the field's type a single NAMED contract
+ * (`RuleMetadata['status']` is `RuleStatus`, no inline union), and leaves the
+ * members usable as values (`RuleStatus.ACTIVE`) so task 5.2 can migrate the
+ * rule files to the enum spelling without changing any recorded value. The
+ * union is DERIVED from the const object, so a member and its type can never
+ * drift apart.
+ */
+export const RuleStatus = {
+  /**
+   * Evaluated by default; a verdict is emitted and reported.
+   */
+  ACTIVE: 'active',
+  /**
+   * Excluded by default — no verdict, no report entry — UNLESS the rule is
+   * explicitly named via --rule (D6).
+   */
+  DRAFT: 'draft',
+  /**
+   * Evaluated by default; a verdict is emitted and reported, until a
+   * documented removal version (D7). A rule in this state MUST carry
+   * `deprecatedSince`.
+   */
+  DEPRECATED: 'deprecated',
+} as const;
+
+/**
+ * The status values a rule may carry — DERIVED from {@link RuleStatus} so the
+ * runtime members and the compile-time type can never drift apart.
+ *
+ * statusBehavior — WHAT each status MEANS operationally. This is the contract
+ * src/core/evaluation.ts and src/rules/registry.ts will enforce in tasks 5.3
+ * and 5.4; it is documented HERE (task 5.1) so the rule contract states the
+ * intended behaviour before the enforcement lands.
+ *
+ *   ACTIVE      evaluated by default; a verdict is emitted and reported.
+ *   DRAFT       excluded by default: no verdict, no report entry. A verdict IS
+ *               emitted when the rule is explicitly named via --rule (D6).
+ *   DEPRECATED  evaluated by default; a verdict is emitted and reported, until
+ *               a documented removal version (D7). `deprecatedSince` is
+ *               REQUIRED in this state and names that version.
+ *
+ * ENFORCEMENT STATUS (stated honestly, not aspirationally):
+ *   - ACTIVE — live today; src/core/evaluation.ts evaluates every active rule.
+ *   - DRAFT — EXCLUDED by default (src/core/evaluation.ts short-circuits on
+ *     RuleStatus.DRAFT); naming the rule EXPLICITLY via --rule opts IN, and
+ *     the rule is then evaluated like an active one (D6, task 5.3).
+ *   - DEPRECATED — evaluated by default (no engine branch treats
+ *     'deprecated' specially, so a deprecated rule still produces a verdict)
+ *     and its `deprecatedSince` version rides on the evaluation envelope and
+ *     on the SARIF rule descriptor (D7, task 5.3). The `deprecatedSince`
+ *     requirement is contract-only until task 5.4 adds the registry check.
+ */
+export type RuleStatus = (typeof RuleStatus)[keyof typeof RuleStatus];
+
+/**
  * The numeric threshold a rule applies to its single named evidence item.
  *
  * HIGHER-IS-BETTER contract: the metric counts something the collector can add
@@ -98,17 +170,25 @@ export interface RuleMetadata {
   decide?: RuleLocalDecisionHook;
   severity: 'error' | 'warning' | 'info';
   /**
-   * Lifecycle label (SPEC:1240-1245: EXPERIMENTAL | STABLE | DEPRECATED).
-   *
-   * ADVISORY IN MILESTONE-1 — recorded, NOT enforced. Neither `evaluateRule`
-   * nor the CLI filters on this field, so a `draft` or `deprecated` rule is
-   * still evaluated and still reported when explicitly requested. This comment
-   * previously claimed draft rules are "never reported", which was never
-   * implemented; the smaller correct fix is to state the real behaviour rather
-   * than add untested filtering to the engine. Enforcement is deferred to the
-   * milestone that introduces rule lifecycle / promotion policy.
+   * Lifecycle status of this rule. Typed as the NAMED `RuleStatus` contract
+   * (not the former inline 'active' | 'draft' | 'deprecated' union) so the
+   * legal values are declared once, in one place, with the per-status
+   * behaviour documented on {@link RuleStatus}.
    */
-  status: 'active' | 'draft' | 'deprecated';
+  status: RuleStatus;
+  /**
+   * The version in which a DEPRECATED rule was deprecated, e.g. '1.11.0'.
+   *
+   * REQUIRED when `status` is `RuleStatus.DEPRECATED`: a deprecated rule with
+   * no removal version cannot say when it goes away, which is the whole point
+   * of deprecating instead of removing (D7). Meaningless for the other two
+   * statuses, so it stays optional.
+   *
+   * NOT ENFORCED YET — the registry check that rejects a DEPRECATED rule
+   * without this field lands in task 5.4 (src/rules/registry.ts); until then
+   * this is a recorded, contract-level field.
+   */
+  deprecatedSince?: string;
   /**
    * WHY this rule exists, in prose (roadmap task 23: "rationale, limitations,
    * documentation reference — where applicable"). ADVISORY IN MILESTONE-1:

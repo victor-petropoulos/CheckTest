@@ -37,7 +37,7 @@ import {
   Provenance,
 } from '../../src/core/evidence';
 import { EvaluationStatus, RuleFinding, RuleResult } from '../../src/core/result';
-import { RuleMetadata } from '../../src/core/rule';
+import { RuleMetadata, RuleStatus } from '../../src/core/rule';
 
 const RULE: RuleMetadata = {
   id: 'CT-TEST-000',
@@ -746,5 +746,78 @@ describe('requiresCompleteForNegativeVerdict — completeness gate', () => {
   });
   it('UNAVAILABLE × UNAVAILABLE → true', () => {
     expect(requiresCompleteForNegativeVerdict(CollectionStatus.UNAVAILABLE, CollectionStatus.UNAVAILABLE)).toBe(true);
+  });
+});
+
+/**
+ * Rule lifecycle (plan task 5.3; D6 draft opt-in, D7 deprecated-until-removal).
+ *
+ * DRAFT — excluded from evaluation unless the caller named the rule
+ *          EXPLICITLY (the CLI's --rule); naming it IS the opt-in.
+ * DEPRECATED — evaluated by default, exactly like an ACTIVE rule, and its
+ *          deprecation version rides on the evaluation envelope.
+ */
+describe('rule lifecycle — DRAFT opt-in and DEPRECATED metadata (D6/D7)', () => {
+  const DRAFT_RULE: RuleMetadata = { ...RULE, id: 'CT-DRAFT-001', status: RuleStatus.DRAFT };
+  const DEPRECATED_RULE: RuleMetadata = {
+    ...RULE,
+    id: 'CT-DEPRECATED-001',
+    status: RuleStatus.DEPRECATED,
+    deprecatedSince: '1.11.0',
+  };
+
+  it('DRAFT: not named -> no verdict at all (status FAILED, finding null)', () => {
+    const result = evaluateRule(DRAFT_RULE, analysis());
+    expect(result.status).toBe(EvaluationStatus.FAILED);
+    expect(result.finding).toBeNull();
+  });
+
+  it('DRAFT: named explicitly -> evaluated like an ACTIVE rule (PASS)', () => {
+    const result = evaluateRule(DRAFT_RULE, analysis(), new Set([DRAFT_RULE.id]));
+    expect(result.status).toBe(EvaluationStatus.EVALUATED);
+    expect(result.finding?.result).toBe(RuleResult.PASS);
+    expect(result.finding?.rule_id).toBe(DRAFT_RULE.id);
+  });
+
+  it('DRAFT: naming a DIFFERENT rule does not opt this one in', () => {
+    const result = evaluateRule(DRAFT_RULE, analysis(), new Set(['CT-OTHER-001']));
+    expect(result.status).toBe(EvaluationStatus.FAILED);
+    expect(result.finding).toBeNull();
+  });
+
+  it('DRAFT: every scope is skipped by default, and every scope is decided when named', () => {
+    const base = analysis();
+    const scoped: AnalysisOutput = {
+      ...base,
+      tests: [
+        {
+          test: { id: 'sample.test.ts#it@2', name: 'asserts once', line: 2, declaration: 'it' },
+          analysis: base.analysis,
+          evidence: { assertion_count: record({ value: 1 }) },
+          declaration_gap: null,
+        },
+      ],
+    };
+    const skipped = evaluateTests(DRAFT_RULE, scoped);
+    expect(skipped.map((s) => s.status)).toEqual([EvaluationStatus.FAILED]);
+    expect(skipped.map((s) => s.finding)).toEqual([null]);
+    const opted = evaluateTests(DRAFT_RULE, scoped, new Set([DRAFT_RULE.id]));
+    expect(opted.map((s) => s.finding?.result)).toEqual([RuleResult.PASS]);
+  });
+
+  it('DEPRECATED: evaluated by default, exactly like an ACTIVE rule', () => {
+    const result = evaluateRule(DEPRECATED_RULE, analysis());
+    expect(result.status).toBe(EvaluationStatus.EVALUATED);
+    expect(result.finding?.result).toBe(RuleResult.PASS);
+  });
+
+  it('DEPRECATED: the deprecation version rides on the evaluation envelope', () => {
+    expect(evaluateRule(DEPRECATED_RULE, analysis()).deprecatedSince).toBe('1.11.0');
+    expect(evaluateTests(DEPRECATED_RULE, analysis())[0].deprecatedSince).toBe('1.11.0');
+  });
+
+  it('no deprecation version -> the envelope carries no such key (never an empty string)', () => {
+    expect('deprecatedSince' in evaluateRule(RULE, analysis())).toBe(false);
+    expect('deprecatedSince' in evaluateTests(RULE, analysis())[0]).toBe(false);
   });
 });

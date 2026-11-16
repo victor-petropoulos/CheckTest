@@ -163,7 +163,18 @@ function serializeRule(rule: RuleMetadata): Json {
     id: rule.id,
     shortDescription: { text: rule.name },
     // Rule-severity lives HERE, separate from every result's `level`.
-    properties: { severity: rule.severity, category: rule.category },
+    properties: {
+      severity: rule.severity,
+      category: rule.category,
+      // 5.6: the rule's lifecycle status rides on the RULE DESCRIPTOR — the
+      // SARIF-native home for rule-level metadata. A consumer reading the
+      // descriptor alone can tell an active rule from a deprecated one.
+      status: rule.status,
+      // D7: a DEPRECATED rule names the version it was deprecated in, so a
+      // consumer can see how long it has been on its way out. Present only
+      // when the rule declares one.
+      ...(rule.deprecatedSince !== undefined ? { deprecatedSince: rule.deprecatedSince } : {}),
+    },
   };
 }
 
