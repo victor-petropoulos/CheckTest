@@ -185,6 +185,11 @@ export function getRule(id: string): RuleMetadata | undefined {
   return rules.get(id);
 }
 
+/** All rules currently registered, in registration order. */
+export function allRules(): RuleMetadata[] {
+  return Array.from(rules.values());
+}
+
 /**
  * Derived membership for the config threshold-rejection contract
  * (hook-based local-decision rules). Does not include thresholds_inert

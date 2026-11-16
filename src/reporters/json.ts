@@ -29,7 +29,7 @@
  * serializes byte-identically.
  */
 
-import { AnalysisOutput, TestScopeResult } from '../core/analysis';
+import { AnalysisOutput, Completeness, TestScopeResult } from '../core/analysis';
 import { evaluationScopes } from './common';
 import { EvidenceConflict, EvidenceLocation, EvidenceRecord } from '../core/evidence';
 import { EvaluationResult, EvaluationStatus, RuleFinding, RuleResult, TestEvaluation } from '../core/result';
@@ -119,7 +119,12 @@ function serializeEvidence(record: EvidenceRecord): Json {
   return json;
 }
 
-function serializeFinding(finding: RuleFinding, testId: string | null): Json {
+function serializeFinding(
+  finding: RuleFinding,
+  testId: string | null,
+  evidence?: Readonly<Record<string, EvidenceRecord>>,
+  completeness?: Completeness,
+): Json {
   const json: Json = {
     rule_id: finding.rule_id,
     result: finding.result,
@@ -132,10 +137,33 @@ function serializeFinding(finding: RuleFinding, testId: string | null): Json {
     // consumer reading them sees — is unchanged.
     ruleStatus: finding.ruleStatus,
   };
+  // 6.2: self-contained fields copied straight off the RuleFinding (6.1).
+  // Present-when-present (D11): omitted, never an empty string, when the rule
+  // declared no such metadata.
+  setIfPresent(json, 'description', finding.description);
+  setIfPresent(json, 'rationale', finding.rationale);
+  setIfPresent(json, 'limitations', finding.limitations);
+  setIfPresent(json, 'docsUrl', finding.docsUrl);
+  setIfPresent(json, 'evidenceStrength', finding.evidenceStrength);
+  // 6.2: provenance/availability derived from the evidence record the finding
+  // references (finding.evidence types + the scope's evidence map). Absent →
+  // omitted, never fabricated.
+  if (evidence !== undefined) {
+    const record = finding.evidence.map((type) => evidence[type]).find((r) => r !== undefined);
+    if (record !== undefined) {
+      json.provenance = record.provenance;
+      json.availability = record.availability;
+    }
+  }
   // Appended LAST and ONLY for a per-test scope: a subject-level (synthetic)
   // envelope keeps its exact four-key finding, byte for byte.
   if (testId !== null) {
     json.test_id = testId;
+  }
+  // 6.2: completeness derived from the scope's analysis summary. Absent →
+  // omitted, never fabricated.
+  if (completeness !== undefined) {
+    json.completeness = completeness;
   }
   // B7 prerequisite: copy the finding location (if any) LAST, so the existing
   // key order is preserved and no position is fabricated. Column is dropped by
@@ -147,8 +175,13 @@ function serializeFinding(finding: RuleFinding, testId: string | null): Json {
 }
 
 /** One finding, or none — an aborted scope carries no verdict, never a stand-in. */
-function serializeFindings(finding: RuleFinding | null, testId: string | null): Json[] {
-  return finding === null ? [] : [serializeFinding(finding, testId)];
+function serializeFindings(
+  finding: RuleFinding | null,
+  testId: string | null,
+  evidence?: Readonly<Record<string, EvidenceRecord>>,
+  completeness?: Completeness,
+): Json[] {
+  return finding === null ? [] : [serializeFinding(finding, testId, evidence, completeness)];
 }
 
 /**
@@ -171,7 +204,12 @@ function serializeTestResult(scope: TestScopeResult, evaluation: TestEvaluation)
     evidence: Object.fromEntries(
       Object.entries(scope.evidence).map(([type, record]) => [type, serializeEvidence(record)]),
     ),
-    ruleResults: serializeFindings(evaluation.finding, evaluation.test?.id ?? null),
+    ruleResults: serializeFindings(
+      evaluation.finding,
+      evaluation.test?.id ?? null,
+      scope.evidence,
+      scope.analysis.completeness,
+    ),
     // D7 (reviewer C1): the scope envelope carries the rule's deprecation
     // version, so the JSON report states it too. Present ONLY when the rule
     // declares one — the key is omitted, never an empty string.
@@ -286,7 +324,18 @@ export function toJson(
     // Flattened, in scope order: one authoritative list. There is deliberately
     // NO separate file-level aggregate verdict beside it — an aggregate PASS
     // next to a per-test FAIL is the same leak (plan task 7, open question).
-    ruleResults: scopes.flatMap((scope) => serializeFindings(scope.finding, scope.test?.id ?? null)),
+    ruleResults: scopes.flatMap((scope, index) => {
+      const testScope = analysis.tests !== undefined ? analysis.tests[index] : undefined;
+      const evidence =
+        scope.test === null ? analysis.evidence : testScope !== undefined ? testScope.evidence : analysis.evidence;
+      const completenessValue =
+        scope.test === null
+          ? analysis.analysis.completeness
+          : testScope !== undefined
+            ? testScope.analysis.completeness
+            : analysis.analysis.completeness;
+      return serializeFindings(scope.finding, scope.test?.id ?? null, evidence, completenessValue);
+    }),
     // Everything below is appended LAST so a consumer reading only the original
     // keys above sees unchanged bytes. The two optional dispatch keys sit
     // inside that block, between `schemaVersion` and the per-test keys.

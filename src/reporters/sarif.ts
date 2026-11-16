@@ -162,6 +162,8 @@ function serializeRule(rule: RuleMetadata): Json {
   return {
     id: rule.id,
     shortDescription: { text: rule.name },
+    // 6.3: the rule's own description becomes the SARIF-native fullDescription.
+    fullDescription: { text: rule.description },
     // Rule-severity lives HERE, separate from every result's `level`.
     properties: {
       severity: rule.severity,
@@ -174,6 +176,11 @@ function serializeRule(rule: RuleMetadata): Json {
       // consumer can see how long it has been on its way out. Present only
       // when the rule declares one.
       ...(rule.deprecatedSince !== undefined ? { deprecatedSince: rule.deprecatedSince } : {}),
+      // 6.3: self-contained rule metadata (6.1) rides on the descriptor's
+      // properties, present-when-present (D11) — never an empty string.
+      ...(rule.rationale !== undefined ? { rationale: rule.rationale } : {}),
+      ...(rule.limitations !== undefined ? { limitations: rule.limitations } : {}),
+      ...(rule.docsUrl !== undefined ? { docsUrl: rule.docsUrl } : {}),
     },
   };
 }

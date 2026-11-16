@@ -19,6 +19,13 @@
  */
 
 import { evaluateRule, evaluateTests, requiresCompleteForNegativeVerdict } from '../../src/core/evaluation';
+import { registerRule, allRules } from '../../src/rules/registry';
+import { CT_INT_001 } from '../../src/rules/ct-int-001';
+import { CT_INT_003 } from '../../src/rules/ct-int-003';
+import { CT_INT_004 } from '../../src/rules/ct-int-004';
+import { CT_COV_001 } from '../../src/rules/ct-cov-001';
+import { CT_MUT_001 } from '../../src/rules/ct-mut-001';
+import { CT_DEMO_001 } from '../../src/rules/ct-demo-001';
 import {
   AnalysisOutput,
   AnalysisStatus,
@@ -819,5 +826,126 @@ describe('rule lifecycle — DRAFT opt-in and DEPRECATED metadata (D6/D7)', () =
   it('no deprecation version -> the envelope carries no such key (never an empty string)', () => {
     expect('deprecatedSince' in evaluateRule(RULE, analysis())).toBe(false);
     expect('deprecatedSince' in evaluateTests(RULE, analysis())[0]).toBe(false);
+  });
+});
+
+describe('reason field stays evidence-tied (plan 6.4)', () => {
+  const PRESCRIPTION = /\b(should|must|fix|recommend)\b/i;
+  const COVERAGE_COMPLETE = {
+    status: CollectionStatus.COMPLETE,
+    supported_frameworks: ['jest', 'vitest', 'mocha'],
+    supported_assertion_forms: ['expect-to-be'],
+  };
+  const COVERAGE_PARTIAL = {
+    status: CollectionStatus.PARTIAL,
+    supported_frameworks: ['jest', 'vitest', 'mocha'],
+    supported_assertion_forms: ['expect-to-be'],
+  };
+
+  beforeAll(() => {
+    for (const rule of [CT_INT_001, CT_INT_003, CT_INT_004, CT_COV_001, CT_MUT_001, CT_DEMO_001]) {
+      registerRule(rule);
+    }
+  });
+
+  function recordFor(rule: { id: string }, evType: string, scenario: string): EvidenceRecord {
+    const partial = scenario === 'incomplete';
+    const unknownAvail = scenario === 'unknown-avail';
+    const coverage = partial ? COVERAGE_PARTIAL : COVERAGE_COMPLETE;
+    const availability = partial || unknownAvail ? Availability.UNKNOWN : Availability.KNOWN;
+
+    let value: unknown;
+    if (scenario === 'nonfinite') {
+      value = Number.NaN;
+    } else if (evType === 'mutation_score') {
+      if (scenario === 'fail') value = { score: 0.2, killed: 1, survived: 4, detected: 1, valid: 5 };
+      else value = { score: 0.8, killed: 4, survived: 1, detected: 4, valid: 5 };
+    } else if (scenario === 'fail') {
+      value = 0;
+    } else if (scenario === 'between') {
+      value = 0.5;
+    } else {
+      value = 1;
+    }
+
+    const rec: EvidenceRecord = {
+      type: evType,
+      value,
+      availability,
+      provenance: evType === 'line_coverage' || evType === 'mutation_score' ? Provenance.EXTERNAL : Provenance.DIRECT,
+      source: 'test-adapter',
+      collector_version: '0.0.0',
+      scope: 'test-body',
+      coverage,
+    };
+
+    if (scenario === 'conflict') {
+      rec.conflicts = [{ value: 2, source: 'x', provenance: Provenance.DIRECT, collector_version: '0.0.0' }];
+    }
+
+    if (evType === 'assertion_count' && rule.id === 'CT-INT-003') {
+      rec.unestablished_assertions = scenario === 'fail' ? { count: 1, reasons: ['r'] } : { count: 0, reasons: [] };
+    }
+    if (evType === 'assertion_count' && rule.id === 'CT-INT-004') {
+      rec.unclassified_constructs = scenario === 'fail' ? { count: 1, reasons: ['r'] } : { count: 0, reasons: [] };
+    }
+
+    return rec;
+  }
+
+  function buildEnvelope(rule: any, scenario: string): AnalysisOutput {
+    const inapplicableType = rule.applies_to[0] === TestType.UNIT ? TestType.COMPONENT : TestType.UNIT;
+    const testType =
+      scenario === 'unknown-type' ? TestType.UNKNOWN : scenario === 'na' ? inapplicableType : rule.applies_to[0];
+    const status = scenario === 'unsupported' ? AnalysisStatus.UNSUPPORTED : AnalysisStatus.SUCCESS;
+    const evidence =
+      scenario === 'absent'
+        ? {}
+        : Object.fromEntries(
+            (rule.required_evidence as string[]).map((ev: string) => [ev, recordFor(rule, ev, scenario)]),
+          );
+    const capabilities = Object.fromEntries(
+      (rule.required_evidence as string[]).map((ev: string) => [ev, CapabilityStatus.AVAILABLE]),
+    );
+    return {
+      subject: { id: 's', name: 'sample', file: 'sample.test.ts', language: 'typescript' },
+      analysis: {
+        status,
+        completeness: Completeness.COMPLETE,
+        scope: rule.analysis_scope,
+        test_type: { value: testType, source: ClassificationSource.EXPLICIT },
+      },
+      evidence,
+      capabilities,
+    };
+  }
+
+  const SCENARIOS = [
+    'pass',
+    'fail',
+    'unknown-type',
+    'na',
+    'unsupported',
+    'absent',
+    'incomplete',
+    'unknown-avail',
+    'conflict',
+    'between',
+    'nonfinite',
+  ];
+
+  it('every shipped rule reason is free of prescription keywords across verdict paths', () => {
+    let findingCount = 0;
+    for (const rule of allRules()) {
+      for (const scenario of SCENARIOS) {
+        const env = buildEnvelope(rule, scenario);
+        const er = evaluateRule(rule, env);
+        if (er.finding) {
+          findingCount++;
+          expect(er.finding.reason).not.toMatch(PRESCRIPTION);
+        }
+      }
+    }
+    expect(findingCount).toBeGreaterThan(0);
   });
 });

@@ -633,6 +633,129 @@ describe('CLI --mutation-report', () => {
   });
 });
 
+describe('file-level CT-MUT-001 surfacing (plan 6.9b)', () => {
+  const REV = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const SUBJECT = fixture('case-01-standard-assertion');
+
+  function scoredReport(name: string, statuses: string[]): string {
+    const mutants = statuses.map((status, index) => ({
+      id: String(index),
+      mutatorName: 'BooleanLiteral',
+      replacement: 'false',
+      status,
+    }));
+    const TMP = join(process.env.TMPDIR || tmpdir(), 'checktest-cli-mutation');
+    mkdirSync(TMP, { recursive: true });
+    const p = join(TMP, name);
+    writeFileSync(
+      p,
+      JSON.stringify({
+        schemaVersion: '2',
+        files: { [SUBJECT]: { language: 'typescript', source: 'function a() { return true; }', mutants } },
+      }),
+      'utf8',
+    );
+    return p;
+  }
+
+  function runCli(reportPath: string, extra: string[] = []): number {
+    stdout = '';
+    return main([
+      '--test',
+      SUBJECT,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-MUT-001',
+      '--mutation-report',
+      reportPath,
+      ...extra,
+    ]);
+  }
+
+  it('PASS: valid mutation report score >= 0.5 surfaces file-level CT-MUT-001 entry (no test_id) alongside per-test findings', () => {
+    const p = scoredReport('p69b-pass.json', ['Survived', 'Killed']);
+    const code = runCli(p, ['--mutation-source-revision', REV]);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    const json = report();
+    const perTest = json.ruleResults.filter((e: any) => e.test_id !== undefined);
+    const fileLevel = json.ruleResults.filter((e: any) => e.test_id === undefined);
+    expect(perTest).toHaveLength(1);
+    expect(fileLevel).toHaveLength(1);
+    expect(fileLevel[0].rule_id).toBe('CT-MUT-001');
+    expect(fileLevel[0].result).toBe('PASS');
+    expect(fileLevel[0]).not.toHaveProperty('test_id');
+  });
+
+  it('FAIL: valid mutation report score < 0.5 surfaces file-level CT-MUT-001 entry FAIL (no test_id)', () => {
+    const p = scoredReport('p69b-fail.json', ['Survived', 'Survived', 'Survived']);
+    const code = runCli(p, ['--mutation-source-revision', REV]);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    const json = report();
+    const fileLevel = json.ruleResults.filter((e: any) => e.test_id === undefined);
+    expect(fileLevel).toHaveLength(1);
+    expect(fileLevel[0].rule_id).toBe('CT-MUT-001');
+    expect(fileLevel[0].result).toBe('FAIL');
+    expect(fileLevel[0]).not.toHaveProperty('test_id');
+  });
+
+  it('SARIF: results[] contains the file-level entry (no properties.testId) alongside per-test results', () => {
+    const p = scoredReport('p69b-sarif.json', ['Survived', 'Killed']);
+    stdout = '';
+    const code = main([
+      '--test',
+      SUBJECT,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-MUT-001',
+      '--format',
+      'sarif',
+      '--mutation-report',
+      p,
+      '--mutation-source-revision',
+      REV,
+    ]);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    const sarif = JSON.parse(stdout);
+    const results = sarif.runs[0].results;
+    const perTest = results.filter((r: any) => r.properties?.testId !== undefined);
+    const fileLevel = results.filter((r: any) => r.properties?.testId === undefined);
+    expect(perTest).toHaveLength(1);
+    expect(fileLevel).toHaveLength(1);
+    expect(fileLevel[0].ruleId).toBe('CT-MUT-001');
+    expect(fileLevel[0].properties).not.toHaveProperty('testId');
+    expect(fileLevel[0].properties.result).toBe('PASS');
+  });
+
+  it('Negative: no mutation report -> no extra ruleResults entry (existing behavior preserved)', () => {
+    stdout = '';
+    const code = main(['--test', SUBJECT, '--type', 'UNIT', '--rule', 'CT-MUT-001']);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    const json = report();
+    expect(json.ruleResults).toHaveLength(1);
+    expect(json.ruleResults.every((e: any) => e.test_id !== undefined)).toBe(true);
+  });
+
+  it('summary.total counts the file-level entry (contract pin, plan 6.9)', () => {
+    const p = scoredReport('p69c-total.json', ['Survived', 'Killed']);
+    const code = runCli(p, ['--mutation-source-revision', REV]);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    const json = report();
+    const perTestCount = json.ruleResults.filter((e: any) => e.test_id !== undefined).length;
+    expect(json.summary.total).toBe(perTestCount + 1);
+    const fileLevel = json.ruleResults.filter((e: any) => e.test_id === undefined);
+    expect(fileLevel).toHaveLength(1);
+    expect(fileLevel[0].rule_id).toBe('CT-MUT-001');
+    expect(fileLevel[0]).not.toHaveProperty('test_id');
+  });
+});
+
 describe('CLI --config (SP4.1)', () => {
   const TMP = join(process.env.TMPDIR || tmpdir(), 'phase5-config');
 

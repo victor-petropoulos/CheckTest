@@ -71,7 +71,7 @@ checktest check --test <file> --mutation-report <path> --mutation-source-revisio
 - `--mutation-report <path>` attaches the external Stryker mutation report JSON.
 - `--mutation-source-revision <rev>` declares the revision the mutation report was produced against (valid git rev or `unknown`).
 - Freshness: report usable when declared revision matches analyzed git HEAD; mismatch or missing flag → INDETERMINATE (CT-MUT-001), never FAIL from stale/missing report.
-- CT-MUT-001: PASS ≥ 0.5 / FAIL < 0.5 on mutation_score, only when freshness established.
+- CT-MUT-001: PASS ≥ 0.5 / FAIL < 0.5 on mutation_score, only when freshness established. The verdict is file-level (mutation evidence is never per-declaration): it appears as a `ruleResults` entry with no `test_id`, alongside any per-test findings, and its `rationale` states that no per-declaration attribution is claimed.
 
 ### Exit Codes
 

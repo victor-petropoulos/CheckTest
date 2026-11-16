@@ -135,6 +135,7 @@ describe('toSarif — envelope', () => {
       {
         id: RULE.id,
         shortDescription: { text: RULE.name },
+        fullDescription: { text: RULE.description },
         properties: { severity: 'error', category: 'integrity', status: 'active' },
       },
     ]);
@@ -428,5 +429,132 @@ describe('toSarif — rule lifecycle status (plan 5.6)', () => {
   it('omits deprecatedSince for a rule that declares none (never an empty string)', () => {
     const properties = sarif(analysis(AnalysisStatus.SUCCESS)).runs[0].tool.driver.rules[0].properties;
     expect(properties.deprecatedSince).toBeUndefined();
+  });
+});
+
+describe('toSarif — rule self-contained fields (plan 6.3)', () => {
+  const DOCUMENTED_RULE: RuleMetadata = {
+    ...RULE,
+    id: 'CT-TEST-002',
+    rationale: 'WHY the rule exists.',
+    limitations: 'What the verdict does NOT establish.',
+    docsUrl: 'https://example.invalid/rules/CT-TEST-002',
+  };
+
+  it('emits fullDescription.text from rule.description', () => {
+    const rule = sarif(analysis(AnalysisStatus.SUCCESS)).runs[0].tool.driver.rules[0];
+    expect(rule.fullDescription).toEqual({ text: RULE.description });
+  });
+
+  it('emits rationale/limitations/docsUrl on properties when present', () => {
+    const rule = sarif(analysis(AnalysisStatus.SUCCESS), DOCUMENTED_RULE).runs[0].tool.driver.rules[0];
+    expect(rule.fullDescription.text).toBe(DOCUMENTED_RULE.description);
+    expect(rule.properties.rationale).toBe(DOCUMENTED_RULE.rationale);
+    expect(rule.properties.limitations).toBe(DOCUMENTED_RULE.limitations);
+    expect(rule.properties.docsUrl).toBe(DOCUMENTED_RULE.docsUrl);
+  });
+
+  it('omits rationale/limitations/docsUrl when absent (never an empty string)', () => {
+    const rule = sarif(analysis(AnalysisStatus.SUCCESS)).runs[0].tool.driver.rules[0];
+    expect(rule.properties.rationale).toBeUndefined();
+    expect(rule.properties.limitations).toBeUndefined();
+    expect(rule.properties.docsUrl).toBeUndefined();
+  });
+});
+
+/**
+ * Contract schema tests (plan 6.5) — pin that every rule descriptor and
+ * every result in the SARIF report carries the documented field set.
+ */
+describe('toSarif — self-contained field contract (plan 6.5)', () => {
+  const FULLY_DOCUMENTED_RULE: RuleMetadata = {
+    ...RULE,
+    id: 'CT-TEST-DOC',
+    rationale: 'WHY this rule exists.',
+    limitations: 'What this verdict does NOT establish.',
+    docsUrl: 'https://example.invalid/rules/CT-TEST-DOC',
+  };
+
+  it('a fully-documented rule descriptor has id, name (shortDescription), fullDescription, properties.{rationale,limitations,docsUrl,status} (a)', () => {
+    const rule = sarif(analysis(AnalysisStatus.SUCCESS), FULLY_DOCUMENTED_RULE).runs[0].tool.driver.rules[0];
+
+    // Required keys (always present)
+    expect(rule).toHaveProperty('id');
+    expect(rule).toHaveProperty('shortDescription');
+    expect(rule).toHaveProperty('fullDescription');
+    expect(rule).toHaveProperty('properties');
+
+    // shortDescription.text carries the rule's name (SARIF shape: name → shortDescription)
+    expect(rule.shortDescription).toHaveProperty('text');
+    expect(rule.shortDescription.text).toBe(FULLY_DOCUMENTED_RULE.name);
+
+    // fullDescription.text is rule.description
+    expect(rule.fullDescription).toHaveProperty('text');
+    expect(rule.fullDescription.text).toBe(FULLY_DOCUMENTED_RULE.description);
+
+    // Optional properties present-when-present (declared by FULLY_DOCUMENTED_RULE)
+    expect(rule.properties).toHaveProperty('rationale');
+    expect(rule.properties).toHaveProperty('limitations');
+    expect(rule.properties).toHaveProperty('docsUrl');
+    expect(rule.properties).toHaveProperty('status');
+    expect(rule.properties.rationale).toBe(FULLY_DOCUMENTED_RULE.rationale);
+    expect(rule.properties.limitations).toBe(FULLY_DOCUMENTED_RULE.limitations);
+    expect(rule.properties.docsUrl).toBe(FULLY_DOCUMENTED_RULE.docsUrl);
+    expect(rule.properties.status).toBe(RULE.status);
+  });
+
+  it('a minimal rule descriptor has id, shortDescription, fullDescription, properties.{severity,category,status} — optional keys absent-by-design (b)', () => {
+    const rule = sarif(analysis(AnalysisStatus.SUCCESS)).runs[0].tool.driver.rules[0];
+
+    // Required keys (always present)
+    expect(rule).toHaveProperty('id');
+    expect(rule).toHaveProperty('shortDescription');
+    expect(rule.shortDescription).toHaveProperty('text');
+    expect(rule).toHaveProperty('fullDescription');
+    expect(rule.fullDescription).toHaveProperty('text');
+    expect(rule).toHaveProperty('properties');
+    expect(rule.properties).toHaveProperty('severity');
+    expect(rule.properties).toHaveProperty('category');
+    expect(rule.properties).toHaveProperty('status');
+
+    // Optional metadata absent-by-design (RULE declares no rationale/limitations/docsUrl)
+    expect(rule.properties).not.toHaveProperty('rationale');
+    expect(rule.properties).not.toHaveProperty('limitations');
+    expect(rule.properties).not.toHaveProperty('docsUrl');
+    expect(rule.properties).not.toHaveProperty('deprecatedSince');
+  });
+
+  it('a per-test result carries properties.testId when finding.testId present (camelCase)', () => {
+    const id = 'sample.test.ts#it@2:0';
+    const scope: TestScopeResult = {
+      test: { id, name: 'has an assertion', line: 2, declaration: 'it' },
+      analysis: analysis(AnalysisStatus.SUCCESS).analysis,
+      evidence: { assertion_count: { ...analysis(AnalysisStatus.SUCCESS).evidence.assertion_count, value: 1 } },
+      declaration_gap: null,
+    };
+    const output: AnalysisOutput = {
+      ...analysis(AnalysisStatus.SUCCESS),
+      tests: [scope],
+    };
+    const r = result(output);
+    expect(r.properties).toHaveProperty('testId');
+    expect(r.properties.testId).toBe(id);
+  });
+
+  it('a subject-level result has properties.result but NO testId (absent-by-design)', () => {
+    const r = result(analysis(AnalysisStatus.SUCCESS));
+    expect(r).toHaveProperty('properties');
+    expect(r.properties).toHaveProperty('result');
+    expect(r.properties).not.toHaveProperty('testId');
+  });
+
+  it('every result carries ruleId, level, message.text, properties.result (minimum contract)', () => {
+    const r = result(analysis(AnalysisStatus.SUCCESS));
+    expect(r).toHaveProperty('ruleId');
+    expect(r).toHaveProperty('level');
+    expect(r).toHaveProperty('message');
+    expect(r.message).toHaveProperty('text');
+    expect(r).toHaveProperty('properties');
+    expect(r.properties).toHaveProperty('result');
   });
 });

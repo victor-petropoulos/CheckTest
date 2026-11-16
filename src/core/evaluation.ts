@@ -71,7 +71,30 @@ export type ExplicitRuleIds = ReadonlySet<string>;
 /** No rule was named explicitly — the default for every non-CLI caller. */
 const NO_EXPLICIT_RULES: ExplicitRuleIds = new Set<string>();
 
-function finding(rule: RuleMetadata, result: RuleResult, reason: string, location?: EvidenceLocation): RuleFinding {
+/**
+ * Build one rule's verdict.
+ *
+ * SELF-CONTAINED FIELDS (plan task 6.1): the finding carries the rule's own
+ * documentation (description/rationale/limitations/docsUrl, copied verbatim
+ * from the rule's RuleMetadata) so a consumer reading a report never has to
+ * resolve the rule registry to learn what the rule checks — or what it does
+ * NOT establish. Each key is OMITTED when the rule declares no such metadata
+ * (D11: additive, optional, never an empty string).
+ *
+ * `record` is the evidence record the verdict was decided FROM. It supplies
+ * the finding's location and its evidenceStrength (D10) — the strength of the
+ * evidence this verdict actually rests on, never a strength borrowed from a
+ * sibling record. Omit it when the verdict rests on no record (applicability,
+ * UNSUPPORTED, UNKNOWN type, absent evidence): the strength is then ABSENT,
+ * because an absent strength is honest and a fabricated one is not.
+ */
+function finding(
+  rule: RuleMetadata,
+  result: RuleResult,
+  reason: string,
+  record?: EvidenceRecord,
+  location?: EvidenceLocation,
+): RuleFinding {
   // ponytail: reason is mandatory (result.ts) — a verdict without a reason is not
   // reportable, so every return path below builds one instead of defaulting to ''.
   // Location is appended LAST and only when an evidence record carries one, so
@@ -85,8 +108,31 @@ function finding(rule: RuleMetadata, result: RuleResult, reason: string, locatio
     evidence: [...rule.required_evidence],
     ruleStatus: rule.status,
   };
-  if (location !== undefined) {
-    out.location = location;
+  if (rule.description !== undefined) {
+    out.description = rule.description;
+  }
+  if (rule.rationale !== undefined) {
+    out.rationale = rule.rationale;
+  }
+  if (rule.limitations !== undefined) {
+    out.limitations = rule.limitations;
+  }
+  if (rule.docsUrl !== undefined) {
+    out.docsUrl = rule.docsUrl;
+  }
+  if (record !== undefined) {
+    // The hook's own location wins over the record's — same rule as before, now
+    // expressed as an override rather than a second source of truth.
+    const resolved = location ?? record.location;
+    if (resolved !== undefined) {
+      out.location = resolved;
+    }
+    // D10: the strength of the evidence this verdict rests on. Copied only when
+    // the record carries one — an adapter that does not classify strength yet
+    // leaves the field absent rather than defaulting it to a definite level.
+    if (record.evidenceStrength !== undefined) {
+      out.evidenceStrength = record.evidenceStrength;
+    }
   }
   return out;
 }
@@ -115,16 +161,16 @@ function localDecision(
   });
   const outcome = hook(context, record, rule);
   if (typeof outcome === 'string') {
-    return finding(rule, outcome, `${rule.id}: local decision returned ${outcome}`, record.location);
+    return finding(rule, outcome, `${rule.id}: local decision returned ${outcome}`, record);
   }
   if (outcome === null || typeof outcome !== 'object') {
-    return finding(rule, RuleResult.INDETERMINATE, `${rule.id}: local decision returned no verdict`, record.location);
+    return finding(rule, RuleResult.INDETERMINATE, `${rule.id}: local decision returned no verdict`, record);
   }
   const reason =
     typeof outcome.reason === 'string' && outcome.reason.trim() !== ''
       ? outcome.reason
       : `${rule.id}: local decision returned ${String(outcome.result)}`;
-  return finding(rule, outcome.result, reason, outcome.location ?? record.location);
+  return finding(rule, outcome.result, reason, record, outcome.location);
 }
 
 /**
@@ -327,7 +373,7 @@ function decide(rule: RuleMetadata, scope: ScopeView, explicitRuleIds: ExplicitR
         rule,
         RuleResult.INDETERMINATE,
         `${rule.id}: coverage.status ${record.coverage.status} for '${type}' is below required ${rule.minimum_evidence_completeness}${suffix(record.reason)}`,
-        record.location,
+        record,
       );
     }
   }
@@ -341,7 +387,7 @@ function decide(rule: RuleMetadata, scope: ScopeView, explicitRuleIds: ExplicitR
         rule,
         rule.unknown_evidence_policy,
         `${rule.id}: availability is ${record.availability} for '${type}'${suffix(record.reason)}`,
-        record.location,
+        record,
       );
     }
   }
@@ -355,7 +401,7 @@ function decide(rule: RuleMetadata, scope: ScopeView, explicitRuleIds: ExplicitR
         rule,
         rule.conflicting_evidence_policy,
         `${rule.id}: conflicting evidence for '${type}' (${record.conflicts.length} recorded value(s))`,
-        record.location,
+        record,
       );
     }
   }
@@ -384,19 +430,14 @@ function decide(rule: RuleMetadata, scope: ScopeView, explicitRuleIds: ExplicitR
       rule,
       RuleResult.INDETERMINATE,
       `${rule.id}: '${metric}' value is ${describeValue(value)}, not a number — threshold not applied${suffix(record.reason)}`,
-      record.location,
+      record,
     );
   }
   // PASS survives an incomplete scan: the established count is a floor on the real
   // count, so reaching pass_at_least on PARTIAL is the one verdict PARTIAL may buy
   // (asymmetric coverage, decision D).
   if (value >= rule.evaluation.pass_at_least) {
-    return finding(
-      rule,
-      RuleResult.PASS,
-      `${rule.id}: ${metric}=${value} >= ${rule.evaluation.pass_at_least}`,
-      record.location,
-    );
+    return finding(rule, RuleResult.PASS, `${rule.id}: ${metric}=${value} >= ${rule.evaluation.pass_at_least}`, record);
   }
   if (value <= rule.evaluation.fail_at_most) {
     // Asymmetric coverage (plan task 4 / decision D). The count is the number the
@@ -408,21 +449,16 @@ function decide(rule: RuleMetadata, scope: ScopeView, explicitRuleIds: ExplicitR
         rule,
         RuleResult.INDETERMINATE,
         `${rule.id}: ${metric}=${value} <= ${rule.evaluation.fail_at_most} but coverage.status ${record.coverage.status} — an incomplete scan cannot prove this count${suffix(record.reason)}`,
-        record.location,
+        record,
       );
     }
-    return finding(
-      rule,
-      RuleResult.FAIL,
-      `${rule.id}: ${metric}=${value} <= ${rule.evaluation.fail_at_most}`,
-      record.location,
-    );
+    return finding(rule, RuleResult.FAIL, `${rule.id}: ${metric}=${value} <= ${rule.evaluation.fail_at_most}`, record);
   }
   return finding(
     rule,
     RuleResult.INDETERMINATE,
     `${rule.id}: ${metric}=${value} is between the thresholds (<= ${rule.evaluation.fail_at_most} FAIL, >= ${rule.evaluation.pass_at_least} PASS)`,
-    record.location,
+    record,
   );
 }
 

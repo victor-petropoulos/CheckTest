@@ -6,7 +6,7 @@
  */
 
 import { TestIdentity } from './analysis';
-import { EvidenceLocation } from './evidence';
+import { EvidenceLocation, EvidenceStrength } from './evidence';
 // The lifecycle status of the rule a finding came from (plan task 5.6).
 //
 // TYPE-ONLY import, deliberately: src/core/rule.ts imports THIS module, so a
@@ -94,4 +94,36 @@ export interface RuleFinding {
   ruleStatus: RuleStatus;
   /** Source location copied from the evidence record when one exists (null-able; never fabricated). */
   location?: EvidenceLocation;
+  /**
+   * The rule's own description, copied from the evaluated rule's RuleMetadata
+   * (src/core/rule.ts) — plan task 6.1, SELF-CONTAINED findings.
+   *
+   * The four fields below (description, rationale, limitations, docsUrl) are
+   * COPIES of the rule's metadata, never re-authored: a consumer reading a
+   * finding learns WHAT the rule checks and WHAT IT DOES NOT ESTABLISH without
+   * resolving the rule registry.
+   *
+   * Additive and OPTIONAL (D11): the key is OMITTED when the rule declares no
+   * such metadata — never an empty string, never invented, never a default.
+   */
+  description?: string;
+  /** WHY the rule exists (RuleMetadata.rationale) — copied, never re-authored. */
+  rationale?: string;
+  /** What the rule's verdict does NOT establish (RuleMetadata.limitations). */
+  limitations?: string;
+  /** Reference into the spec/docs for the rule's own definition (RuleMetadata.docsUrl). */
+  docsUrl?: string;
+  /**
+   * D10 — HOW the evidence the verdict rests on was established
+   * (src/core/evidence.ts `EvidenceStrength`): SYNTAX_OBSERVED /
+   * EXECUTION_ESTABLISHED / UNSUPPORTED.
+   *
+   * Copied from the evidence record the finding was decided FROM — never
+   * derived, never guessed, never promoted. ABSENT when the verdict rests on no
+   * evidence record (an applicability or UNSUPPORTED verdict) or when that
+   * record carries no strength of its own (an adapter that does not classify
+   * strength yet). It never substitutes for `availability`: strength is not a
+   * certainty.
+   */
+  evidenceStrength?: EvidenceStrength;
 }

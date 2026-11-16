@@ -18,7 +18,7 @@ import {
   TestScopeResult,
   TestType,
 } from '../../src/core/analysis';
-import { Availability, CollectionStatus, EvidenceRecord, Provenance } from '../../src/core/evidence';
+import { Availability, CollectionStatus, EvidenceRecord, EvidenceStrength, Provenance } from '../../src/core/evidence';
 import { RuleMetadata } from '../../src/core/rule';
 import { EvaluationStatus, RuleResult } from '../../src/core/result';
 import { collectAnalysis } from '../../src/adapters/typescript/collector';
@@ -86,6 +86,10 @@ describe('toJson — evaluation status', () => {
         reason: expect.stringContaining('assertion_count=1 >= 1'),
         evidence: ['assertion_count'],
         ruleStatus: 'active',
+        description: RULE.description,
+        provenance: 'DIRECT',
+        availability: 'KNOWN',
+        completeness: Completeness.COMPLETE,
       },
     ]);
   });
@@ -204,7 +208,17 @@ describe('toJson — evaluation status', () => {
     const json = report(AnalysisStatus.SUCCESS);
     const finding = (json.ruleResults as Array<Record<string, unknown>>)[0];
     // ruleStatus (5.6) joins the four original keys; test_id stays absent.
-    expect(Object.keys(finding).sort()).toEqual(['evidence', 'reason', 'result', 'ruleStatus', 'rule_id']);
+    expect(Object.keys(finding).sort()).toEqual([
+      'availability',
+      'completeness',
+      'description',
+      'evidence',
+      'provenance',
+      'reason',
+      'result',
+      'ruleStatus',
+      'rule_id',
+    ]);
     expect(finding.test_id).toBeUndefined();
   });
 
@@ -487,5 +501,126 @@ describe('toJson — rule lifecycle status (plan 5.6)', () => {
     const json = report(AnalysisStatus.SUCCESS);
     expect('deprecatedSince' in json).toBe(false);
     expect(json.deprecatedSince).toBeUndefined();
+  });
+});
+
+/**
+ * Contract schema tests (plan 6.5) — pin that every finding in the JSON
+ * report carries the documented field set. Per 6.1/6.2/6.3 semantics:
+ * present-when-present; absent-by-design never fabricated.
+ */
+describe('toJson — self-contained finding field contract (plan 6.5)', () => {
+  const FULLY_DOCUMENTED_RULE: RuleMetadata = {
+    ...RULE,
+    id: 'CT-TEST-DOC',
+    rationale: 'WHY this rule exists.',
+    limitations: 'What this verdict does NOT establish.',
+    docsUrl: 'https://example.invalid/rules/CT-TEST-DOC',
+  };
+
+  function documentedAnalysis(): AnalysisOutput {
+    const base = analysis(AnalysisStatus.SUCCESS);
+    const record: EvidenceRecord = {
+      ...base.evidence.assertion_count,
+      evidenceStrength: EvidenceStrength.EXECUTION_ESTABLISHED,
+      location: { file: 'sample.test.ts', line: 3, column: 1 },
+    };
+    return { ...base, evidence: { assertion_count: record } };
+  }
+
+  it('a fully-documented finding carries ALL listed keys with correct values (a)', () => {
+    const output = documentedAnalysis();
+    const json = JSON.parse(toJson(output, evaluateRule(FULLY_DOCUMENTED_RULE, output))) as Record<string, any>;
+    const finding = json.ruleResults[0] as Record<string, unknown>;
+
+    // Required keys (always present)
+    expect(finding).toHaveProperty('rule_id');
+    expect(finding).toHaveProperty('result');
+    expect(finding).toHaveProperty('reason');
+    expect(finding).toHaveProperty('evidence');
+    expect(finding).toHaveProperty('ruleStatus');
+
+    // Optional keys that are present-when-present (declared by FULLY_DOCUMENTED_RULE)
+    expect(finding).toHaveProperty('description');
+    expect(finding).toHaveProperty('rationale');
+    expect(finding).toHaveProperty('limitations');
+    expect(finding).toHaveProperty('docsUrl');
+    expect(finding).toHaveProperty('evidenceStrength');
+    expect(finding).toHaveProperty('provenance');
+    expect(finding).toHaveProperty('availability');
+    expect(finding).toHaveProperty('completeness');
+    expect(finding).toHaveProperty('location');
+
+    // Values are the source values, verbatim (COPIED not invented)
+    expect(finding.description).toBe(FULLY_DOCUMENTED_RULE.description);
+    expect(finding.rationale).toBe(FULLY_DOCUMENTED_RULE.rationale);
+    expect(finding.limitations).toBe(FULLY_DOCUMENTED_RULE.limitations);
+    expect(finding.docsUrl).toBe(FULLY_DOCUMENTED_RULE.docsUrl);
+    expect(finding.evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
+    expect(finding.provenance).toBe(Provenance.DIRECT);
+    expect(finding.availability).toBe(Availability.KNOWN);
+    expect(finding.completeness).toBe(Completeness.COMPLETE);
+  });
+
+  it('a fully-documented per-test finding also carries test_id (a, per-test variant)', () => {
+    const output = documentedAnalysis();
+    // Add a tests[] with one synthetic per-test scope
+    const scope: TestScopeResult = {
+      test: { id: 'sample.test.ts#it@3:0', name: 'has an assertion', line: 3, declaration: 'it' },
+      analysis: output.analysis,
+      evidence: { assertion_count: output.evidence.assertion_count as EvidenceRecord },
+      declaration_gap: null,
+    };
+    const outputWithTest: AnalysisOutput = { ...output, tests: [scope] };
+    const json = JSON.parse(
+      toJson(
+        outputWithTest,
+        evaluateRule(FULLY_DOCUMENTED_RULE, outputWithTest),
+        evaluateTests(FULLY_DOCUMENTED_RULE, outputWithTest),
+      ),
+    ) as Record<string, any>;
+
+    const finding = json.ruleResults[0] as Record<string, unknown>;
+    expect(finding).toHaveProperty('test_id');
+    expect(finding.test_id).toBe('sample.test.ts#it@3:0');
+    expect(finding).toHaveProperty('description');
+    expect(finding).toHaveProperty('rationale');
+    expect(finding).toHaveProperty('limitations');
+    expect(finding).toHaveProperty('docsUrl');
+    expect(finding).toHaveProperty('evidenceStrength');
+    expect(finding).toHaveProperty('provenance');
+    expect(finding).toHaveProperty('availability');
+    expect(finding).toHaveProperty('completeness');
+    expect(finding).toHaveProperty('location');
+  });
+
+  it('a minimal finding has base keys only — optional keys absent-by-design (b)', () => {
+    const json = report(AnalysisStatus.SUCCESS);
+    const finding = (json.ruleResults as Array<Record<string, unknown>>)[0];
+
+    // Required keys (always present)
+    expect(finding).toHaveProperty('rule_id');
+    expect(finding).toHaveProperty('result');
+    expect(finding).toHaveProperty('reason');
+    expect(finding).toHaveProperty('evidence');
+    expect(finding).toHaveProperty('ruleStatus');
+    expect(finding).toHaveProperty('description');
+    expect(finding).toHaveProperty('provenance');
+    expect(finding).toHaveProperty('availability');
+    expect(finding).toHaveProperty('completeness');
+
+    // Optional metadata absent-by-design (RULE declares no rationale/limitations/docsUrl)
+    expect(finding).not.toHaveProperty('rationale');
+    expect(finding).not.toHaveProperty('limitations');
+    expect(finding).not.toHaveProperty('docsUrl');
+
+    // evidenceStrength absent when record carries none (D10 present-when-present)
+    expect(finding).not.toHaveProperty('evidenceStrength');
+
+    // test_id absent for subject-level finding (per-test only)
+    expect(finding).not.toHaveProperty('test_id');
+
+    // location absent when record carries none (never fabricated)
+    expect(finding).not.toHaveProperty('location');
   });
 });

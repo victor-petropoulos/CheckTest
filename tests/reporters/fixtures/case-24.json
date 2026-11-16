@@ -64,7 +64,15 @@
         "assertion_count"
       ],
       "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "docs/CHECKTEST_SPEC_v0.3.md#rule-ct-int-001",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
       "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0",
+      "completeness": "COMPLETE",
       "location": {
         "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
         "line": 5
@@ -129,7 +137,15 @@
             "assertion_count"
           ],
           "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "docs/CHECKTEST_SPEC_v0.3.md#rule-ct-int-001",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
           "test_id": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0",
+          "completeness": "COMPLETE",
           "location": {
             "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
             "line": 5

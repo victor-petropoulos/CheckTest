@@ -191,11 +191,15 @@ export interface RuleMetadata {
   deprecatedSince?: string;
   /**
    * WHY this rule exists, in prose (roadmap task 23: "rationale, limitations,
-   * documentation reference — where applicable"). ADVISORY IN MILESTONE-1:
-   * nothing in src/core/evaluation.ts reads these three fields, so they are
-   * recorded documentation, not behaviour. When present they must be a
-   * non-empty string — an empty rationale is worse than none, and
-   * validateRule() rejects it.
+   * documentation reference — where applicable").
+   *
+   * READ BY THE ENGINE since plan task 6.1: the evaluator copies these three
+   * fields — and `description` — onto every finding it produces, so a finding
+   * is SELF-CONTAINED: a consumer reading a report learns what the rule checks
+   * and what its verdict does NOT establish without resolving the rule
+   * registry. The copies are verbatim; the engine never re-authors them. When
+   * present they must be a non-empty string — an empty rationale is worse than
+   * none, and validateRule() rejects it.
    */
   rationale?: string;
   /** What this rule does NOT establish, so no consumer overreads its verdict. */

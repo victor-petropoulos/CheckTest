@@ -379,6 +379,11 @@ Known limitations:
   says nothing about individual test declarations. Mutation evidence is therefore
   attached only to `AnalysisOutput.evidence`; no `TestScopeResult` is decorated
   (roadmap:1086 "Do not assume file-level evidence is test-level evidence").
+- **File-level surfacing in `ruleResults`.** The file-level CT-MUT-001 verdict
+  appears in `ruleResults` as an entry with no `test_id` and is counted in
+  `summary.total`; mutation evidence stays file-level (no per-declaration
+  attribution — see the bullet above). This raises `summary.total` by 1 on
+  mutation-report runs.
 - **CT-MUT-001 now consumes `mutation_score`.** `src/rules/ct-mut-001.ts` declares `required_evidence: ['mutation_score']` with a fixed `MUTATION_THRESHOLD = 0.5` (user ruling 2026-11-07). A supplied report triggers PASS/FAIL/INDETERMINATE — not just an additive record. Missing / unreadable / malformed / zero-valid / revision-mismatched reports yield UNKNOWN → INDETERMINATE (never FAIL; "no report ≠ zero mutants", roadmap:1087) and are documented fully at `docs/rules/ct-mut-001-contract.md`.
 - **Missing ≠ zero.** A missing, unreadable, malformed, or unsupported report (no
   `files` key, wrong/absent `schemaVersion`) yields an explicit `UNKNOWN` record with

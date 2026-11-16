@@ -13,10 +13,16 @@
               "shortDescription": {
                 "text": "assertion-required"
               },
+              "fullDescription": {
+                "text": "A test should contain at least one executable verification of an observable outcome."
+              },
               "properties": {
                 "severity": "error",
                 "category": "integrity",
-                "status": "active"
+                "status": "active",
+                "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+                "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+                "docsUrl": "docs/CHECKTEST_SPEC_v0.3.md#rule-ct-int-001"
               }
             }
           ]
