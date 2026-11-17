@@ -429,6 +429,7 @@ function scopedPerDeclarationRecord(
   targetRecord: EvidenceRecord,
   parsed: CoverageReportResult,
   testFile: string,
+  declLine: number,
 ): EvidenceRecord {
   const provider = targetRecord.provider ?? parsed.provider;
   const version = targetRecord.provider_version ?? parsed.provider_version;
@@ -445,6 +446,7 @@ function scopedPerDeclarationRecord(
     provider,
     provider_version: version,
     source_revision: revision,
+    location: { file: testFile, line: declLine },
     reason: `coverage evidence from a run scoped to ${testFile}`,
   });
 }
@@ -462,6 +464,7 @@ function perDeclarationRecord(
   fileRecord: EvidenceRecord,
   parsed: CoverageReportResult,
   declLine: number,
+  file: string,
 ): EvidenceRecord {
   const provider = fileRecord.provider ?? parsed.provider;
   const version = fileRecord.provider_version ?? parsed.provider_version;
@@ -489,6 +492,7 @@ function perDeclarationRecord(
     provider,
     provider_version: version,
     source_revision: revision,
+    location: { file, line: declLine },
     reason,
   });
 }
@@ -599,10 +603,10 @@ export function applyCoverageReport(
         ...testScope.evidence,
         line_coverage:
           perDeclNumericSource !== undefined
-            ? scopedPerDeclarationRecord(perDeclNumericSource, parsed, analysis.subject.file)
+            ? scopedPerDeclarationRecord(perDeclNumericSource, parsed, analysis.subject.file, testScope.test.line)
             : isMapped
               ? advisoryPerDeclarationRecord(fileRecord, parsed, mappingReason)
-              : perDeclarationRecord(fileRecord, parsed, testScope.test.line),
+              : perDeclarationRecord(fileRecord, parsed, testScope.test.line, analysis.subject.file),
       },
     }));
   }

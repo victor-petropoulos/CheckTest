@@ -99,11 +99,19 @@ describe('E4 — python-slice corpus integration', () => {
 
       it('CT-INT-001 verdict pinned per repo', () => {
         const out = runCli(entry, null, 'CT-INT-001');
-        const d = JSON.parse(out) as { summary: { pass: number; fail: number } };
+        const d = JSON.parse(out) as {
+          summary: { total: number; pass: number; fail: number; indeterminate: number };
+        };
         if (entry.name === 'packaging') {
-          // all 62 tests carry >=1 assertion -> PASS
-          expect(d.summary.pass).toBe(62);
-          expect(d.summary.fail).toBe(0);
+          // M5: decorated class-member collection now unwraps the 23
+          // @pytest.mark.parametrize test_* methods in test_version.py, so the
+          // slice collects 85 tests: 84 pass, 1 fail (test_valid_versions has
+          // assertion_count=0). The former 2 INDETERMINATE (@given PARTIAL) were a
+          // decoratedWithGiven false positive on comment prose; detection fix now counts them.
+          expect(d.summary.total).toBe(85);
+          expect(d.summary.pass).toBe(84);
+          expect(d.summary.fail).toBe(1);
+          expect(d.summary.indeterminate).toBe(0);
         } else if (entry.name === 'click') {
           // all 42 tests carry >=1 assertion -> PASS
           expect(d.summary.pass).toBe(42);

@@ -295,6 +295,8 @@ describe('cross-adapter assertion-evidence parity (phase9 2.4b)', () => {
     const py = collectAnalysis(join(PY_FIXTURES, 'hypothesis_given.py'));
     const pyRec = py.evidence['assertion_count'];
     expect(pyRec.coverage.status).toBe(CollectionStatus.PARTIAL);
+    // @given records are tagged property_based (present-only, never false; D-20261117-2 Q1).
+    expect((pyRec as { property_based?: boolean }).property_based).toBe(true);
     const pyAnalysis = assertionEvidenceFromAdapter(py as any);
     const pyResult = evaluateRule(CT_INT_001, pyAnalysis).finding?.result;
     // minimum_evidence_completeness COMPLETE + PARTIAL → INDETERMINATE (rule-contract).

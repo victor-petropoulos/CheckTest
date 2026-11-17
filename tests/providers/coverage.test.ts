@@ -931,6 +931,8 @@ describe('coverage-map (SP2.2)', () => {
     expect(out.tests![1].evidence.line_coverage.reason).toContain(
       'per-declaration attribution not supported for mapped coverage',
     );
+    // I0 (Q3 parity): advisory per-declaration records stay location-less (ADR-039:22).
+    expect(out.tests![1].evidence.line_coverage.location).toBeUndefined();
   });
 
   it('unmapped subject still INDETERMINATE', () => {
@@ -1125,6 +1127,8 @@ describe('SP2.2-fix mapped file-level verdicts (TDD)', () => {
       expect(t.evidence.line_coverage.reason).toContain(
         'per-declaration attribution not supported for mapped coverage',
       );
+      // I0 (Q3 parity): advisory per-declaration records stay location-less (ADR-039:22).
+      expect(t.evidence.line_coverage.location).toBeUndefined();
     }
   });
 
@@ -1289,6 +1293,8 @@ describe('per-test-run verdicts + veto-WARN (CT-COV-001 unit B)', () => {
       expect(decl.value).toBeUndefined();
       expect(decl.availability).toBe(Availability.UNKNOWN);
       expect(decl.reason).toContain('per-declaration attribution not supported for mapped coverage');
+      // I0 (Q3 parity): advisory per-declaration records stay location-less (ADR-039:22).
+      expect(decl.location).toBeUndefined();
     }
     // Per-declaration: unmarked INDETERMINATE, marked decidable PASS.
     for (const e of evaluateTests(active(), unmarked)) expect(e.finding?.result).toBe(RuleResult.INDETERMINATE);
@@ -1370,7 +1376,88 @@ describe('per-test-run verdicts + veto-WARN (CT-COV-001 unit B)', () => {
       const decl = t.evidence.line_coverage;
       expect(decl.value).toBeUndefined();
       expect(decl.reason).toContain('per-declaration attribution not supported for mapped coverage');
+      // I0 (Q3 parity): advisory per-declaration records stay location-less (ADR-039:22).
+      expect(decl.location).toBeUndefined();
     }
     for (const e of evaluateTests(active(), out)) expect(e.finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+});
+
+// I0 (Q3 parity) — RED-first location contract BEFORE implementation (ADR-039).
+// Numeric per-declaration records (perDeclarationRecord, scopedPerDeclarationRecord)
+// MUST carry location { file, line } naming the TEST file + declaration line.
+// Advisory per-declaration records (advisoryPerDeclarationRecord) MUST stay
+// location-LESS: their reason disclaims per-declaration attribution, so a
+// location would be a false attribution claim (ADR-039:22,40; DECISIONS Q6).
+// location.file is the TEST file containing the declaration, never the mapped
+// production file (ADR-039:21, Q3 ruling).
+// RED semantics: the numeric toBeDefined/toEqual pins FAIL pre-impl (location
+// is undefined today); the advisory toBeUndefined pins PASS pre-impl (they pin
+// the asymmetry by design).
+describe('per-declaration location (Q3 parity)', () => {
+  it('perDeclarationRecord: numeric records carry location { file: test file, line: decl line }', () => {
+    const p = tmpFile('q3-pdr.json', JSON.stringify({ files: { 's.test.ts': { coveredLines: [1, 3] } } }));
+    const out = applyCoverageReport(analysisWith('s.test.ts', [1, 3]), p);
+    const decl1 = out.tests!.find((t) => t.test.line === 1)!.evidence.line_coverage;
+    expect(decl1.value).toBe(1);
+    expect(decl1.location).toBeDefined();
+    expect(decl1.location).toEqual({ file: 's.test.ts', line: 1 });
+    const decl3 = out.tests!.find((t) => t.test.line === 3)!.evidence.line_coverage;
+    expect(decl3.value).toBe(1);
+    expect(decl3.location).toBeDefined();
+    expect(decl3.location).toEqual({ file: 's.test.ts', line: 3 });
+  });
+
+  it('perDeclarationRecord: numeric 0 record still carries its location', () => {
+    const p = tmpFile('q3-pdr-zero.json', JSON.stringify({ files: { 's.test.ts': { coveredLines: [1] } } }));
+    const out = applyCoverageReport(analysisWith('s.test.ts', [1, 5]), p);
+    const decl5 = out.tests!.find((t) => t.test.line === 5)!.evidence.line_coverage;
+    expect(decl5.value).toBe(0);
+    expect(decl5.availability).toBe(Availability.KNOWN);
+    expect(decl5.location).toBeDefined();
+    expect(decl5.location).toEqual({ file: 's.test.ts', line: 5 });
+  });
+
+  it('scopedPerDeclarationRecord: numeric records carry location { file: test file, line: decl line }', () => {
+    const p = tmpFile('q3-scoped.json', JSON.stringify({ covered: { 'to.ts': [0, 1] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    expect(out.tests).toHaveLength(2);
+    const decl1 = out.tests!.find((t) => t.test.line === 1)!.evidence.line_coverage;
+    expect(decl1.value).toBe(1);
+    expect(decl1.reason).toBe('coverage evidence from a run scoped to from.ts');
+    expect(decl1.location).toBeDefined();
+    expect(decl1.location).toEqual({ file: 'from.ts', line: 1 });
+    const decl2 = out.tests!.find((t) => t.test.line === 2)!.evidence.line_coverage;
+    expect(decl2.location).toBeDefined();
+    expect(decl2.location).toEqual({ file: 'from.ts', line: 2 });
+  });
+
+  it('advisoryPerDeclarationRecord: mapped advisory records stay location-less (asymmetry pin)', () => {
+    const p = tmpFile('q3-advisory.json', JSON.stringify({ covered: { 'to.ts': [0, 1] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, { coverageMap: { 'from.ts': 'to.ts' } });
+    for (const t of out.tests!) {
+      const decl = t.evidence.line_coverage;
+      expect(decl.value).toBeUndefined();
+      expect(decl.reason).toContain('per-declaration attribution not supported for mapped coverage');
+      expect(decl.location).toBeUndefined();
+    }
+  });
+
+  it('asymmetry: numeric per-decl records have location; advisory records do not', () => {
+    const numericReport = tmpFile(
+      'q3-asym-num.json',
+      JSON.stringify({ files: { 's.test.ts': { coveredLines: [1] } } }),
+    );
+    const numeric = applyCoverageReport(analysisWith('s.test.ts', [1]), numericReport);
+    expect(numeric.tests![0].evidence.line_coverage.location).toBeDefined();
+
+    const advisoryReport = tmpFile('q3-asym-adv.json', JSON.stringify({ covered: { 'to.ts': [0, 1] } }));
+    const advisory = applyCoverageReport(analysisWith('from.ts', [1]), advisoryReport, {
+      coverageMap: { 'from.ts': 'to.ts' },
+    });
+    expect(advisory.tests![0].evidence.line_coverage.location).toBeUndefined();
   });
 });

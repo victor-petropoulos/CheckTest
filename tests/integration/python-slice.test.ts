@@ -131,14 +131,16 @@ describe('python slice — integration (Phase 8 C5)', () => {
     expect(r.json!.ruleResults.map((x: any) => x.result)).toEqual(['PASS']);
   });
 
-  it('hypothesis_given.py + --type UNIT: PARTIAL unsupported-form through pipeline', () => {
+  it('hypothesis_given.py + --type UNIT: @given body asserts counted (KNOWN, property_based, PARTIAL) through pipeline', () => {
     const r = runMain(['--test', fixture('hypothesis_given.py'), '--type', 'UNIT']);
     expect(r.code).toBe(0);
     expect(r.json!.analysisStatus).toBe('SUCCESS');
     expect(r.json!.evaluationStatus).toBe('EVALUATED');
-    expect(r.json!.evidence.assertion_count.availability).toBe('UNKNOWN');
+    expect(r.json!.evidence.assertion_count.availability).toBe('KNOWN');
+    expect(r.json!.evidence.assertion_count.value).toBeGreaterThan(0);
+    expect((r.json!.evidence.assertion_count as { property_based?: boolean }).property_based).toBe(true);
     expect(r.json!.evidence.assertion_count.coverage.status).toBe('PARTIAL');
-    expect(r.json!.evidence.assertion_count.reason).toContain('unsupported-form');
+    expect(r.json!.evidence.assertion_count.reason).toContain('property-based');
     expect(r.json!.ruleResults.map((x: any) => x.result)).toEqual(['INDETERMINATE']);
   });
 

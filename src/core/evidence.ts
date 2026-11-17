@@ -197,6 +197,13 @@ export interface EvidenceRecord {
    */
   per_test_run?: boolean;
   /**
+   * D-20261117-2 — record carries a property-based (hypothesis @given) count.
+   * Additive, optional, present-only: absent (undefined) unless the producer
+   * detected @given; detection-affirmative only, never negative evidence.
+   * Count is not case-exhaustive. Only assertion_count records set it.
+   */
+  property_based?: boolean;
+  /**
    * D10 — how this assertion was established (see `EvidenceStrength`).
    *
    * Additive, optional: absent (undefined) means the producing adapter does not
@@ -230,6 +237,7 @@ export type MakeEvidenceBaseParams = {
   unestablished_assertions?: { count: number; reasons: string[] };
   unclassified_constructs?: { count: number; reasons: string[] };
   evidenceStrength?: EvidenceStrength;
+  property_based?: boolean;
 };
 
 export type MakeEvidenceDirectParams = MakeEvidenceBaseParams & {
@@ -282,6 +290,9 @@ export function makeEvidenceRecord(params: MakeEvidenceParams): EvidenceRecord {
   }
   if (params.evidenceStrength !== undefined) {
     record.evidenceStrength = params.evidenceStrength;
+  }
+  if (params.property_based !== undefined) {
+    record.property_based = params.property_based;
   }
   if (params.provenance === Provenance.EXTERNAL) {
     const external = params as MakeEvidenceExternalParams;

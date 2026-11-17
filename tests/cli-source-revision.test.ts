@@ -107,6 +107,8 @@ describe('source-revision flag (TDD RED)', () => {
     expect(subj.source_revision).toBe('unknown');
     const decl = json.testResults[0].evidence.line_coverage;
     expect(decl.availability).toBe('UNKNOWN');
+    // I0 (Q3 parity): advisory per-declaration record stays location-less (ADR-039:22).
+    expect(decl.location).toBeUndefined();
     expect(json.testResults[0].ruleResults[0].result).toBe('INDETERMINATE');
   });
 
@@ -134,6 +136,8 @@ describe('source-revision flag (TDD RED)', () => {
     const decl = json.testResults[0].evidence.line_coverage;
     expect(decl.availability).toBe('UNKNOWN');
     expect(decl.value).toBeNull();
+    // I0 (Q3 parity): advisory per-declaration record stays location-less (ADR-039:22).
+    expect(decl.location).toBeUndefined();
     expect(json.testResults[0].ruleResults[0].result).toBe('INDETERMINATE');
   });
 

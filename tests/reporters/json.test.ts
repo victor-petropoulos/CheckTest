@@ -296,6 +296,46 @@ describe('toJson — per-test records', () => {
     expect(json.testResults[1].evidence.assertion_count.value).toBe(0);
   });
 
+  it('serializes a MIXED-attribution per-test framework (pytest + unittest) while the subject stays pytest-first', () => {
+    const base = analysis(AnalysisStatus.SUCCESS);
+    const pytestScope: TestScopeResult = {
+      test: {
+        id: 'sample_test.py#test_pytest@3:0',
+        name: 'test_pytest',
+        line: 3,
+        declaration: 'def',
+        framework: 'pytest',
+      },
+      analysis: base.analysis,
+      evidence: { ...base.evidence, assertion_count: { ...base.evidence.assertion_count, value: 1 } },
+      declaration_gap: null,
+    };
+    const unittestScope: TestScopeResult = {
+      test: {
+        id: 'sample_test.py#TestThing.test_unittest@8:0',
+        name: 'test_unittest',
+        line: 8,
+        declaration: 'def',
+        framework: 'unittest',
+      },
+      analysis: base.analysis,
+      evidence: { ...base.evidence, assertion_count: { ...base.evidence.assertion_count, value: 1 } },
+      declaration_gap: null,
+    };
+    const output: AnalysisOutput = {
+      ...base,
+      subject: { ...base.subject, framework: 'pytest' },
+      tests: [pytestScope, unittestScope],
+    };
+    const json = perTestReport(output);
+    // Each entry reports its OWN framework attribution, not a file-level label.
+    expect(json.testResults).toHaveLength(2);
+    expect(json.testResults[0].test.framework).toBe('pytest');
+    expect(json.testResults[1].test.framework).toBe('unittest');
+    // The subject-level framework still resolves pytest-first (mixed -> pytest).
+    expect(json.test.framework).toBe('pytest');
+  });
+
   it('never lets a sibling PASS mask a per-test FAIL (plan D1 regression)', () => {
     const json = perTestReport(twoTestAnalysis());
     const results = json.testResults.map((entry: any) => entry.ruleResults[0].result);

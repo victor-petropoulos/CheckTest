@@ -207,7 +207,7 @@ The evidence model distinguishes three provenance values (`src/core/evidence.ts:
 | `DERIVED`  | value derived from another signal (e.g., regex scan of source text) | YES — test stub only                                | `src/adapters/typescript/regex-assertion-count.ts:51`                                                                                                              |
 | `EXTERNAL` | value from an external tool/provider (coverage, mutation, runtime)  | YES — file-level (and per-declaration for coverage) | `src/providers/coverage.ts:90,146,281,331` and `src/providers/mutation.ts:194,210,225,360` (file-level scope; coverage also per-declaration by line-range overlap) |
 
-`DIRECT` is produced at 4 sites in `collector.ts`. `DERIVED` exists only as the fixture-13 regex stub (`regex-assertion-count.ts`); no `src/` module imports it. `EXTERNAL` is produced by the coverage provider (`src/providers/coverage.ts`, §14) and the mutation provider (`src/providers/mutation.ts`, §19); both attach file-level records, and coverage additionally attaches per-declaration records by line-range overlap without a `location`.
+`DIRECT` is produced at 4 sites in `collector.ts`. `DERIVED` exists only as the fixture-13 regex stub (`regex-assertion-count.ts`); no `src/` module imports it. `EXTERNAL` is produced by the coverage provider (`src/providers/coverage.ts`, §14) and the mutation provider (`src/providers/mutation.ts`, §19); both attach file-level records, and coverage additionally attaches per-declaration records by line-range overlap with a declaration `location`.
 
 **Consequence:** reachability is documented here, not asserted by a test. No fake producer is built to make `EXTERNAL` reachable (DPC-3, closed). `EXTERNAL` provenance fields are added in WP4.1 task 56a (optional `provider`, `provider_version`, `source_revision`), present only when `provenance === EXTERNAL`; real producers exist as of §14 (coverage) and §19 (mutation). §13 and §14 no longer contradict: §13 states provenance-level reachability (EXTERNAL reachable today via those providers, file-level scope with an additional per-declaration pass for coverage), and §14/§19 describe provider behavior. Missing/unreadable/malformed/stale reports yield explicit UNKNOWN records with a reason rather than zero (§14, §19).
 
@@ -217,7 +217,7 @@ The evidence model distinguishes three provenance values (`src/core/evidence.ts:
 
 ## 14. External Coverage Provider (WP4.1 task 56b)
 
-`EvidenceRecord` carries optional provenance fields `provider`, `provider_version`, and `source_revision`, meaningful only when `provenance === EXTERNAL`. A producer now exists: `src/providers/coverage.ts` (`parseCoverageReport`) reads an Istanbul (primary) or c8 (secondary) JSON report from disk and emits `line_coverage` records with `provenance: EXTERNAL` plus provider identity/version/revision. File-level coverage attaches to `AnalysisOutput.evidence`; per-declaration coverage is attributed by line-range overlap with declaration locations and attaches to `TestScopeResult.evidence`.
+`EvidenceRecord` carries optional provenance fields `provider`, `provider_version`, and `source_revision`, meaningful only when `provenance === EXTERNAL`. A producer now exists: `src/providers/coverage.ts` (`parseCoverageReport`) reads an Istanbul (primary) or c8 (secondary) JSON report from disk and emits `line_coverage` records with `provenance: EXTERNAL` plus provider identity/version/revision. File-level coverage attaches to `AnalysisOutput.evidence`; per-declaration coverage is attributed by line-range overlap with declaration locations and attaches to `TestScopeResult.evidence`; these records now carry `location` { file, line } naming the test file and declaration line (advisory records for mapped coverage stay location-less).
 
 Missing/unreadable/malformed/unsupported reports do NOT crash and never read as zero coverage: they yield empty records or explicit UNKNOWN records with a reason. A stale or mismatched `source_revision` versus the analyzed revision yields UNKNOWN records (reason records the mismatch) instead of a definitive result. External evidence is opt-in via `--coverage-report <path>`; with no flag, existing rules behave exactly as before.
 
@@ -300,10 +300,11 @@ output:
   test) and gets NO `locations` key when it has none; no position is fabricated.
   `column` is never populated by any producer, so `region.startColumn` is
   effectively absent.
-- **Coverage records lack a location.** The external coverage provider
-  (`src/providers/coverage.ts`) keys records by file in a map and never sets
-  `location`, so a verdict resting on coverage evidence cannot point at a source
-  line.
+- **Coverage records lack a location in SARIF output.** The SARIF reporter
+  (`src/reporters/sarif.ts`) does not serialize evidence records, so coverage
+  evidence carries no `location` there. JSON output now carries `location` on
+  provider per-declaration records (file-level records stay keyed by file, with
+  no `location`).
 - **UNSUPPORTED/FAILED are diagnostics, not findings.** An UNSUPPORTED or FAILED
   analysis state is recorded at `runs[0].properties`
   (`analysisStatus`/`evaluationStatus`/`completeness`), never emitted as a
@@ -321,6 +322,8 @@ output:
   required keys and the pinned shape (top required `version`+`runs`; result
   required `message`; `level` in the schema enum). No external SARIF validator
   is a dependency, so a full JSON-schema validation is not performed in-repo.
+
+- **JSON↔SARIF field asymmetry is intentional.** JSON is the envelope format: per-test records live in `testResults[]` (`src/reporters/json.ts:294`, `:354-355`) with the aggregate `summary` (`:227`, `:355`), and every `ruleResults[]` entry carries `ruleStatus` (`src/reporters/json.ts:133-138`); JSON has no rule descriptor. SARIF has no `testResults[]`: findings are `runs[0].results[]`, the test id rides at `results[].properties.testId` (`src/reporters/sarif.ts:135-147`), and rule lifecycle status lives on the rule descriptor at `runs[0].tool.driver.rules[].properties.status` (`:161-178`, with `deprecatedSince` there when present). Analysis/evaluation state is top-level in JSON (`src/reporters/json.ts:10-17`) but `runs[0].properties` in SARIF (`src/reporters/sarif.ts:24-28`). Neither format serializes `evidenceStrength` today (§24.4).
 
 A representative byte-exact golden lives at
 `tests/reporters/fixtures/case-24.sarif.json` (generated from the real collector
@@ -451,7 +454,9 @@ Setup: run Stryker with a JSON reporter, then invoke
 
 - **Substrate: native tree-sitter primary, earned python3 stdlib-ast fallback.** Native tree-sitter (`tree-sitter` + `tree-sitter-python`, optionalDependencies) is the primary substrate, loaded lazily inside a guarded `require` (`src/adapters/python/collector.ts:257-294`). When the native modules are absent or fail to load, the collector spawns `python3 -c <AST_SCRIPT> <file>` and parses the module with the stdlib `ast` module — the earned fallback (`parseWithPythonAst`, `collector.ts:296-309`). `restorePristineRootNode` (`collector.ts:217-245`) repairs the upstream node-tree-sitter #181 undefined-rootNode race before any root read. `collectAnalysis` (`collector.ts:536-581`) tries native first, falls back to python3-ast on walk failure, and only then gives up. Absent both — native null AND `python3` fails — `unsupportedParser` emits `AnalysisStatus.UNSUPPORTED` (`collector.ts:707-726`), and the CLI turns that unsupported dispatch pair into exit 2 (`src/cli.ts:329-331`, `:286-290`). Ruling: DECISIONS.md `D-20261112-3` (native primary + earned stdlib-ast fallback; absent both → UNSUPPORTED, council verdict), addendum "verdict STANDS" 2026-11-12 (main checkout `.opencode/progress/DECISIONS.md:2161-2168`).
 
-- **Unsupported assertion/declaration forms.** Gap strings VERBATIM from `src/adapters/python/support.ts`: `unsupported-form` (`:49` — the hypothesis `@given` class), `unparseable-coverage-report` (`:55`), `no mutation report supplied` (`:52`). Hypothesis `@given`-decorated tests are recorded as property-based assertion shapes that are UNKNOWN: `collector.ts:498` (`reason: \`hypothesis @given: ${gapReason('unsupported-form')}\``) and `:601-602` (file-level reason).
+- **Unsupported assertion/declaration forms.** Gap strings VERBATIM from `src/adapters/python/support.ts`: `unsupported-form` (`:49` — now only unrecognized assertion forms, NOT `@given`), `unparseable-coverage-report` (`:55`), `no mutation report supplied` (`:52`). Hypothesis `@given`-decorated tests are no longer a gap: their body assertions are counted with `availability: KNOWN`, `coverage` `PARTIAL` and reason `hypothesis @given: property-based count (not case-exhaustive)` (`testEvidence`, `collector.ts:713-737`), plus a present-only `property_based: true` marker (subject-level reason `:818-822`). The count is NOT case-exhaustive.
+
+- **`property_based` signals a non-case-exhaustive count; consume the verdict, not `availability`.** `property_based: true` is detection-affirmative only — its absence is NEVER negative evidence about a test's nature. It is a JSON-only present-only key (`src/reporters/json.ts:119`, never `false`, schemaVersion stays `'0.5'`, SARIF unchanged). A real `@given` test has `value > 0` with `availability: KNOWN` and `coverage: PARTIAL` yet stays INDETERMINATE under CT-INT-001 — key on the verdict, never on `availability`.
 
 - **mutation_score always UNKNOWN in v1.** No mutmut wiring. The file-level record (`collector.ts:614-624`) and the per-declaration record (`:500-510`) both emit `availability: Availability.UNKNOWN` with reason `gapReason('no-mutation-report')` = `'no mutation report supplied'` (`support.ts:52`). `PROVIDER_HINTS = ['coverage-py', 'pytest-cov', 'mutmut']` (`support.ts:40`) is declared but unconsumed — nothing reads it (`adapter.ts:52` labels `providerHints` "DECLARED BUT UNCONSUMED — ADR-033 §Decision 1"); `mutmut` is a hint, not a wired provider. ADR-033 exists (`docs/adr/ADR-033-per-language-adapter-modules-formal-contract.md`, accepted 2026-11-11).
 
@@ -471,11 +476,11 @@ Setup: run Stryker with a JSON reporter, then invoke
 
 ### 24.1 Taxonomy
 
-| Strength                | Definition                                                                                                                                                                                               |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EXECUTION_ESTABLISHED` | A straight-line test-body assertion: executing the test proves the assertion itself ran. In Python, a unittest `TestClass` method IS a straight-line test body; class-method containment is not nesting. |
-| `SYNTAX_OBSERVED`       | The assertion form is visible in source, but execution does not establish it (nested helper called from the body; assertion in a conditional/loop branch). pytest `@given` properties are this level.    |
-| `UNSUPPORTED`           | The adapter cannot classify this form at all.                                                                                                                                                            |
+| Strength                | Definition                                                                                                                                                                                                                                                                                               |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EXECUTION_ESTABLISHED` | A straight-line test-body assertion: executing the test proves the assertion itself ran. In Python, a unittest `TestClass` method IS a straight-line test body; class-method containment is not nesting.                                                                                                 |
+| `SYNTAX_OBSERVED`       | The assertion form is visible in source, but execution does not establish it (nested helper called from the body; assertion in a conditional/loop branch). pytest `@given` properties are this level even though their assertions are now counted: `PARTIAL` coverage keeps executability unestablished. |
+| `UNSUPPORTED`           | The adapter cannot classify this form at all.                                                                                                                                                                                                                                                            |
 
 Classification is language-specific and lives in the adapters (`src/adapters/*`); core only names the axis.
 
@@ -493,12 +498,12 @@ Aggregation: weakest-finding-wins at file level and per-declaration (`classifyFo
 
 **Python (pytest/unittest)** — `src/adapters/python/collector.ts` (`countAsserts` native + `AST_SCRIPT`):
 
-| Construct                                                                                 | Strength                                                             |
-| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| pytest/unittest straight-line body assertion (class-method containment is NOT nesting)    | `EXECUTION_ESTABLISHED`                                              |
-| Assertion inside a helper called from the body, or inside `if`/`for`/`while`/`try` branch | `SYNTAX_OBSERVED`                                                    |
-| `@given`-decorated test (all its assertions)                                              | `SYNTAX_OBSERVED` with `CollectionStatus.PARTIAL` retained           |
-| Non-pytest `.raises` receiver form (e.g. `foo.raises(Exception)`, `self.assertRaises`)    | counted in `totalAsserts`, strength `UNSUPPORTED` on both substrates |
+| Construct                                                                                 | Strength                                                                                   |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| pytest/unittest straight-line body assertion (class-method containment is NOT nesting)    | `EXECUTION_ESTABLISHED`                                                                    |
+| Assertion inside a helper called from the body, or inside `if`/`for`/`while`/`try` branch | `SYNTAX_OBSERVED`                                                                          |
+| `@given`-decorated test (assertions counted, tagged `property_based: true`)               | `SYNTAX_OBSERVED`; `value > 0`, `availability: KNOWN`, `CollectionStatus.PARTIAL` retained |
+| Non-pytest `.raises` receiver form (e.g. `foo.raises(Exception)`, `self.assertRaises`)    | counted in `totalAsserts`, strength `UNSUPPORTED` on both substrates                       |
 
 Aggregation: weakest-strength at subject level (`aggregateSubjectStrength`); per-declaration uses the same weakest reduction over its asserts (see `testEvidence`).
 
@@ -544,3 +549,22 @@ Cross-reference: [§14](../limitations.md) and ADR-031 for mapped semantics; do 
 **Source:** `src/core/analysis.ts:73-91` (`TestIdentity`); `src/adapters/typescript/collector.ts:458` (id), `:652-655` + `:670-672` (index); `src/adapters/python/collector.ts:1001` (id), `:977-983` + `:994-996` (index); tests: `tests/adapters/typescript/collector.test.ts:31-90`, `tests/adapters/python/collector.test.ts:636-760`.
 
 Cross-reference: Coverage-input file identity is in §25; declaration/test identity is scoped here, not duplicated.
+
+## 27. Rule Lifecycle (Phase 9 close-out, plan 9.3)
+
+`RuleStatus` is a closed set of three operational states, declared as a const object with a derived union at `src/core/rule.ts:39-84` (not a TS enum and not an inline union — the wire values stay `'active' | 'draft' | 'deprecated'`).
+
+| Status       | Default run                               | Explicit `--rule <id>`                                        | Registration requirement            |
+| ------------ | ----------------------------------------- | ------------------------------------------------------------- | ----------------------------------- |
+| `active`     | evaluated; verdict reported               | same                                                          | none                                |
+| `draft`      | excluded: no verdict, no evidence wiring  | opt-in: evaluated like an `active` rule, real verdict emitted | none                                |
+| `deprecated` | evaluated; verdict reported until removal | same                                                          | non-empty `deprecatedSince` version |
+
+- **Draft gate.** `src/core/evaluation.ts:311-317` short-circuits a draft rule before any evidence guard unless its id is in `explicitRuleIds` (the CLI's `--rule`, D6). Naming the rule IS the opt-in — the verdict that follows is genuine, not a synthetic INDETERMINATE. Contract prose: `src/core/rule.ts:44-48`, `:66-71`.
+- **Deprecated rules** have no engine special case (`src/core/rule.ts:78-82`): they run by default and report a verdict. `deprecatedSince` is enforced at registration by `validateRule` → `guardEvaluationLifecycle` (`src/rules/registry.ts:131-140`, `:163-173`); a deprecated rule without it is rejected with `deprecatedSince must be a non-empty string when status is deprecated`.
+- **Registration is explicit** and re-registering an id replaces the entry (`src/rules/registry.ts:175-181`). Validation covers id shape, classification, thresholds, severity, status and advisory fields (`:34-150`); evidence policy fields are immutable via config (§21).
+- **Report exposure differs by format.** JSON carries `ruleStatus` on each finding (`src/reporters/json.ts:133-138`); SARIF carries `status` (and `deprecatedSince` when present) on the rule descriptor (`src/reporters/sarif.ts:161-178`). See the §17 asymmetry note.
+- **Historical posture.** ADR-030 (`docs/adr/030-draft-rules-produce-no-verdicts.md`) recorded the earlier "draft rules produce no verdicts" decision and was amended by ADR-031 for CT-COV-001. Its blanket statement about future draft rules is superseded for opt-in runs by the D6 enforcement above; the ADR is retained as history, not rewritten here.
+- **Today's registry** contains six rules, all `active`: CT-INT-001, CT-INT-003, CT-INT-004, CT-COV-001, CT-MUT-001, CT-DEMO-001 (`README.md:97-108`; rule files `src/rules/ct-*.ts` each declare `RuleStatus.ACTIVE`). No draft or deprecated rule is registered, so the gates above are contract behavior for future rules, not currently exercised by a shipped rule.
+
+**Source:** `src/core/rule.ts:39-84`; `src/core/evaluation.ts:311-317`; `src/rules/registry.ts:34-150,163-181`; `src/reporters/json.ts:133-138`; `src/reporters/sarif.ts:161-178`; `README.md:95-108`; `docs/adr/030-draft-rules-produce-no-verdicts.md`.

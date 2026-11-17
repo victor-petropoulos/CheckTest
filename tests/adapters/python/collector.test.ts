@@ -71,12 +71,19 @@ describe('python adapter — collectAnalysis contract (Phase 8 C1)', () => {
     expect(record.reason).toContain('no mutation report supplied');
   });
 
-  it('hypothesis @given → assertion_count PARTIAL reason contains "unsupported-form"', () => {
+  it('hypothesis @given → assertion_count KNOWN, counted, PARTIAL, reason "property-based" (D-20261117-2 Q1)', () => {
     const output = collectAnalysis(join(FIXTURES, 'hypothesis_given.py'));
     const record = output.evidence['assertion_count'];
 
+    // PARTIAL coverage retained (count not case-exhaustive) -> verdict stays
+    // INDETERMINATE via the completeness guard; but the count is now KNOWN.
     expect(record.coverage.status).toBe(CollectionStatus.PARTIAL);
-    expect(record.reason).toContain('unsupported-form');
+    expect(record.availability).toBe(Availability.KNOWN);
+    expect(record.value as number).toBeGreaterThan(0);
+    expect(record.reason).toContain('property-based');
+    expect(record.reason).not.toContain('unsupported-form');
+    // @given records are tagged property_based (present-only, never false).
+    expect((record as { property_based?: boolean }).property_based).toBe(true);
   });
 });
 
@@ -593,22 +600,25 @@ describe('Phase 9 task 1.3 — evidenceStrength (D10)', () => {
     }
   });
 
-  it('@given-decorated test → SYNTAX_OBSERVED with CollectionStatus.PARTIAL retained', () => {
+  it('@given-decorated test → SYNTAX_OBSERVED with CollectionStatus.PARTIAL retained + property_based tag (D-20261117-2 Q1)', () => {
     const output = collectAnalysis(join(FIXTURES, 'hypothesis_given.py'));
     expect(output.evidence['assertion_count'].evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
     expect(output.evidence['assertion_count'].coverage.status).toBe(CollectionStatus.PARTIAL);
+    expect((output.evidence['assertion_count'] as { property_based?: boolean }).property_based).toBe(true);
     const scope = (output.tests ?? [])[0];
     expect(scope).toBeDefined();
     expect(scope!.evidence['assertion_count'].evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
     expect(scope!.evidence['assertion_count'].coverage.status).toBe(CollectionStatus.PARTIAL);
+    expect((scope!.evidence['assertion_count'] as { property_based?: boolean }).property_based).toBe(true);
   });
 
-  it('zero-assert @given + straight-line assert test → subject SYNTAX_OBSERVED (D10: @given is syntax-form regardless of assert count)', () => {
+  it('zero-assert @given + straight-line assert test → subject SYNTAX_OBSERVED + property_based tagged on subject', () => {
     const file = write(
       'from hypothesis import given, strategies as st\n\n@given(st.integers())\ndef test_prop(x):\n    pass\n\ndef test_straight():\n    assert True\n',
     );
     const output = collectAnalysis(file);
     expect(output.evidence['assertion_count'].evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
+    expect((output.evidence['assertion_count'] as { property_based?: boolean }).property_based).toBe(true);
   });
 
   it('unsupported/unclassifiable assert form → UNSUPPORTED', () => {
@@ -959,5 +969,291 @@ describe('Phase 9 task 7.11 — framework attribution hot-fix (AST walk, no stri
     const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
     expect(byName.get('test_z')?.test.framework).toBe('pytest');
     expect(output.subject.framework).toBe('pytest');
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * M5 (plan task 3, RED-first) — decorated class-member test methods
+ *
+ * Bug: the native tree-sitter class-member loop (collector.ts walkNative
+ * :491-494) accepts only `function_definition` members via
+ * isTestFunction(member); decorated methods appear as `decorated_definition`
+ * in class bodies and are SKIPPED. The module-level loop already unwraps
+ * (:482-484). The stdlib-ast fallback (AST_SCRIPT :178-185) already
+ * collects decorated methods (Python ast stores them as plain FunctionDef
+ * with decorator_list; is_test matches), so the fallback tests below pin
+ * already-correct behavior and must stay GREEN; only the native tests are
+ * RED until task 2 mirrors the module-level unwrap in the class loop.
+ * ------------------------------------------------------------------ */
+
+describe('M5: decorated class-member test methods (native vs python3-ast fallback)', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'py-m5-decor-'));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function write(src: string): string {
+    const file = join(dir, 'case.py');
+    writeFileSync(file, src, 'utf8');
+    return file;
+  }
+
+  // Valid Python: plain method, @staticmethod-decorated method,
+  // @property-decorated method — all named test_* inside a Test* class.
+  const SRC = [
+    'import unittest',
+    '',
+    'class TestSample(unittest.TestCase):',
+    '    def test_plain(self):',
+    '        self.assertEqual(1, 1)',
+    '',
+    '    @staticmethod',
+    '    def test_static():',
+    '        assert True',
+    '',
+    '    @property',
+    '    def test_prop(self):',
+    '        return 42',
+    '',
+  ].join('\n');
+
+  it('(a) native tree-sitter path collects plain + decorated class members, framework unittest', () => {
+    const file = write(SRC);
+    const output = collectAnalysis(file);
+    expect(output.analysis.status).toBe(AnalysisStatus.SUCCESS);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    // RED before task 2: decorated_definition members are skipped by the
+    // native class-member loop; test_static and test_prop are absent.
+    expect(byName.has('test_plain')).toBe(true);
+    expect(byName.has('test_static')).toBe(true);
+    expect(byName.has('test_prop')).toBe(true);
+    expect(byName.get('test_plain')!.test.framework).toBe('unittest');
+    expect(byName.get('test_static')!.test.framework).toBe('unittest');
+    expect(byName.get('test_prop')!.test.framework).toBe('unittest');
+    expect(output.subject.framework).toBe('unittest');
+  });
+
+  it('(b) python3-ast fallback (forced) collects plain + decorated class members, framework unittest', () => {
+    const file = write(SRC);
+    const output = collectAnalysis(file, { substrateProbe: fakeProbe(fakeTreeSitter(true)) } as any);
+    expect(output.analysis.status).toBe(AnalysisStatus.SUCCESS);
+    const byName = new Map((output.tests ?? []).map((s) => [s.test.name, s]));
+    // GREEN before and after task 2: stdlib ast already collects decorated
+    // methods as plain FunctionDef with decorator_list.
+    expect(byName.has('test_plain')).toBe(true);
+    expect(byName.has('test_static')).toBe(true);
+    expect(byName.has('test_prop')).toBe(true);
+    expect(byName.get('test_plain')!.test.framework).toBe('unittest');
+    expect(byName.get('test_static')!.test.framework).toBe('unittest');
+    expect(byName.get('test_prop')!.test.framework).toBe('unittest');
+    expect(output.subject.framework).toBe('unittest');
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * D-20261117-2 (task 0, RED) — decoratedWithGiven FALSE POSITIVE
+ *
+ * Bug: the native decoratedWithGiven() (collector.ts:365-371) matches
+ * /\bgiven\b/ over the WHOLE decorator text span, so a plain
+ * @pytest.mark.parametrize(...) whose argument list contains a COMMENT line
+ * with the word "given" (corpus prose: "# should be True for the given
+ * operator") is mis-detected as a hypothesis @given test -> the assertion
+ * count is zero-suppressed (value undefined / UNKNOWN / PARTIAL /
+ * unsupported-form). The stdlib-ast fallback (AST_SCRIPT decs() :129-134,
+ * `"given" in decs(...)` :182/:184) is name-based and does NOT
+ * false-positive -> the two substrates diverge on DETECTION.
+ *
+ * Fix (task 2): name-anchored detection — match the decorator CALL NAME only.
+ * RED here: the native test fails pre-fix (given=true); the forced-fallback
+ * test already passes (pins the correct behavior the native path must match).
+ * ------------------------------------------------------------------ */
+
+describe('D-20261117-2: decoratedWithGiven detection false positive (task 0)', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'py-given-fp-'));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function write(src: string): string {
+    const file = join(dir, 'case.py');
+    writeFileSync(file, src, 'utf8');
+    return file;
+  }
+
+  // Corpus-shaped: @pytest.mark.parametrize whose arg list carries a COMMENT
+  // line containing the word "given" — tree-sitter keeps the comment INSIDE
+  // the `decorator` node span, so /\bgiven\b/ over decorator.text matches.
+  const PARAMETRIZE_WITH_GIVEN_COMMENT = [
+    'import pytest',
+    '@pytest.mark.parametrize(',
+    '    "version",',
+    '    [',
+    '        # should be True for the given operator',
+    '        "1.0.0",',
+    '    ],',
+    ')',
+    'def test_comparison(version):',
+    '    assert Version(version)',
+    '',
+  ].join('\n');
+
+  it('(native) parametrize-with-"given"-comment is NOT a @given test (value counted, no property_based)', () => {
+    const file = write(PARAMETRIZE_WITH_GIVEN_COMMENT);
+    const output = collectAnalysis(file);
+    const record = output.evidence['assertion_count'];
+    const scope = (output.tests ?? []).find((s) => s.test.name === 'test_comparison')!;
+    const scopeRecord = scope.evidence['assertion_count'];
+
+    // RED pre-fix: native given=true -> value undefined / UNKNOWN / PARTIAL.
+    expect(output.analysis.status).toBe(AnalysisStatus.SUCCESS);
+    expect(record.value as number).toBeGreaterThan(0);
+    expect(record.availability).toBe(Availability.KNOWN);
+    expect(record.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect((record as { property_based?: boolean }).property_based).toBeUndefined();
+    expect(scopeRecord.value as number).toBeGreaterThan(0);
+    expect(scopeRecord.availability).toBe(Availability.KNOWN);
+    expect(scopeRecord.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect((scopeRecord as { property_based?: boolean }).property_based).toBeUndefined();
+  });
+
+  it('(forced fallback) parametrize-with-"given"-comment is NOT a @given test — parity', () => {
+    const file = write(PARAMETRIZE_WITH_GIVEN_COMMENT);
+    const output = collectAnalysis(file, { substrateProbe: fakeProbe(fakeTreeSitter(true)) } as any);
+    const record = output.evidence['assertion_count'];
+    const scope = (output.tests ?? []).find((s) => s.test.name === 'test_comparison')!;
+    const scopeRecord = scope.evidence['assertion_count'];
+
+    expect(output.analysis.status).toBe(AnalysisStatus.SUCCESS);
+    expect(record.value as number).toBeGreaterThan(0);
+    expect(record.availability).toBe(Availability.KNOWN);
+    expect(record.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect((record as { property_based?: boolean }).property_based).toBeUndefined();
+    expect(scopeRecord.value as number).toBeGreaterThan(0);
+    expect(scopeRecord.availability).toBe(Availability.KNOWN);
+    expect(scopeRecord.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect((scopeRecord as { property_based?: boolean }).property_based).toBeUndefined();
+  });
+
+  it('(control) a real @given(st.integers()) decorator IS still detected as @given on both substrates', () => {
+    const file = write(
+      'from hypothesis import given, strategies as st\n\n@given(st.integers())\ndef test_prop(x):\n    assert x + 0 == x\n',
+    );
+    for (const opts of [undefined, { substrateProbe: fakeProbe(fakeTreeSitter(true)) }] as any[]) {
+      const output = collectAnalysis(file, opts);
+      const scope = (output.tests ?? []).find((s) => s.test.name === 'test_prop')!;
+      expect(scope).toBeDefined();
+      // Detection fires for a REAL @given: the scope record carries the @given
+      // note in its reason (pre-fix 'unsupported-form', post-fix 'property-based').
+      // A detection regression would leave the record value-counted with no reason.
+      expect(scope.evidence['assertion_count'].reason).toMatch(/hypothesis @given/);
+    }
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * D-20261117-2 (task 1a, RED) — @given estimate_marker (new semantics)
+ *
+ * Owner ruling D-20261117-2 Q1: python adapter COUNTS assert statements
+ * inside hypothesis @given bodies into assertion_count (value > 0),
+ * availability KNOWN (was UNKNOWN), coverage PARTIAL retained (count not
+ * case-exhaustive -> verdict stays INDETERMINATE), reason carries
+ * 'property-based' (NOT 'unsupported-form'), and the record is tagged
+ * property_based === true. Subject-level aggregate mirrors the tag.
+ *
+ * RED pre-fix: given tests zero-suppress -> value undefined / UNKNOWN /
+ * unsupported-form / no property_based key.
+ * ------------------------------------------------------------------ */
+
+describe('D-20261117-2: @given estimate_marker semantics (task 1a)', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'py-given-marker-'));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function write(src: string): string {
+    const file = join(dir, 'case.py');
+    writeFileSync(file, src, 'utf8');
+    return file;
+  }
+
+  const GIVEN_SRC = [
+    'from hypothesis import given, strategies as st',
+    '',
+    '',
+    '@given(st.integers())',
+    'def test_prop(x):',
+    '    assert x + 0 == x',
+    '    assert isinstance(x, int)',
+    '',
+  ].join('\n');
+
+  it('(a) real @given body asserts counted: value > 0, KNOWN, property_based, PARTIAL, reason property-based', () => {
+    const file = write(GIVEN_SRC);
+    const output = collectAnalysis(file);
+    const scope = (output.tests ?? []).find((s) => s.test.name === 'test_prop')!;
+    const record = scope.evidence['assertion_count'];
+
+    expect(record.value as number).toBeGreaterThan(0);
+    expect(record.availability).toBe(Availability.KNOWN);
+    expect(record.coverage.status).toBe(CollectionStatus.PARTIAL);
+    expect((record as { property_based?: boolean }).property_based).toBe(true);
+    expect(record.reason).toContain('property-based');
+    expect(record.reason).not.toContain('unsupported-form');
+  });
+
+  it('(b) subject-level aggregate carries property_based === true for a file with @given', () => {
+    const file = write(GIVEN_SRC);
+    const output = collectAnalysis(file);
+    const record = output.evidence['assertion_count'];
+
+    expect(record.value as number).toBeGreaterThan(0);
+    expect((record as { property_based?: boolean }).property_based).toBe(true);
+  });
+
+  it('(c) parity: forced python3-ast fallback substrate -> same (a)+(b) hold', () => {
+    const file = write(GIVEN_SRC);
+    const output = collectAnalysis(file, { substrateProbe: fakeProbe(fakeTreeSitter(true)) } as any);
+    const scope = (output.tests ?? []).find((s) => s.test.name === 'test_prop')!;
+    const record = scope.evidence['assertion_count'];
+    const subjectRecord = output.evidence['assertion_count'];
+
+    expect(record.value as number).toBeGreaterThan(0);
+    expect(record.availability).toBe(Availability.KNOWN);
+    expect(record.coverage.status).toBe(CollectionStatus.PARTIAL);
+    expect((record as { property_based?: boolean }).property_based).toBe(true);
+    expect(record.reason).toContain('property-based');
+    expect(record.reason).not.toContain('unsupported-form');
+    expect(subjectRecord.value as number).toBeGreaterThan(0);
+    expect((subjectRecord as { property_based?: boolean }).property_based).toBe(true);
+  });
+
+  it('(d) non-@given tests unchanged: no property_based key, value unchanged', () => {
+    const file = join(FIXTURES, 'pytest_sample.py');
+    const output = collectAnalysis(file);
+    const record = output.evidence['assertion_count'];
+
+    expect(record.value as number).toBeGreaterThan(0);
+    expect(record.availability).toBe(Availability.KNOWN);
+    expect(record.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect((record as { property_based?: boolean }).property_based).toBeUndefined();
+    for (const scope of output.tests ?? []) {
+      expect((scope.evidence['assertion_count'] as { property_based?: boolean }).property_based).toBeUndefined();
+      expect(scope.evidence['assertion_count'].value as number).toBeGreaterThan(0);
+    }
   });
 });

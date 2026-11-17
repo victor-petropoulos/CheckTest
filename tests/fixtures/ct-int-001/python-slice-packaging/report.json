@@ -22,7 +22,7 @@
   },
   "evidence": {
     "assertion_count": {
-      "value": 134,
+      "value": 157,
       "availability": "KNOWN",
       "provenance": "DIRECT",
       "source": "python-pytest-adapter",
@@ -118,6 +118,23 @@
     },
     {
       "rule_id": "CT-INT-001",
+      "result": "FAIL",
+      "reason": "CT-INT-001: assertion_count=0 <= 0",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_valid_versions@170:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
       "result": "PASS",
       "reason": "CT-INT-001: assertion_count=2 >= 1",
       "evidence": [
@@ -149,7 +166,115 @@
       "evidenceStrength": "EXECUTION_ESTABLISHED",
       "provenance": "DIRECT",
       "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_invalid_versions@209:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_non_string_versions_raise_invalid_version@214:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "SYNTAX_OBSERVED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_oversized_version_raises_valueerror@231:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_normalized_versions@356:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=2 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_str_repr@411:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_rc_and_c_equals@415:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_hash@419:0",
       "completeness": "COMPLETE"
     },
     {
@@ -168,6 +293,294 @@
       "provenance": "DIRECT",
       "availability": "KNOWN",
       "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_hash_with_warm_key_cache@422:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_public@462:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_base_version@499:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_epoch@536:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_release@573:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_local@610:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_pre@647:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_is_prerelease@677:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_dev@714:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_is_devrelease@751:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_post@788:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_is_postrelease@801:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_comparison_true@845:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_comparison_false@891:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_dunder_op_returns_notimplemented@897:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_compare_other@902:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": [
+        "assertion_count"
+      ],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "<corpus-root>/packaging/tests/test_version.py#test_base_version_notimplemented_with_non_base_version@910:0",
       "completeness": "COMPLETE"
     },
     {
@@ -1206,7 +1619,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_parse@39:0",
         "name": "test_parse",
         "line": 39,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -1292,7 +1706,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_parse_raises@43:0",
         "name": "test_parse_raises",
         "line": 43,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -1375,10 +1790,97 @@
     },
     {
       "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_valid_versions@170:0",
+        "name": "test_valid_versions",
+        "line": 170,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "FAIL",
+          "reason": "CT-INT-001: assertion_count=0 <= 0",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_valid_versions@170:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
         "id": "<corpus-root>/packaging/tests/test_version.py#test_match_args@173:0",
         "name": "test_match_args",
         "line": 173,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -1461,10 +1963,446 @@
     },
     {
       "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_invalid_versions@209:0",
+        "name": "test_invalid_versions",
+        "line": 209,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_invalid_versions@209:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_non_string_versions_raise_invalid_version@214:0",
+        "name": "test_non_string_versions_raise_invalid_version",
+        "line": 214,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_non_string_versions_raise_invalid_version@214:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_oversized_version_raises_valueerror@231:0",
+        "name": "test_oversized_version_raises_valueerror",
+        "line": 231,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "SYNTAX_OBSERVED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_oversized_version_raises_valueerror@231:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_normalized_versions@356:0",
+        "name": "test_normalized_versions",
+        "line": 356,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_normalized_versions@356:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_str_repr@411:0",
+        "name": "test_version_str_repr",
+        "line": 411,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 2,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=2 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_str_repr@411:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
         "id": "<corpus-root>/packaging/tests/test_version.py#test_version_rc_and_c_equals@415:0",
         "name": "test_version_rc_and_c_equals",
         "line": 415,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -1547,10 +2485,98 @@
     },
     {
       "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_hash@419:0",
+        "name": "test_version_hash",
+        "line": 419,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_hash@419:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
         "id": "<corpus-root>/packaging/tests/test_version.py#test_version_hash_with_warm_key_cache@422:0",
         "name": "test_version_hash_with_warm_key_cache",
         "line": 422,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -1633,10 +2659,1403 @@
     },
     {
       "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_public@462:0",
+        "name": "test_version_public",
+        "line": 462,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_public@462:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_base_version@499:0",
+        "name": "test_version_base_version",
+        "line": 499,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_base_version@499:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_epoch@536:0",
+        "name": "test_version_epoch",
+        "line": 536,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_epoch@536:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_release@573:0",
+        "name": "test_version_release",
+        "line": 573,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_release@573:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_local@610:0",
+        "name": "test_version_local",
+        "line": 610,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_local@610:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_pre@647:0",
+        "name": "test_version_pre",
+        "line": 647,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_pre@647:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_is_prerelease@677:0",
+        "name": "test_version_is_prerelease",
+        "line": 677,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_is_prerelease@677:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_dev@714:0",
+        "name": "test_version_dev",
+        "line": 714,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_dev@714:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_is_devrelease@751:0",
+        "name": "test_version_is_devrelease",
+        "line": 751,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_is_devrelease@751:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_post@788:0",
+        "name": "test_version_post",
+        "line": 788,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_post@788:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_version_is_postrelease@801:0",
+        "name": "test_version_is_postrelease",
+        "line": 801,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_version_is_postrelease@801:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_comparison_true@845:0",
+        "name": "test_comparison_true",
+        "line": 845,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_comparison_true@845:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_comparison_false@891:0",
+        "name": "test_comparison_false",
+        "line": 891,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_comparison_false@891:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_dunder_op_returns_notimplemented@897:0",
+        "name": "test_dunder_op_returns_notimplemented",
+        "line": 897,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_dunder_op_returns_notimplemented@897:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_compare_other@902:0",
+        "name": "test_compare_other",
+        "line": 902,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_compare_other@902:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "<corpus-root>/packaging/tests/test_version.py#test_base_version_notimplemented_with_non_base_version@910:0",
+        "name": "test_base_version_notimplemented_with_non_base_version",
+        "line": 910,
+        "declaration": "def",
+        "framework": "unittest"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          }
+        },
+        "mutation_score": {
+          "value": null,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "python-pytest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "UNAVAILABLE",
+            "supported_frameworks": [
+              "pytest",
+              "unittest"
+            ],
+            "supported_assertion_forms": [
+              "assert",
+              "pytest.raises",
+              "self.assertEqual",
+              "self.assertTrue",
+              "self.assertFalse",
+              "self.assertIsNone",
+              "self.assertRaises",
+              "self.assertIn",
+              "self.assertAlmostEqual"
+            ]
+          },
+          "reason": "no mutation report supplied"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": [
+            "assertion_count"
+          ],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "<corpus-root>/packaging/tests/test_version.py#test_base_version_notimplemented_with_non_base_version@910:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    },
+    {
+      "test": {
         "id": "<corpus-root>/packaging/tests/test_version.py#test_base_version_hash@915:0",
         "name": "test_base_version_hash",
         "line": 915,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -1722,7 +4141,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_base_version_ne_with_base_version@920:0",
         "name": "test_base_version_ne_with_base_version",
         "line": 920,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -1808,7 +4228,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_gt_with_cached_other@926:0",
         "name": "test_gt_with_cached_other",
         "line": 926,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -1894,7 +4315,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_version_compare_with_base_version_subclass@934:0",
         "name": "test_version_compare_with_base_version_subclass",
         "line": 934,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -1980,7 +4402,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_version_ne_with_uncached_keys@952:0",
         "name": "test_version_ne_with_uncached_keys",
         "line": 952,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2066,7 +4489,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_version_le_with_uncached_keys@971:0",
         "name": "test_version_le_with_uncached_keys",
         "line": 971,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2152,7 +4576,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_major_version@985:0",
         "name": "test_major_version",
         "line": 985,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2238,7 +4663,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_minor_version@988:0",
         "name": "test_minor_version",
         "line": 988,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2324,7 +4750,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_micro_version@992:0",
         "name": "test_micro_version",
         "line": 992,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2410,7 +4837,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_unknown_argument@998:0",
         "name": "test_replace_unknown_argument",
         "line": 998,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2496,7 +4924,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_no_args@1004:0",
         "name": "test_replace_no_args",
         "line": 1004,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2582,7 +5011,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_epoch@1011:0",
         "name": "test_replace_epoch",
         "line": 1011,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2668,7 +5098,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_release_tuple@1020:0",
         "name": "test_replace_release_tuple",
         "line": 1020,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2754,7 +5185,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_release_none@1026:0",
         "name": "test_replace_release_none",
         "line": 1026,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2840,7 +5272,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_alpha@1030:0",
         "name": "test_replace_pre_alpha",
         "line": 1030,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -2926,7 +5359,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_alpha_none@1036:0",
         "name": "test_replace_pre_alpha_none",
         "line": 1036,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3012,7 +5446,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_beta@1040:0",
         "name": "test_replace_pre_beta",
         "line": 1040,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3098,7 +5533,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_beta_none@1046:0",
         "name": "test_replace_pre_beta_none",
         "line": 1046,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3184,7 +5620,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_rc@1050:0",
         "name": "test_replace_pre_rc",
         "line": 1050,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3270,7 +5707,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_pre_rc_none@1055:0",
         "name": "test_replace_pre_rc_none",
         "line": 1055,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3356,7 +5794,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_post@1059:0",
         "name": "test_replace_post",
         "line": 1059,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3442,7 +5881,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_post_none@1064:0",
         "name": "test_replace_post_none",
         "line": 1064,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3528,7 +5968,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_dev@1068:0",
         "name": "test_replace_dev",
         "line": 1068,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3614,7 +6055,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_dev_none@1073:0",
         "name": "test_replace_dev_none",
         "line": 1073,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3700,7 +6142,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_local_string@1077:0",
         "name": "test_replace_local_string",
         "line": 1077,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3786,7 +6229,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_local_none@1083:0",
         "name": "test_replace_local_none",
         "line": 1083,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3872,7 +6316,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_multiple_components@1087:0",
         "name": "test_replace_multiple_components",
         "line": 1087,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -3958,7 +6403,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_clear_all_optional@1093:0",
         "name": "test_replace_clear_all_optional",
         "line": 1093,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4044,7 +6490,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_preserves_comparison@1098:0",
         "name": "test_replace_preserves_comparison",
         "line": 1098,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4130,7 +6577,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_preserves_hash@1107:0",
         "name": "test_replace_preserves_hash",
         "line": 1107,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4216,7 +6664,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_returns_same_instance_when_unchanged@1115:0",
         "name": "test_replace_returns_same_instance_when_unchanged",
         "line": 1115,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4302,7 +6751,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_change_pre_type@1126:0",
         "name": "test_replace_change_pre_type",
         "line": 1126,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4388,7 +6838,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_epoch_type@1135:0",
         "name": "test_replace_invalid_epoch_type",
         "line": 1135,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4474,7 +6925,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_post_type@1140:0",
         "name": "test_replace_invalid_post_type",
         "line": 1140,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4560,7 +7012,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_dev_type@1145:0",
         "name": "test_replace_invalid_dev_type",
         "line": 1145,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4646,7 +7099,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_epoch_negative@1150:0",
         "name": "test_replace_invalid_epoch_negative",
         "line": 1150,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4732,7 +7186,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_release_empty@1155:0",
         "name": "test_replace_invalid_release_empty",
         "line": 1155,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4818,7 +7273,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_release_tuple_content@1160:0",
         "name": "test_replace_invalid_release_tuple_content",
         "line": 1160,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4904,7 +7360,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_pre_negative@1167:0",
         "name": "test_replace_invalid_pre_negative",
         "line": 1167,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -4990,7 +7447,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_pre_type@1172:0",
         "name": "test_replace_invalid_pre_type",
         "line": 1172,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5076,7 +7534,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_pre_format@1177:0",
         "name": "test_replace_invalid_pre_format",
         "line": 1177,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5162,7 +7621,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_post_negative@1186:0",
         "name": "test_replace_invalid_post_negative",
         "line": 1186,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5248,7 +7708,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_dev_negative@1191:0",
         "name": "test_replace_invalid_dev_negative",
         "line": 1191,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5334,7 +7795,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_replace_invalid_local_string@1196:0",
         "name": "test_replace_invalid_local_string",
         "line": 1196,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "unittest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5420,7 +7882,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_deprecated__version@1229:0",
         "name": "test_deprecated__version",
         "line": 1229,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5506,7 +7969,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_hatchling_usage__version@1235:0",
         "name": "test_hatchling_usage__version",
         "line": 1235,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5592,7 +8056,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_from_parts@1277:0",
         "name": "test_from_parts",
         "line": 1277,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5678,7 +8143,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_from_parts_rejects_non_str_pre_letter@1282:0",
         "name": "test_from_parts_rejects_non_str_pre_letter",
         "line": 1282,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5764,7 +8230,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_roundtrip@1302:0",
         "name": "test_pickle_roundtrip",
         "line": 1302,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5850,7 +8317,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_old_format_loads@1333:0",
         "name": "test_pickle_old_format_loads",
         "line": 1333,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -5936,7 +8404,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_old_format_re_pickled_is_clean@1350:0",
         "name": "test_pickle_old_format_re_pickled_is_clean",
         "line": 1350,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -6022,7 +8491,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_26_0_slots_format_loads@1376:0",
         "name": "test_pickle_26_0_slots_format_loads",
         "line": 1376,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -6108,7 +8578,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_26_2_tuple_getstate_loads@1397:0",
         "name": "test_pickle_26_2_tuple_getstate_loads",
         "line": 1397,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -6194,7 +8665,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_pickle_setstate_rejects_invalid_state@1412:0",
         "name": "test_pickle_setstate_rejects_invalid_state",
         "line": 1412,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -6280,7 +8752,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_structures_shim_repr@1429:0",
         "name": "test_structures_shim_repr",
         "line": 1429,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -6366,7 +8839,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_trimmed_release_hash_from_unhashed_version@1435:0",
         "name": "test_trimmed_release_hash_from_unhashed_version",
         "line": 1435,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -6452,7 +8926,8 @@
         "id": "<corpus-root>/packaging/tests/test_version.py#test_trimmed_release_hash_from_prehashed_version@1443:0",
         "name": "test_trimmed_release_hash_from_prehashed_version",
         "line": 1443,
-        "declaration": "def"
+        "declaration": "def",
+        "framework": "pytest"
       },
       "analysisStatus": "SUCCESS",
       "evaluationStatus": "EVALUATED",
@@ -6535,11 +9010,11 @@
     }
   ],
   "summary": {
-    "total": 62,
-    "pass": 62,
-    "fail": 0,
+    "total": 85,
+    "pass": 84,
+    "fail": 1,
     "indeterminate": 0,
     "not_applicable": 0,
-    "failed": 0
+    "failed": 1
   }
 }

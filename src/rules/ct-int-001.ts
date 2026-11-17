@@ -14,13 +14,15 @@
  *   change, not a rule decision, so milestone-1 records the rule's own spec
  *   default. A CI policy may raise error to blocker later (SPEC:876).
  *
- *   status — 'active', which is the milestone-1 equivalent of EXPERIMENTAL.
- *   SPEC:1245 says a rule must not be promoted to STABLE until its evidence
- *   behavior and edge cases are understood: executability after return/throw and
- *   inside callbacks is deliberately unresolved here (plan A7), so claiming
- *   STABLE would overstate what this rule knows. The core union is
- *   active|draft|deprecated and 'draft' means "never reported", which would
- *   disable the rule. Recorded here; the reporter does not yet filter on status.
+ *   status — 'active' (RuleStatus.ACTIVE). SPEC:1245 says a rule must not be
+ *   promoted to STABLE until its evidence behavior and edge cases are
+ *   understood: executability after return/throw and inside callbacks is
+ *   deliberately unresolved here (plan A7), so claiming STABLE would overstate
+ *   what this rule knows. The closed RuleStatus set is active|draft|deprecated
+ *   (src/core/rule.ts:39-55). 'draft' does NOT mean "never reported": a draft
+ *   rule is excluded by default but emits a real verdict when explicitly named
+ *   via --rule (src/core/evaluation.ts:311-317). Status is reported on every
+ *   finding (JSON: ruleStatus) and on the SARIF rule descriptor (status).
  *
  * Per-result requirements (SPEC:567-569), enforced by src/core/evaluation.ts:
  *

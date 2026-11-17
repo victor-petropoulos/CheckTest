@@ -211,7 +211,7 @@ Per-test framework labels come from declaration shape, not raw text:
 - Module-level `def test_*` → `unittest` only if the body contains an actual `self.assert*(...)` **call node** (tree-sitter call walk; `ast.Call` attribute walk in the stdlib-ast fallback). String literals, docstrings and snippet text are never inspected, so a `pytester.makepyfile("…self.assertEqual…")` snippet stays `pytest`.
 - Subject-level `test.framework` uses pytest-first precedence: any pytest-labeled test → `pytest`; else any unittest-labeled test → `unittest`; a file with no collected tests keeps the default attribution (`src/adapters/python/collector.ts:1004-1006`). A pytest file that merely contains a `class Test*` helper is attributed `pytest`.
 
-Per-test framework labels are internal to the analysis envelope; the JSON report serializes the subject-level `framework` only (`src/reporters/json.ts:308`).
+The JSON report emits the subject-level `framework` (`src/reporters/json.ts:312`) and, inside each `testResults[]` entry, a per-test `test.framework` copied from the analysis envelope (`src/reporters/json.ts:200-203`). The per-test key is present-only: it is omitted when the test carries no framework attribution, so TS tests — whose adapter produces no per-test framework — have no `test.framework` key.
 
 ### Test declaration forms
 
@@ -256,11 +256,13 @@ Mutation is unsupported in v1: the collector emits `mutation_score` with `availa
 
 ### Known gaps
 
-| Gap                                    | Gap reason (verbatim from `support.ts`) | Trigger                                                                                                 |
-| -------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| hypothesis `@given` / property-based   | `'unsupported-form'`                    | `@given`-decorated test (`decoratedWithGiven`, `collector.ts:321-327`; subject-level reason `:600-602`) |
-| Unrecognized assertion shape           | `'unsupported-form'`                    | any assert not in `SUPPORTED_ASSERTION_FORMS`                                                           |
-| Unparseable or missing coverage report | `'unparseable-coverage-report'`         | report path given but not parseable (`collector.ts:644-655`)                                            |
+| Gap                                    | Gap reason (verbatim from `support.ts`) | Trigger                                                                                                                                                                                                                                                         |
+| -------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| hypothesis `@given` / property-based   | — (counted, not a gap)                  | `@given`-decorated test: body asserts counted, `availability: KNOWN`, `coverage: PARTIAL`, record tagged `property_based: true`; count not case-exhaustive (`decoratedWithGiven`, `collector.ts:381-387`; `testEvidence` `:713-737`; subject reason `:818-822`) |
+| Unrecognized assertion shape           | `'unsupported-form'`                    | any assert not in `SUPPORTED_ASSERTION_FORMS`                                                                                                                                                                                                                   |
+| Unparseable or missing coverage report | `'unparseable-coverage-report'`         | report path given but not parseable (`collector.ts:644-655`)                                                                                                                                                                                                    |
+
+**`@given` consumer contract.** Key on the verdict, never on `availability`: a real `@given` test now carries `value > 0` with `availability: KNOWN` and `coverage: PARTIAL`, yet CT-INT-001 stays INDETERMINATE (PARTIAL → completeness guard). `property_based: true` is detection-affirmative only — its absence is NEVER negative evidence about a test's nature. The key is JSON-only and present-only (never `false`), appended after `unclassified_constructs` (`src/reporters/json.ts:119`); `REPORT_SCHEMA_VERSION` stays `'0.5'` and SARIF is unchanged.
 
 **Source:** `src/adapters/python/support.ts:49` (`UNSUPPORTED_FORM_GAP = 'unsupported-form'`), `:55` (`UNPARSEABLE_REPORT_GAP = 'unparseable-coverage-report'`), `:52` (`NO_MUTATION_REPORT = 'no mutation report supplied'`).
 ---
@@ -390,9 +392,9 @@ Every evidence record carries a `provenance` value (`src/core/evidence.ts:14-18`
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DIRECT`   | `src/adapters/typescript/collector.ts:267` (failed scan), `:294` (unsupported framework), `:336` (file-level aggregate record), `:408` (per-declaration record)                                                                                                                           | YES — 4 sites in the AST collector                                                                                                          |
 | `DERIVED`  | `src/adapters/typescript/regex-assertion-count.ts:51` (regex stub that produces the fixture-13 conflict)                                                                                                                                                                                  | YES — test-only stub; no `src/` module imports it                                                                                           |
-| `EXTERNAL` | `src/providers/coverage.ts:90` (Istanbul file record), `:146` (c8 file record), `:281` (missing-file fallback), `:331` (per-declaration record); `src/providers/mutation.ts:194` (unavailable revision), `:210` (scoring failure), `:225` (scored record), `:360` (missing-file fallback) | YES — reachable via the coverage provider (file-level + per-declaration, by line-range overlap) and the mutation provider (file-level only) |
+| `EXTERNAL` | `src/providers/coverage.ts:90` (Istanbul file record), `:146` (c8 file record), `:281` (missing-file fallback), `:331` (per-declaration record); `src/providers/mutation.ts:194` (unavailable revision), `:210` (scoring failure), `:225` (scored record), `:360` (missing-file fallback) | YES — reachable via the coverage provider (file-level + per-declaration by line-range overlap, with `location` on per-declaration records) and the mutation provider (file-level only) |
 
-This is documentation of reachability, not a test guarantee: `DIRECT` and `DERIVED` are observed in the AST collector, and `EXTERNAL` is now observed reachable via the coverage provider (file-level + per-declaration by line-range overlap) and the mutation provider (file-level only). Neither provider populates `location`; mutation has no per-declaration attribution.
+This is documentation of reachability, not a test guarantee: `DIRECT` and `DERIVED` are observed in the AST collector, and `EXTERNAL` is now observed reachable via the coverage provider (file-level + per-declaration by line-range overlap) and the mutation provider (file-level only). The coverage provider now populates `location` on per-declaration records; the mutation provider does not. Mutation has no per-declaration attribution.
 
 ---
 
@@ -418,7 +420,7 @@ Classification in `countAsserts` (native `src/adapters/python/collector.ts:374-4
 | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | pytest/unittest straight-line body assertion (class-method containment is NOT nesting)    | `EXECUTION_ESTABLISHED`                                    |
 | Assertion inside a helper called from the body, or inside `if`/`for`/`while`/`try` branch | `SYNTAX_OBSERVED`                                          |
-| `@given`-decorated test (all its assertions)                                              | `SYNTAX_OBSERVED` (`CollectionStatus.PARTIAL` retained)    |
+| `@given`-decorated test (assertions counted, tagged `property_based: true`)               | `SYNTAX_OBSERVED` (`CollectionStatus.PARTIAL` retained)    |
 | Non-pytest `.raises` receiver form (`foo.raises(Exception)`, `self.assertRaises`)         | counted in `totalAsserts`, `UNSUPPORTED` (both substrates) |
 
 ### Orthogonality

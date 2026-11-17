@@ -66,6 +66,27 @@ error or a failed run.
 | `--mutation-source-revision <rev>` | Declared revision the mutation report was produced against (valid git rev or `unknown`)                  |
 | `--config <path>`                  | Explicit config file (`checktest.config.json`); no implicit discovery                                    |
 
+### Config File
+
+Config is explicit-only: pass `--config <path>`; there is no implicit discovery of `checktest.config.json`.
+
+Top-level keys are `rules` and `sourceRevision` (`src/core/config.ts:23-28`); `sourceRevision` must be a string and unknown top-level keys are rejected (`src/core/config.ts:65-72`). Each rule entry is an override shaped `{ enabled?, thresholds?: { passAtLeast?, failAtMost? }, severity?: 'error'|'warning'|'info' }` (`src/core/config.ts:12-21`).
+
+```json
+{
+  "rules": {
+    "CT-INT-001": {
+      "enabled": false,
+      "severity": "warning"
+    }
+  }
+}
+```
+
+- Precedence: CLI `--source-revision` beats config `sourceRevision` (see the Flags table above).
+- Thresholds are not configurable for every rule: CT-COV-001 has `thresholds_inert: true` (`src/rules/ct-cov-001.ts:28`) and a `thresholds` override is rejected with `invalid --config: thresholds are not configurable for rule '<id>': its thresholds are inert` (`src/core/config.ts:117`).
+- Local-decision rules reject thresholds with a distinct message: `invalid --config: 'thresholds' is not configurable for local-decision rule '<id>'` (`src/core/config.ts:113`).
+
 ### Mutation Testing
 
 Attach an external Stryker mutation report and evaluate CT-MUT-001 against it.

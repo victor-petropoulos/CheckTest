@@ -116,6 +116,7 @@ function serializeEvidence(record: EvidenceRecord): Json {
   if (record.unclassified_constructs !== undefined) {
     json.unclassified_constructs = record.unclassified_constructs;
   }
+  setIfPresent(json, 'property_based', record.property_based);
   return json;
 }
 
@@ -197,6 +198,10 @@ function serializeTestResult(scope: TestScopeResult, evaluation: TestEvaluation)
       name: scope.test.name,
       line: scope.test.line,
       declaration: scope.test.declaration,
+      // Present-only (D7 idiom): key omitted when the test carries no per-test
+      // framework attribution — never an empty string. Python adapter carries
+      // per-test framework; TS adapter does not.
+      ...(scope.test.framework !== undefined ? { framework: scope.test.framework } : {}),
     },
     analysisStatus: scope.analysis.status,
     evaluationStatus: evaluation.status,

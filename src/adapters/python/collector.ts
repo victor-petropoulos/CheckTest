@@ -362,12 +362,28 @@ function isTestFunction(node: StNode): boolean {
   return name !== null && name.text.startsWith('test_');
 }
 
+// Decorator call-name extraction, mirroring the fallback decs() name logic (:127-135):
+// the callee's id/attr tail only — comment prose inside argument lists never counts.
+function decoratorName(decorator: StNode): string | undefined {
+  const call = (decorator.children ?? []).find((child) => child.type === 'call');
+  const callee = call
+    ? call.childForFieldName('function')
+    : ((decorator.children ?? []).find((child) => child.type === 'identifier' || child.type === 'attribute') ?? null);
+  if (callee === null || callee === undefined) return undefined;
+  if (callee.type === 'identifier') return callee.text;
+  if (callee.type === 'attribute') {
+    const attr = callee.childForFieldName('attribute');
+    return attr === null ? undefined : attr.text;
+  }
+  return undefined;
+}
+
 function decoratedWithGiven(node: StNode): boolean {
   // tree-sitter: @given(...) sits inside a decorated_definition wrapping the function.
   const parent = (node as StNode & { parent?: StNode }).parent;
   if (parent === undefined || parent === null) return false;
   if (parent.type !== 'decorated_definition') return false;
-  return (parent.children ?? []).some((child) => child.type === 'decorator' && /\bgiven\b/.test(child.text));
+  return (parent.children ?? []).some((child) => child.type === 'decorator' && decoratorName(child) === 'given');
 }
 
 /** Node types that make any contained assertion non-straight-line (D10). */
@@ -490,7 +506,14 @@ function walkNative(root: StNode): ParsedPython {
       const body = node.childForFieldName('body');
       if (className.startsWith('Test') && body !== null) {
         for (const member of body.children ?? []) {
-          if (isTestFunction(member)) addTest(member, true);
+          // Mirror the module-level unwrap: decorated class methods arrive as
+          // decorated_definition wrapping the function_definition.
+          if (member.type === 'decorated_definition') {
+            const fn = (member.children ?? []).find((child) => child.type === 'function_definition');
+            if (fn !== undefined && isTestFunction(fn)) addTest(fn, true);
+          } else if (isTestFunction(member)) {
+            addTest(member, true);
+          }
         }
       }
     }
@@ -700,14 +723,16 @@ function testEvidence(
   const evidence: Record<string, ReturnType<typeof makeEvidenceRecord>> = {
     [EVIDENCE_ASSERTION_COUNT]: makeEvidenceRecord({
       type: EVIDENCE_ASSERTION_COUNT,
-      value: test.given ? undefined : test.asserts.total,
-      availability: deriveAvailability(test.given ? CollectionStatus.PARTIAL : CollectionStatus.COMPLETE),
+      value: test.asserts.total,
+      availability: test.given ? Availability.KNOWN : deriveAvailability(CollectionStatus.COMPLETE),
       provenance: Provenance.DIRECT,
       source: ANALYZER_ID,
       collector_version: COLLECTOR_VERSION,
       scope: ANALYSIS_SCOPE,
       coverage: coverageBlock(test.given ? CollectionStatus.PARTIAL : CollectionStatus.COMPLETE),
-      ...(test.given ? { reason: `hypothesis @given: ${gapReason('unsupported-form')}` } : {}),
+      ...(test.given
+        ? { reason: 'hypothesis @given: property-based count (not case-exhaustive)', property_based: true }
+        : {}),
       evidenceStrength: testStrength,
     }),
     mutation_score: makeEvidenceRecord({
@@ -779,20 +804,21 @@ function buildSubjectEvidence(
   const record = makeEvidenceRecord({
     type: EVIDENCE_ASSERTION_COUNT,
     value: parsed.totalAsserts,
-    availability: deriveAvailability(coverageStatus),
+    availability: anyGiven ? Availability.KNOWN : deriveAvailability(coverageStatus),
     provenance: Provenance.DIRECT,
     source: ANALYZER_ID,
     collector_version: COLLECTOR_VERSION,
     scope: ANALYSIS_SCOPE,
     coverage: coverageBlock(coverageStatus),
     evidenceStrength: aggregateSubjectStrength(parsed),
+    ...(anyGiven ? { property_based: true } : {}),
   });
 
   const reasonParts: string[] = [];
   if (anyGiven) {
     reasonParts.push(
       `${parsed.tests.filter((test) => test.given).length} hypothesis @given declaration(s): ` +
-        `property-based assertion shapes are ${gapReason('unsupported-form')}, so executability cannot be established statically`,
+        'property-based count (not case-exhaustive), so executability cannot be established statically',
     );
   }
   if (reasonParts.length > 0) {
