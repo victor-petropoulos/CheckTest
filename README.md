@@ -223,6 +223,14 @@ Jest and Vitest are supported natively. Mocha-class bare-global derivations and 
 
 See [supported syntax](./docs/supported-syntax.md) for assertion forms and [framework detection](./docs/supported-syntax.md#framework-detection) rules. See [docs/limitations.md](./docs/limitations.md) for declared gaps. Coverage rule CT-COV-001 is Active (activated 2026-11-07 via ADR-031); with an explicit `--coverage-map` it evaluates mapped coverage — see [docs/limitations.md](./docs/limitations.md) §14.
 
+## Agent Skill (using-checktest)
+
+The repo ships the `using-checktest` skill — the operating guide for using CheckTest *with* an AI coding agent (verdict semantics, exit-code honesty, evidence-interpretation rules, common mistakes).
+
+- In-repo path: [`.agents/skills/using-checktest/SKILL.md`](./.agents/skills/using-checktest/SKILL.md).
+- npm installs: the skill file ships in the published `checktest-cli` package (`package.json` `files` includes `.agents/skills`) — find it at `node_modules/checktest-cli/.agents/skills/using-checktest/SKILL.md`.
+- Clone-and-build: copy the repo path into your agent's skills directory, e.g. `mkdir -p ~/.agents/skills && cp -r .agents/skills/using-checktest ~/.agents/skills/` (OpenCode: `~/.config/opencode/skills/`; adjust for your agent's convention).
+
 ## Example Output
 
 ```json
