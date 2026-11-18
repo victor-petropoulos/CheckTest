@@ -48,7 +48,8 @@
           "expect-to-match-object",
           "expect-to-have-been-called-times"
         ]
-      }
+      },
+      "evidenceStrength": "EXECUTION_ESTABLISHED"
     }
   },
   "ruleResults": [
@@ -113,7 +114,8 @@
               "expect-to-match-object",
               "expect-to-have-been-called-times"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         }
       },
       "ruleResults": [

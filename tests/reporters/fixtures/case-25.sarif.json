@@ -42,7 +42,8 @@
           },
           "properties": {
             "result": "INDETERMINATE",
-            "testId": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5:0"
+            "testId": "<fixture-root>/case-25-vitest-aliased/sample.test.ts#it.aliased@5:0",
+            "evidenceStrength": "SYNTAX_OBSERVED"
           },
           "locations": [
             {

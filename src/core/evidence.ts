@@ -44,7 +44,12 @@ export enum Availability {
 export const EVIDENCE_SCOPE_TEST_BODY = 'test-body';
 
 /** Closed set of evidence type ids thresholded by rules. */
-export const EVIDENCE_TYPES = ['assertion_count', 'line_coverage', 'mutation_score'] as const;
+export const EVIDENCE_TYPES = [
+  'assertion_count',
+  'line_coverage',
+  'mutation_score',
+  'unestablished_assertion',
+] as const;
 export type EvidenceType = (typeof EVIDENCE_TYPES)[number];
 
 /**
@@ -67,7 +72,15 @@ export type EvidenceType = (typeof EVIDENCE_TYPES)[number];
  *   UNSUPPORTED — the form the adapter cannot classify at all.
  *
  * Classification is language-specific and therefore lives in the adapters
- * (src/adapters/*); core only names the axis. Adapters do not populate it yet.
+ * (src/adapters/*); core only names the axis. Adapters DO populate it today:
+ *   - src/adapters/typescript/collector.ts:260,289 — EvidenceStrength.UNSUPPORTED
+ *     for unscanned / unsupported forms (no classified form to report).
+ *   - src/adapters/typescript/collector.ts:331,420 — classifyFormStrength
+ *     (weakest-finding-wins aggregation).
+ *   - src/adapters/python/collector.ts:736 — testStrength (SYNTAX_OBSERVED for
+ *     @given, else weakest reduction over the declaration's asserts).
+ *   - src/adapters/python/collector.ts:813 — aggregateSubjectStrength
+ *     (subject-level weakest reduction).
  */
 export enum EvidenceStrength {
   /** Form observed in source; execution does not establish it. */
@@ -207,9 +220,11 @@ export interface EvidenceRecord {
    * D10 — how this assertion was established (see `EvidenceStrength`).
    *
    * Additive, optional: absent (undefined) means the producing adapter does not
-   * classify strength yet, which is every adapter today — so this field changes
-   * no existing value. It never substitutes for `availability`; the two are
-   * independent axes and a strength never turns UNKNOWN into KNOWN.
+   * classify strength for that record (some records still carry none — gapped
+   * declarations with no classified form, property-based @given counts). Both
+   * adapters classify strength today on the records they produce, so this field
+   * is no longer universally absent. It never substitutes for `availability`;
+   * the two are independent axes and a strength never turns UNKNOWN into KNOWN.
    */
   evidenceStrength?: EvidenceStrength;
 }

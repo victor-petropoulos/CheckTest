@@ -21,6 +21,11 @@
  * (SPEC:407). Only exit 2 describes a run that produced no verdict at all
  * (SPEC:405).
  *
+ * `doctor` (Phase 2a) reuses the same 0/1/2 contract: 0 = diagnostic success,
+ * 2 = unresolvable/no-verdict dispatch (e.g. `doctor --test <path>` with no
+ * matching adapter), 1 = unknown flag/rule/id (UsageError path). It never runs
+ * tests, mutates config, or writes files.
+ *
  * stderr is the channel for USAGE and CRASH only. A FAILED test is reported in
  * the JSON — never on stderr — so a machine consumer never has to parse prose.
  *
@@ -41,14 +46,14 @@ import { TestType } from './core/analysis';
 import { applyConfigToRule, CheckTestConfig, loadConfig, UsageError } from './core/config';
 import { evaluateRule, evaluateTests } from './core/evaluation';
 import { EvaluationStatus } from './core/result';
-import { toJson } from './reporters/json';
+import { toJson, REPORT_SCHEMA_VERSION } from './reporters/json';
 import { toSarif } from './reporters/sarif';
 import { CT_INT_001 } from './rules/ct-int-001';
 import { CT_INT_003 } from './rules/ct-int-003';
 import { CT_INT_004 } from './rules/ct-int-004';
 import { CT_COV_001 } from './rules/ct-cov-001';
 import { CT_MUT_001 } from './rules/ct-mut-001';
-import { getRule, localDecisionRuleIds, registerRule, thresholdsInertRuleIds } from './rules/registry';
+import { allRules, getRule, localDecisionRuleIds, registerRule, thresholdsInertRuleIds } from './rules/registry';
 
 // Single source of truth: package.json. Resolved relative to this module so it
 // works under ts-jest (src/), compiled output (dist/src/), and global install.
@@ -96,6 +101,23 @@ const USAGE = [
   'rule result, including FAIL, and any UNSUPPORTED analysis), 2 when the engine',
   'reached no verdict (including a file that declares no tests), and 1 on a usage',
   'error or a failed run.',
+  '',
+  'Usage: checktest doctor [--json] [--test <path>] [--config <path>]',
+  '',
+  '  --json          emit machine-readable JSON (kind: doctor)',
+  '  --test <path>   probe adapter dispatch for <path> (prints adapterId/decidedBy/reason)',
+  '  --config <path> validate an explicit config file (read-only)',
+  '',
+  'Exits 0 on diagnostic success, 2 when dispatch is unresolvable, 1 on usage error.',
+  '',
+  'Usage: checktest explain --rule <id> [--json]',
+  '',
+  '  --rule <id>   registered rule id to explain (required)',
+  '  --json        emit machine-readable JSON (kind: explain)',
+  '',
+  'Prints the rule meaning, applicability, required evidence, evaluation,',
+  'severity, status, rationale, limitations and docsUrl from RuleMetadata.',
+  'Exits 0 on success; 1 on a missing or unregistered --rule (usage error).',
 ].join('\n');
 
 /** Report formats. JSON stays the default and byte-unchanged; SARIF is additive. */
@@ -245,6 +267,297 @@ function isTestType(value: string): value is TestType {
 }
 
 /**
+ * Phase 2a (task 7): read-only environment/project diagnostics. Never runs
+ * tests, never mutates config, never writes files. Dispatch probe reuses the
+ * pure resolveAdapter from src/adapters/registry.ts.
+ *
+ * @returns process exit code (0 = diagnostic success, 2 = unresolvable dispatch,
+ *   1 = usage error)
+ */
+interface DoctorArgs {
+  json: boolean;
+  testPath?: string;
+  configPath?: string;
+}
+
+function parseDoctorArgs(args: readonly string[]): DoctorArgs {
+  let json = false;
+  let testPath: string | undefined;
+  let configPath: string | undefined;
+  for (let i = 0; i < args.length; i += 1) {
+    const flag = args[i];
+    if (flag === '--json') {
+      json = true;
+      continue;
+    }
+    if (flag === '--help' || flag === '-h') {
+      process.stdout.write(`${USAGE}\n`);
+      process.exit(0);
+    }
+    if (flag === '--version') {
+      process.stdout.write(`${VERSION}\n`);
+      process.exit(0);
+    }
+    if (flag !== '--test' && flag !== '--config') {
+      throw new UsageError(`unknown argument '${flag}'`);
+    }
+    const value = args[i + 1];
+    if (value === undefined) {
+      throw new UsageError(`missing value for '${flag}'`);
+    }
+    if (flag === '--test') {
+      testPath = value;
+    } else {
+      configPath = value;
+    }
+    i += 1;
+  }
+  return { json, testPath, configPath };
+}
+
+function runDoctorDispatch(testPath: string, json: boolean): number {
+  let resolution = resolveAdapter(testPath, {}, { manifestExists: (name) => existsSync(name) });
+  if (!existsSync(testPath)) {
+    resolution = { adapterId: null, decidedBy: 'unsupported', reason: 'no adapter matched' };
+  }
+  const payload = {
+    kind: 'doctor',
+    schemaVersion: REPORT_SCHEMA_VERSION,
+    mode: 'dispatch',
+    adapterId: resolution.adapterId,
+    decidedBy: resolution.decidedBy,
+    reason: resolution.reason,
+  };
+  if (json) {
+    process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+  } else {
+    const verdict =
+      resolution.adapterId === null || resolution.decidedBy === 'unsupported' ? 'no adapter matched' : 'resolved';
+    process.stdout.write(
+      `checktest doctor (dispatch)\nTest: ${testPath}\nAdapter: ${resolution.adapterId ?? 'none'} (${resolution.decidedBy}) ${verdict}\n`,
+    );
+  }
+  if (resolution.adapterId === null || resolution.decidedBy === 'unsupported') {
+    return 2;
+  }
+  return 0;
+}
+
+function runDoctorEnv(configPath: string | undefined, json: boolean): number {
+  let configStatus: 'not-supplied' | 'valid' = 'not-supplied';
+  if (configPath !== undefined) {
+    loadConfig(
+      configPath,
+      [CT_INT_001.id, CT_INT_003.id, CT_INT_004.id, CT_COV_001.id, CT_MUT_001.id],
+      localDecisionRuleIds(),
+      thresholdsInertRuleIds(),
+    );
+    configStatus = 'valid';
+  }
+
+  const manifestNames = ['package.json', 'pyproject.toml', 'setup.py', 'requirements.txt'];
+  const manifests = manifestNames.map((name) => ({ name, present: existsSync(name) }));
+
+  const adapters = defaultRegistry.list().map((adapter) => ({
+    id: adapter.id,
+    version: adapter.version,
+    language: adapter.language,
+    extensions: [...adapter.extensions],
+    manifestSignatures: [...adapter.manifestSignatures],
+    providerHints: [...adapter.providerHints],
+    capabilities: {
+      frameworks: [...adapter.capabilities.frameworks],
+      assertionForms: [...adapter.capabilities.assertionForms],
+    },
+  }));
+
+  const payload = {
+    kind: 'doctor',
+    schemaVersion: REPORT_SCHEMA_VERSION,
+    mode: 'env',
+    node: process.version,
+    manifests,
+    adapters,
+    config: {
+      supplied: configPath !== undefined,
+      status: configStatus,
+      ...(configPath !== undefined ? { path: configPath } : {}),
+    },
+    supported: {
+      extensions: adapters.flatMap((a) => a.extensions),
+      frameworks: adapters.flatMap((a) => a.capabilities.frameworks),
+    },
+  };
+
+  if (json) {
+    process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+  } else {
+    const lines: string[] = [];
+    lines.push('checktest doctor');
+    lines.push(`Node: ${process.version}`);
+    lines.push('Manifests:');
+    for (const m of manifests) {
+      lines.push(`  ${m.name}: ${m.present ? 'present' : 'absent'}`);
+    }
+    lines.push('Adapters:');
+    for (const a of adapters) {
+      lines.push(`  ${a.id} ${a.version} (${a.extensions.join(', ')}) hints: ${a.providerHints.join(', ')}`);
+    }
+    lines.push(`Config: ${configStatus === 'valid' ? 'valid' : 'not supplied (validity checked only with --config)'}`);
+    lines.push(`Supported extensions: ${payload.supported.extensions.join(', ')}`);
+    lines.push(`Supported frameworks: ${payload.supported.frameworks.join(', ')}`);
+    process.stdout.write(`${lines.join('\n')}\n`);
+  }
+  return 0;
+}
+
+function runDoctor(args: readonly string[]): number {
+  let parsed: DoctorArgs;
+  try {
+    parsed = parseDoctorArgs(args);
+  } catch (error) {
+    if (error instanceof UsageError) {
+      process.stderr.write(`checktest: ${error.message}\n\n${USAGE}\n`);
+      return 1;
+    }
+    throw error;
+  }
+  try {
+    if (parsed.testPath !== undefined) {
+      return runDoctorDispatch(parsed.testPath, parsed.json);
+    }
+    return runDoctorEnv(parsed.configPath, parsed.json);
+  } catch (error) {
+    if (error instanceof UsageError) {
+      process.stderr.write(`checktest: ${error.message}\n\n${USAGE}\n`);
+      return 1;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Phase 2b (task 8): explain a registered rule from its RuleMetadata.
+ *
+ * @returns process exit code (0 = explained, 1 = usage error: missing or
+ *   unregistered --rule). There is no exit-2 case for explain.
+ */
+interface ExplainArgs {
+  json: boolean;
+  rule?: string;
+}
+
+function parseExplainArgs(args: readonly string[]): ExplainArgs {
+  let json = false;
+  let rule: string | undefined;
+  for (let i = 0; i < args.length; i += 1) {
+    const flag = args[i];
+    if (flag === '--json') {
+      json = true;
+      continue;
+    }
+    if (flag === '--help' || flag === '-h') {
+      process.stdout.write(`${USAGE}\n`);
+      process.exit(0);
+    }
+    if (flag === '--version') {
+      process.stdout.write(`${VERSION}\n`);
+      process.exit(0);
+    }
+    if (flag !== '--rule') {
+      throw new UsageError(`unknown argument '${flag}'`);
+    }
+    const value = args[i + 1];
+    if (value === undefined) {
+      throw new UsageError(`missing value for '${flag}'`);
+    }
+    rule = value;
+    i += 1;
+  }
+  return { json, rule };
+}
+
+function runExplain(args: readonly string[]): number {
+  let parsed: ExplainArgs;
+  try {
+    parsed = parseExplainArgs(args);
+  } catch (error) {
+    if (error instanceof UsageError) {
+      process.stderr.write(`checktest: ${error.message}\n\n${USAGE}\n`);
+      return 1;
+    }
+    throw error;
+  }
+  if (parsed.rule === undefined) {
+    process.stderr.write(`checktest: --rule <id> is required for explain\n\n${USAGE}\n`);
+    return 1;
+  }
+  const rule = getRule(parsed.rule);
+  if (rule === undefined) {
+    const registered = allRules()
+      .map((r) => r.id)
+      .join(', ');
+    process.stderr.write(
+      `checktest: unknown or unregistered rule '${parsed.rule}'; registered rules: ${registered}\n\n${USAGE}\n`,
+    );
+    return 1;
+  }
+
+  const payload = {
+    kind: 'explain',
+    schemaVersion: REPORT_SCHEMA_VERSION,
+    id: rule.id,
+    name: rule.name,
+    category: rule.category,
+    description: rule.description,
+    applies_to: rule.applies_to,
+    required_evidence: rule.required_evidence,
+    analysis_scope: rule.analysis_scope,
+    minimum_evidence_completeness: rule.minimum_evidence_completeness,
+    unknown_evidence_policy: rule.unknown_evidence_policy,
+    conflicting_evidence_policy: rule.conflicting_evidence_policy,
+    evaluation: rule.evaluation,
+    severity: rule.severity,
+    status: rule.status,
+    ...(rule.deprecatedSince !== undefined ? { deprecatedSince: rule.deprecatedSince } : {}),
+    ...(rule.rationale !== undefined ? { rationale: rule.rationale } : {}),
+    ...(rule.limitations !== undefined ? { limitations: rule.limitations } : {}),
+    ...(rule.docsUrl !== undefined ? { docsUrl: rule.docsUrl } : {}),
+    ...(rule.thresholds_inert !== undefined ? { thresholds_inert: rule.thresholds_inert } : {}),
+  };
+
+  if (parsed.json) {
+    process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+    return 0;
+  }
+
+  const lines: string[] = [];
+  lines.push(`checktest explain: ${rule.id}`);
+  lines.push(`Name: ${rule.name}`);
+  lines.push(`Category: ${rule.category}`);
+  lines.push(`Description: ${rule.description}`);
+  lines.push(`Applies to: ${rule.applies_to.join(', ')}`);
+  lines.push(`Required evidence: ${rule.required_evidence.join(', ')}`);
+  lines.push(`Analysis scope: ${rule.analysis_scope}`);
+  lines.push(`Minimum evidence completeness: ${rule.minimum_evidence_completeness}`);
+  lines.push(`Unknown evidence policy: ${rule.unknown_evidence_policy}`);
+  lines.push(`Conflicting evidence policy: ${rule.conflicting_evidence_policy}`);
+  lines.push(`Evaluation:`);
+  lines.push(`  Metric: ${rule.evaluation.metric}`);
+  lines.push(`  Pass at least: ${rule.evaluation.pass_at_least}`);
+  lines.push(`  Fail at most: ${rule.evaluation.fail_at_most}`);
+  lines.push(`Severity: ${rule.severity}`);
+  lines.push(`Status: ${rule.status}`);
+  if (rule.deprecatedSince !== undefined) lines.push(`Deprecated since: ${rule.deprecatedSince}`);
+  if (rule.rationale !== undefined) lines.push(`Rationale: ${rule.rationale}`);
+  if (rule.limitations !== undefined) lines.push(`Limitations: ${rule.limitations}`);
+  if (rule.docsUrl !== undefined) lines.push(`Docs URL: ${rule.docsUrl}`);
+  if (rule.thresholds_inert !== undefined) lines.push(`Thresholds inert: ${rule.thresholds_inert}`);
+  process.stdout.write(`${lines.join('\n')}\n`);
+  return 0;
+}
+
+/**
  * Run one analysis and write its report.
  *
  * @returns the process exit code (0 = at least one scope reached a verdict,
@@ -268,6 +581,19 @@ export function main(argv: readonly string[]): number {
   let args = argv;
   if (args.length > 0 && args[0] === 'check') {
     args = args.slice(1);
+  }
+
+  // Phase 2a: leading 'doctor' subcommand — read-only diagnostics. Handled
+  // before parseArgs (which requires --test) and before the no-args guard.
+  if (args.length > 0 && args[0] === 'doctor') {
+    return runDoctor(args.slice(1));
+  }
+
+  // Phase 2b: leading 'explain' subcommand — rule metadata from RuleMetadata.
+  // Handled before parseArgs (which requires --test) and before the no-args
+  // guard, mirroring the doctor placement above.
+  if (args.length > 0 && args[0] === 'explain') {
+    return runExplain(args.slice(1));
   }
 
   if (args.length === 0) {
@@ -421,6 +747,7 @@ export function runAnalysis(options: Options): { report: string; exitCode: numbe
   if (options.mutationReport !== undefined) {
     analysis = applyMutationReport(analysis, options.mutationReport, {
       analyzedRevision,
+      coverageMap: options.coverageMap,
       ...(options.mutationSourceRevision !== undefined
         ? { mutationSourceRevision: options.mutationSourceRevision }
         : {}),

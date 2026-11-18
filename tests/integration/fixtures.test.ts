@@ -22,16 +22,26 @@
  */
 
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { basename, join } from 'path';
 import { tmpdir } from 'os';
 
 import { collectAnalysis } from '../../src/adapters/typescript/collector';
 import { regexAssertionCount } from '../../src/adapters/typescript/regex-assertion-count';
 import { EVIDENCE_ASSERTION_COUNT } from '../../src/adapters/typescript/support';
-import { AnalysisOutput, TestType } from '../../src/core/analysis';
-import { Availability, EvidenceConflict, EvidenceRecord } from '../../src/core/evidence';
+import {
+  AnalysisOutput,
+  AnalysisStatus,
+  CapabilityStatus,
+  ClassificationSource,
+  Completeness,
+  TestType,
+} from '../../src/core/analysis';
+import { Availability, EvidenceConflict, EvidenceRecord, EvidenceStrength } from '../../src/core/evidence';
 import { evaluateRule, evaluateTests } from '../../src/core/evaluation';
 import { EvaluationStatus, RuleFinding, RuleResult } from '../../src/core/result';
+import { applyCoverageReport, parseCoverageReport } from '../../src/providers/coverage';
+import { applyMutationReport } from '../../src/providers/mutation';
+import { toJson } from '../../src/reporters/json';
 import { CT_DEMO_001 } from '../../src/rules/ct-demo-001';
 import { CT_INT_001 } from '../../src/rules/ct-int-001';
 import { getRule, registerRule } from '../../src/rules/registry';
@@ -81,6 +91,16 @@ const CASES = [
   'case-39-bare-mocha',
   'case-40-supertest-chains',
   'case-41-jsx-js',
+  // Phase 1d (plan task 6) — adversarial fixtures. Each pins that incomplete or
+  // unrecognized source can never become a confident zero (invariant 1) and
+  // that incomplete evidence cannot inflate PASS beyond the rule contract
+  // (invariant 2). Cases 45-50 extend the CASES seam, never a new test file.
+  'case-45-helper-indirection',
+  'case-46-unsupported-assertions',
+  'case-47-mixed-framework',
+  'case-48-control-flow',
+  'case-49-skipped-modifier-tests',
+  'case-50-paths-locations',
 ] as const;
 
 interface ExpectedSidecar {
@@ -107,6 +127,13 @@ interface ExpectedSidecar {
   conflicts: Array<{ value: unknown; source: string; provenance: string }>;
   /** Case 13 only: run the regex stub and attach it as a conflicting provider. */
   attach_regex_stub_conflict?: boolean;
+  /**
+   * Case 50 only (paths/locations): the file-level assertion_count record must
+   * carry `location {file, line}` copied from the first classified finding
+   * (collector.ts:356-359) — the path suffix the record names and the 1-based
+   * line of that finding. Never fabricated; absent when no finding exists.
+   */
+  evidence_location?: { file_suffix: string; line: number };
 }
 
 /** Exact projection the sidecar is compared against. */
@@ -198,8 +225,8 @@ function manifestExists(path: string): boolean {
 }
 
 describe('CT-INT-001 fixtures (plan §4)', () => {
-  it('declares exactly the planned cases (14 + case-15/16/17), each with a sidecar', () => {
-    expect(CASES).toHaveLength(41);
+  it('declares exactly the planned cases (41 original + 6 Phase 1d adversarial = 47), each with a sidecar', () => {
+    expect(CASES).toHaveLength(47);
     for (const caseName of CASES) {
       expect(load(caseName).expected.case).toBe(caseName);
     }
@@ -248,6 +275,14 @@ describe('CT-INT-001 fixtures (plan §4)', () => {
       }
       if (expected.evidence.assertion_count.reason_contains.length === 0) {
         expect(record.reason).toBeUndefined();
+      }
+
+      // Case 50 (paths/locations): the record's location names THIS fixture
+      // file and the line of the finding it came from — never fabricated.
+      if (expected.evidence_location !== undefined) {
+        expect(record.location).toBeDefined();
+        expect(record.location!.file.endsWith(expected.evidence_location.file_suffix)).toBe(true);
+        expect(record.location!.line).toBe(expected.evidence_location.line);
       }
 
       // Every emitted verdict must carry a reason — no silent verdicts.
@@ -483,5 +518,144 @@ describe('K-15 — FAIL characterization (B4)', () => {
     const perTest = results.find((r) => r.test?.name === 'y');
     expect(perTest).toBeDefined();
     expect(perTest!.finding?.result).toBe(RuleResult.FAIL);
+  });
+});
+
+/**
+ * Phase 1d (plan task 6) — adversarial external-report cases.
+ *
+ * The CASES harness above is the established fixture seam for SOURCE-level
+ * analysis; it cannot drive `--coverage-report` / `--mutation-report` flags
+ * (verified: zero coverage-report/mutation-report references in the CASES
+ * table). Plan task 6 says: use the closest existing mechanism and say so —
+ * the providers seam (`parseCoverageReport` / `applyCoverageReport` /
+ * `parseMutationReport` / `applyMutationReport`), modeled on
+ * tests/providers/{coverage,mutation}.test.ts, with the same public functions
+ * the CLI calls.
+ *
+ * What these pin (task-5 behavior + invariants 1-2):
+ *   - Missing / malformed / stale external reports NEVER read as a zero
+ *     (missing != zero, stale != definitive) — availability UNKNOWN, no value,
+ *     and the honest verdict is INDETERMINATE (invariant 1).
+ *   - Providers set EvidenceStrength.UNSUPPORTED on the UNKNOWN records they
+ *     produce, and serializeEvidence emits evidenceStrength present-when-present
+ *     on evidence records in the JSON report (task 5).
+ */
+describe('Phase 1d — adversarial external reports (providers seam, task-5 behavior)', () => {
+  const tempDirs: string[] = [];
+  function tmpReport(name: string, content: string): string {
+    const dir = mkdtempSync(join(tmpdir(), 'checktest-task6-'));
+    tempDirs.push(dir);
+    const file = join(dir, name);
+    writeFileSync(file, content, 'utf8');
+    return file;
+  }
+  afterAll(() => {
+    for (const dir of tempDirs) {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  // A minimal AnalysisOutput with one subject file, so apply* can attach a
+  // record — same construction shape tests/providers/mutation.test.ts uses.
+  function analysisFor(file: string): AnalysisOutput {
+    return {
+      subject: {
+        id: `${file}#file`,
+        name: basename(file),
+        file,
+        language: 'typescript',
+        framework: 'jest',
+        type: TestType.UNIT,
+      },
+      analysis: {
+        status: AnalysisStatus.SUCCESS,
+        completeness: Completeness.COMPLETE,
+        scope: 'test-body',
+        test_type: { value: TestType.UNIT, source: ClassificationSource.EXPLICIT },
+      },
+      evidence: {},
+      capabilities: { typescript: CapabilityStatus.AVAILABLE },
+      tests: [],
+    };
+  }
+
+  const ANALYSIS_FILE = '/abs/proj/sample.test.ts';
+  const REAL_MUTATION_SAMPLE = JSON.stringify({
+    schemaVersion: '2',
+    files: {
+      '/abs/proj/sample.test.ts': {
+        language: 'typescript',
+        source: '',
+        mutants: [
+          { id: '0', status: 'Survived' },
+          { id: '1', status: 'Killed' },
+        ],
+      },
+    },
+  });
+
+  it('missing mutation report -> mutation_score UNKNOWN, UNSUPPORTED strength, never zero, INDETERMINATE', () => {
+    const out = applyMutationReport(analysisFor(ANALYSIS_FILE), join(tmpdir(), 'no-such-report.json'));
+    const rec = out.evidence['mutation_score'];
+    expect(rec.availability).toBe(Availability.UNKNOWN);
+    expect(rec.value).toBeUndefined();
+    expect(rec.value).not.toBe(0);
+    expect(rec.reason).toContain('unable to read');
+    // Task 5: providers set UNSUPPORTED on records they cannot classify.
+    expect(rec.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
+    // Invariant 1: missing evidence never becomes a confident zero -> FAIL.
+    const evaluation = evaluateRule(CT_INT_001, out);
+    expect(evaluation.finding?.result).toBe(RuleResult.INDETERMINATE);
+    // Task 5: evidenceStrength is present on the evidence record in JSON.
+    const json = JSON.parse(toJson(out, evaluation));
+    expect(json.evidence.mutation_score.evidenceStrength).toBe('UNSUPPORTED');
+  });
+
+  it('malformed mutation report -> UNKNOWN with reason, never zero', () => {
+    const report = tmpReport('malformed.json', '{not json');
+    const out = applyMutationReport(analysisFor(ANALYSIS_FILE), report);
+    const rec = out.evidence['mutation_score'];
+    expect(rec.availability).toBe(Availability.UNKNOWN);
+    expect(rec.value).toBeUndefined();
+    expect(rec.reason).toContain('malformed');
+    expect(rec.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
+    const evaluation = evaluateRule(CT_INT_001, out);
+    expect(evaluation.finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('stale mutation report (revision mismatch) -> UNKNOWN, never a definitive score', () => {
+    const report = tmpReport('stale.json', REAL_MUTATION_SAMPLE);
+    const out = applyMutationReport(analysisFor(ANALYSIS_FILE), report, {
+      source_revision: 'rev1',
+      analyzedRevision: 'rev2',
+    });
+    const rec = out.evidence['mutation_score'];
+    expect(rec.availability).toBe(Availability.UNKNOWN);
+    expect(rec.value).toBeUndefined();
+    expect(rec.reason).toContain('does not match analyzed revision');
+    expect(rec.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
+    const evaluation = evaluateRule(CT_INT_001, out);
+    expect(evaluation.finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('malformed coverage report -> parse reason UNKNOWN, never zero; apply yields INDETERMINATE, evidenceStrength in JSON', () => {
+    const report = tmpReport('bad-cov.json', '{nope');
+    // Parse layer: malformed JSON is reported with a reason, never a crash and
+    // never a fabricated zero — the reason is preserved on the parse result.
+    const parsed = parseCoverageReport(report);
+    expect(parsed.records.size).toBe(0);
+    expect(parsed.reason).toContain('malformed');
+    // Apply layer: no records + no mapping -> a per-file UNKNOWN record with the
+    // apply-side reason ("no coverage data for ..."), never zero coverage.
+    const out = applyCoverageReport(analysisFor(ANALYSIS_FILE), report);
+    const rec = out.evidence['line_coverage'];
+    expect(rec.availability).toBe(Availability.UNKNOWN);
+    expect(rec.value).toBeUndefined();
+    expect(rec.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
+    const evaluation = evaluateRule(CT_INT_001, out);
+    expect(evaluation.finding?.result).toBe(RuleResult.INDETERMINATE);
+    const json = JSON.parse(toJson(out, evaluation));
+    expect(json.evidence.line_coverage.evidenceStrength).toBe('UNSUPPORTED');
   });
 });

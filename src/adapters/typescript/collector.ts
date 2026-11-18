@@ -45,6 +45,7 @@ import {
   TestType,
 } from '../../core/analysis';
 import {
+  Availability,
   CollectionStatus,
   EvidenceRecord,
   EvidenceStrength,
@@ -57,6 +58,7 @@ import {
   ANALYSIS_SCOPE,
   COLLECTOR_VERSION,
   EVIDENCE_ASSERTION_COUNT,
+  EVIDENCE_UNESTABLISHED_ASSERTION,
   SUPPORTED_ASSERTION_FORMS,
   SUPPORTED_FRAMEWORKS,
   MOCHA_FRAMEWORK,
@@ -424,10 +426,12 @@ function testScopeResult(filePath: string, declaredType: TestType, entry: Declar
   // the collector already produces. Absent (undefined) when there are none, so
   // consumers reading older records see unchanged bytes; never `{count:0,...}`.
   const unestablishedFindings = recognized.filter((finding) => !finding.established);
-  if (unestablishedFindings.length > 0) {
+  const unestablishedCount = unestablishedFindings.length;
+  const unestablishedReasons = [...new Set(unestablishedFindings.map((finding) => finding.reason))];
+  if (unestablishedCount > 0) {
     record.unestablished_assertions = {
-      count: unestablishedFindings.length,
-      reasons: [...new Set(unestablishedFindings.map((finding) => finding.reason))],
+      count: unestablishedCount,
+      reasons: unestablishedReasons,
     };
   }
   if (unclassified.length > 0) {
@@ -435,6 +439,28 @@ function testScopeResult(filePath: string, declaredType: TestType, entry: Declar
       count: unclassified.length,
       reasons: [...new Set(unclassified.map((finding) => finding.reason))],
     };
+  }
+
+  // ADR-035 amendment 2026-11-18 — gap-vocabulary sibling signal record.
+  // Emitted when the declaration has at least one recognized assertion (count
+  // may be 0), so clean scopes reach PASS; absent when nothing is recognized
+  // (custom-helper) so there is no signal to FAIL on. Availability is KNOWN by
+  // construction (the signal is a presence-and-count fact, not a coverage
+  // measurement); coverage carries the honest collector status.
+  const scopeEvidence: Record<string, EvidenceRecord> = { [EVIDENCE_ASSERTION_COUNT]: record };
+  if (recognized.length > 0) {
+    scopeEvidence[EVIDENCE_UNESTABLISHED_ASSERTION] = makeEvidenceRecord({
+      type: EVIDENCE_UNESTABLISHED_ASSERTION,
+      value: unestablishedCount,
+      availability: Availability.KNOWN,
+      provenance: Provenance.DIRECT,
+      source: ANALYZER_ID,
+      collector_version: COLLECTOR_VERSION,
+      scope: ANALYSIS_SCOPE,
+      coverage: coverage(coverageStatus),
+      unestablished_assertions: { count: unestablishedCount, reasons: unestablishedReasons },
+      evidenceStrength: EvidenceStrength.SYNTAX_OBSERVED,
+    });
   }
   const reason = gapped ? declarationGapReason(site) : coverageReason(unclassified, recognized, nonePresent, [site]);
   if (reason !== undefined) {
@@ -461,7 +487,7 @@ function testScopeResult(filePath: string, declaredType: TestType, entry: Declar
       declaration: name,
     },
     analysis: summary(AnalysisStatus.SUCCESS, completeness, declaredType),
-    evidence: { [EVIDENCE_ASSERTION_COUNT]: record },
+    evidence: scopeEvidence,
     declaration_gap: gapped ? declarationGapReason(site) : null,
   };
 }

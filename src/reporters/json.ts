@@ -117,6 +117,8 @@ function serializeEvidence(record: EvidenceRecord): Json {
     json.unclassified_constructs = record.unclassified_constructs;
   }
   setIfPresent(json, 'property_based', record.property_based);
+  // D10 (task 5): evidence record strength — present-when-present, never null.
+  setIfPresent(json, 'evidenceStrength', record.evidenceStrength);
   return json;
 }
 

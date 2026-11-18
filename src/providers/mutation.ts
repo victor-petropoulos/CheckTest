@@ -29,11 +29,14 @@ import {
   Availability,
   CollectionStatus,
   EVIDENCE_SCOPE_TEST_BODY,
+  EvidenceStrength,
   EvidenceRecord,
   Provenance,
   makeEvidenceRecord,
 } from '../core/evidence';
 import { AnalysisOutput } from '../core/analysis';
+import { toCoverageMappings } from './coverage';
+import type { CoverageMapInput } from './coverage';
 
 export interface MutationReportOptions {
   provider?: string;
@@ -47,6 +50,8 @@ export interface MutationReportOptions {
   analyzedRevision?: string;
   analyzed_revision?: string;
   revision?: string;
+  /** Explicit from=to path mapping for the subject file (CLI --coverage-map). */
+  coverageMap?: CoverageMapInput;
 }
 
 /** Per-file mutation score breakdown. `score` is null only when not computable. */
@@ -203,6 +208,7 @@ function buildRecord(
       provider_version: version,
       source_revision: revision,
       reason: reasonRevision(revision, analyzed),
+      evidenceStrength: EvidenceStrength.UNSUPPORTED,
     });
   }
   if (value === undefined) {
@@ -219,6 +225,7 @@ function buildRecord(
       provider_version: version,
       source_revision: revision,
       reason: failureReason,
+      evidenceStrength: EvidenceStrength.UNSUPPORTED,
     });
   }
   return makeEvidenceRecord({
@@ -365,6 +372,7 @@ function unknownRecord(parsed: MutationReportResult, reason: string): EvidenceRe
     provider_version: parsed.provider_version,
     source_revision: parsed.source_revision,
     reason,
+    evidenceStrength: EvidenceStrength.UNSUPPORTED,
   });
 }
 
@@ -381,16 +389,37 @@ export function applyMutationReport(
   opts?: MutationReportOptions,
 ): AnalysisOutput {
   const parsed = parseMutationReport(reportPath, opts);
-  // Whole-report failure (missing/malformed/unsupported) keeps its parse reason;
-  // a parsed report that simply lacks this file gets a per-file reason.
-  const record =
-    findFileRecord(parsed, analysis.subject.file) ??
-    unknownRecord(
-      parsed,
-      parsed.records.size === 0 && parsed.reason !== undefined
-        ? parsed.reason
-        : `no mutation data for ${analysis.subject.file}`,
-    );
+  // Coverage-map-style redirect (CLI --coverage-map): mirrors applyCoverageReport
+  // (coverage.ts:513-519) — exact-match only, no basename fallbacks.
+  const mappedEntry = toCoverageMappings(opts?.coverageMap).find(
+    (m) => normalizePath(m.from) === normalizePath(analysis.subject.file),
+  );
+  const mappedTo = mappedEntry?.to;
+  const mappingReason =
+    mappedTo !== undefined ? `mutation mapped from ${mappedEntry!.from} to ${mappedTo} per user mapping` : undefined;
+
+  let record: EvidenceRecord;
+  if (mappedTo !== undefined) {
+    const targetRecord = findFileRecord(parsed, mappedTo);
+    record =
+      targetRecord !== undefined
+        ? {
+            ...targetRecord,
+            reason: targetRecord.reason ? `${mappingReason} (${targetRecord.reason})` : mappingReason,
+          }
+        : unknownRecord(parsed, `${mappingReason} (no mutation data for ${mappedTo})`);
+  } else {
+    // Whole-report failure (missing/malformed/unsupported) keeps its parse reason;
+    // a parsed report that simply lacks this file gets a per-file reason.
+    record =
+      findFileRecord(parsed, analysis.subject.file) ??
+      unknownRecord(
+        parsed,
+        parsed.records.size === 0 && parsed.reason !== undefined
+          ? parsed.reason
+          : `no mutation data for ${analysis.subject.file}`,
+      );
+  }
 
   return {
     ...analysis,

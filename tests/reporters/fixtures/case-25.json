@@ -53,7 +53,8 @@
       "location": {
         "file": "<fixture-root>/case-25-vitest-aliased/sample.test.ts",
         "line": 6
-      }
+      },
+      "evidenceStrength": "SYNTAX_OBSERVED"
     }
   },
   "ruleResults": [
@@ -133,7 +134,44 @@
             "reasons": [
               "'it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs"
             ]
-          }
+          },
+          "evidenceStrength": "SYNTAX_OBSERVED"
+        },
+        "unestablished_assertion": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "PARTIAL",
+            "supported_frameworks": [
+              "jest",
+              "vitest",
+              "mocha"
+            ],
+            "supported_assertion_forms": [
+              "expect-to-be",
+              "expect-to-equal",
+              "expect-to-be-truthy",
+              "expect-to-be-falsy",
+              "expect-to-throw",
+              "expect-rejects-to-throw",
+              "expect-to-match-snapshot",
+              "expect-to-contain",
+              "expect-matcher-utils",
+              "expect-to-match-object",
+              "expect-to-have-been-called-times"
+            ]
+          },
+          "unestablished_assertions": {
+            "count": 1,
+            "reasons": [
+              "'it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs"
+            ]
+          },
+          "evidenceStrength": "SYNTAX_OBSERVED"
         }
       },
       "ruleResults": [

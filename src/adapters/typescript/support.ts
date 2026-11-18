@@ -39,6 +39,9 @@ export const COLLECTOR_VERSION = '0.1.0';
 /** The single evidence type this adapter emits. */
 export const EVIDENCE_ASSERTION_COUNT = 'assertion_count';
 
+/** ADR-035 amendment 2026-11-18: gap-vocabulary sibling signal type (presence-and-count). */
+export const EVIDENCE_UNESTABLISHED_ASSERTION = 'unestablished_assertion';
+
 /** Matcher name -> form ID. `rejects.toThrow` is handled separately (async form). */
 export const ASSERTION_FORM_BY_MATCHER: Readonly<Record<string, string>> = {
   toBe: 'expect-to-be',

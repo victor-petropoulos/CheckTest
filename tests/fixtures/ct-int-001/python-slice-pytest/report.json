@@ -49,7 +49,8 @@
       "location": {
         "file": "<corpus-root>/pytest/testing/test_unittest.py",
         "line": 1
-      }
+      },
+      "evidenceStrength": "SYNTAX_OBSERVED"
     },
     "mutation_score": {
       "value": null,
@@ -1341,7 +1342,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -1514,7 +1516,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -1601,7 +1604,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -1774,7 +1778,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -2033,7 +2038,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -2120,7 +2126,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -2379,7 +2386,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -2466,7 +2474,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -2639,7 +2648,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -2984,7 +2994,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -3243,7 +3254,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -3846,7 +3858,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -4019,7 +4032,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -4106,7 +4120,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -4193,7 +4208,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -4280,7 +4296,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -5313,7 +5330,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -5744,7 +5762,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "SYNTAX_OBSERVED"
         },
         "mutation_score": {
           "value": null,
@@ -5831,7 +5850,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -5918,7 +5938,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -6005,7 +6026,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -6350,7 +6372,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -6437,7 +6460,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -6524,7 +6548,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -6611,7 +6636,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -6698,7 +6724,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -6785,7 +6812,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -7130,7 +7158,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -7217,7 +7246,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,
@@ -7304,7 +7334,8 @@
               "self.assertIn",
               "self.assertAlmostEqual"
             ]
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
         },
         "mutation_score": {
           "value": null,

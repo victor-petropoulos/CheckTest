@@ -143,6 +143,16 @@ export interface RuleMetadata {
   /** Concrete types only — UNKNOWN never appears here; unknown → INDETERMINATE. */
   applies_to: TestType[];
   required_evidence: EvidenceType[];
+  /**
+   * Optional per-type completeness policy (CT-INT-003 capability seam, ADR-035
+   * amendment 2026-11-18). Defaults to 'rank' for every type: the existing
+   * COVERAGE_RANK comparison at evaluation.ts step 4. A type marked 'signal'
+   * uses presence-and-count semantics (record present + availability KNOWN +
+   * finite integer count >= 0) and skips the rank ladder. COVERAGE_RANK and
+   * requiresCompleteForNegativeVerdict stay unchanged; no rule's
+   * minimum_evidence_completeness value changes.
+   */
+  evidence_completeness?: Partial<Record<EvidenceType, 'rank' | 'signal'>>;
   analysis_scope: string;
   /**
    * Minimum collection completeness before this rule may reach a verdict

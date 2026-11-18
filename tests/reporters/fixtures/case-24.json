@@ -52,7 +52,8 @@
       "location": {
         "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
         "line": 5
-      }
+      },
+      "evidenceStrength": "EXECUTION_ESTABLISHED"
     }
   },
   "ruleResults": [
@@ -125,7 +126,42 @@
           "location": {
             "file": "<fixture-root>/case-24-vitest-standard/sample.test.ts",
             "line": 5
-          }
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
+        },
+        "unestablished_assertion": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": [
+              "jest",
+              "vitest",
+              "mocha"
+            ],
+            "supported_assertion_forms": [
+              "expect-to-be",
+              "expect-to-equal",
+              "expect-to-be-truthy",
+              "expect-to-be-falsy",
+              "expect-to-throw",
+              "expect-rejects-to-throw",
+              "expect-to-match-snapshot",
+              "expect-to-contain",
+              "expect-matcher-utils",
+              "expect-to-match-object",
+              "expect-to-have-been-called-times"
+            ]
+          },
+          "unestablished_assertions": {
+            "count": 0,
+            "reasons": []
+          },
+          "evidenceStrength": "SYNTAX_OBSERVED"
         }
       },
       "ruleResults": [

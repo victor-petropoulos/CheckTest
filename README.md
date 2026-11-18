@@ -113,6 +113,88 @@ Supported: Istanbul JSON, c8 JSON, per-test-run derived shape. Raw vitest covera
 | `1`  | Usage error or runtime crash                                            |
 | `2`  | No verdict — engine reached no conclusion (e.g. file declares no tests) |
 
+The `doctor` and `explain` subcommands share the same 0/1/2 contract: `0` = diagnostic success, `1` = usage error (unknown flag / rule / id), `2` = unresolvable dispatch (`doctor --test <path>` with no matching adapter). `explain` has no exit-2 case — an unknown `--rule` is a usage error (1).
+
+### Discoverability
+
+Two read-only subcommands help orient a new user without running an analysis.
+
+**`doctor`** — environment probe (manifests, registered adapters + capabilities, config validity). Add `--json` for machine-readable output; add `--test <path>` to probe adapter dispatch for a single file.
+
+```sh
+checktest doctor            # human-readable env probe (exits 0)
+checktest doctor --json     # machine-readable env probe (kind: doctor, schemaVersion 0.5)
+checktest doctor --test tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts
+```
+
+`doctor --test <path>` output (verbatim, exit 0):
+
+```
+checktest doctor (dispatch)
+Test: tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts
+Adapter: typescript-jest-adapter (manifest) resolved
+```
+
+`doctor --json` (env mode) shape — capabilities, never a framework-certainty claim:
+
+```json
+{
+  "kind": "doctor",
+  "schemaVersion": "0.5",
+  "mode": "env",
+  "node": "v24.18.1",
+  "manifests": [{ "name": "package.json", "present": true }],
+  "adapters": [
+    {
+      "id": "typescript-jest-adapter",
+      "version": "0.1.0",
+      "language": "typescript",
+      "extensions": [".ts", ".tsx", ".js", ".jsx"],
+      "manifestSignatures": ["package.json"],
+      "providerHints": ["istanbul", "c8", "stryker"],
+      "capabilities": {
+        "frameworks": ["jest", "vitest", "mocha"],
+        "assertionForms": ["expect-to-be", "expect-to-equal"]
+      }
+    }
+  ],
+  "config": { "supplied": false, "status": "not-supplied" },
+  "supported": { "extensions": [".ts", ".tsx", ".js", ".jsx"], "frameworks": ["jest", "vitest", "mocha"] }
+}
+```
+
+**`explain`** — print a registered rule's full `RuleMetadata` (meaning, applicability, required evidence, evaluation, severity, status, rationale, limitations, docs URL) without analyzing any file. Add `--json` for machine-readable output.
+
+```sh
+checktest explain --rule CT-INT-001          # human-readable (exits 0)
+checktest explain --rule CT-INT-001 --json   # machine-readable (kind: explain, schemaVersion 0.5)
+checktest explain --rule CT-NOPE             # unknown id -> exit 1, lists registered ids on stderr
+```
+
+`explain --rule CT-INT-001` output (verbatim, exit 0):
+
+```
+checktest explain: CT-INT-001
+Name: assertion-required
+Category: integrity
+Description: A test should contain at least one executable verification of an observable outcome.
+Applies to: UNIT, COMPONENT, INTEGRATION, CONTRACT, E2E
+Required evidence: assertion_count
+Analysis scope: test-body
+Minimum evidence completeness: COMPLETE
+Unknown evidence policy: INDETERMINATE
+Conflicting evidence policy: INDETERMINATE
+Evaluation:
+  Metric: assertion_count
+  Pass at least: 1
+  Fail at most: 0
+Severity: error
+Status: active
+Rationale: A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).
+Limitations: Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.
+Docs URL: https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9
+```
+
 ### Rule Lifecycle
 
 - `CT-INT-001` — **Active**
@@ -120,13 +202,12 @@ Supported: Istanbul JSON, c8 JSON, per-test-run derived shape. Raw vitest covera
 - `CT-INT-004` — **Active**
 - `CT-COV-001` — **Active**
 - `CT-MUT-001` — **Active**
-- `CT-DEMO-001` — **Active**
 
 - **Active** — evaluated by default; verdicts produced like any rule.
 - **Draft** — excluded by default; opt in via `--rule <id>`.
 - **Deprecated** — still evaluated and reported until removal; reports carry `deprecatedSince`.
 
-No Draft or Deprecated rules are registered today; all six shipped rules are Active.
+No Draft or Deprecated rules are registered today; all five registered rules are Active. `src/rules/ct-demo-001.ts` is an unregistered N/A-path stub used only in tests; it is not a shipped rule (see [rule catalog](./docs/rules/catalog.md)).
 
 ## Supported Frameworks
 

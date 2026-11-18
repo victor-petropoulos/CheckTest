@@ -140,6 +140,12 @@ function serializeResult(finding: RuleFinding, test: TestIdentity | null): Json 
   if (test !== null) {
     properties.testId = test.id;
   }
+  // Task 5 (c): surface the finding's evidence strength (already on
+  // RuleFinding) in the SARIF result properties bag, mirroring JSON findings.
+  // Present-when-present; omitted, never null, when the record carried none.
+  if (finding.evidenceStrength !== undefined) {
+    properties.evidenceStrength = finding.evidenceStrength;
+  }
   const result: Json = {
     ruleId: finding.rule_id,
     level: SARIF_LEVEL_BY_RESULT[finding.result],

@@ -20,6 +20,7 @@ import {
   Availability,
   CollectionStatus,
   EVIDENCE_SCOPE_TEST_BODY,
+  EvidenceStrength,
   EvidenceRecord,
   Provenance,
   makeEvidenceRecord,
@@ -57,7 +58,7 @@ export interface CoverageReportOptions {
 }
 
 /** Normalize any supported coverage-map input shape into from=to pairs. */
-function toCoverageMappings(input: unknown): Array<{ from: string; to: string }> {
+export function toCoverageMappings(input: unknown): Array<{ from: string; to: string }> {
   const out: Array<{ from: string; to: string }> = [];
   if (input === undefined || input === null) return out;
   if (input instanceof Map) {
@@ -180,6 +181,7 @@ function makeIstanbulRecord(
         ? 'report revision unknown; freshness cannot be established'
         : `source revision mismatch: report ${revision} != analyzed ${analyzed ?? ''}`.trim()
       : undefined,
+    evidenceStrength: unavailable ? EvidenceStrength.UNSUPPORTED : undefined,
   });
 }
 
@@ -236,6 +238,7 @@ function parseC8(
       provider_version: version,
       source_revision: revision,
       reason: malformed ? 'missing or invalid coveredLines array' : undefined,
+      evidenceStrength: unavailable ? EvidenceStrength.UNSUPPORTED : undefined,
     });
     records.set(file, record);
   }
@@ -367,6 +370,7 @@ function unknownRecord(parsed: CoverageReportResult, reason: string): EvidenceRe
     provider_version: parsed.provider_version,
     source_revision: parsed.source_revision,
     reason,
+    evidenceStrength: EvidenceStrength.UNSUPPORTED,
   });
 }
 

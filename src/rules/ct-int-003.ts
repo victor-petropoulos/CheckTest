@@ -22,8 +22,7 @@
  */
 
 import { TestType } from '../core/analysis';
-import { requiresCompleteForNegativeVerdict } from '../core/evaluation';
-import { CollectionStatus } from '../core/evidence';
+import { Availability, CollectionStatus } from '../core/evidence';
 import { RuleResult } from '../core/result';
 import { RuleMetadata, RuleStatus } from '../core/rule';
 
@@ -37,14 +36,15 @@ export const CT_INT_003: RuleMetadata = {
   // The field is additive evidence on the assertion_count record; the rule
   // requires that record so the shared completeness/availability/conflict
   // guards still apply before the local verdict.
-  required_evidence: ['assertion_count'],
+  required_evidence: ['assertion_count', 'unestablished_assertion'],
   analysis_scope: 'test-body',
   minimum_evidence_completeness: CollectionStatus.COMPLETE,
   unknown_evidence_policy: RuleResult.INDETERMINATE,
   conflicting_evidence_policy: RuleResult.INDETERMINATE,
+  evidence_completeness: { unestablished_assertion: 'signal' },
   // Numeric thresholds are inert for this rule: local_decision replaces step 7.
   // They still satisfy the registry's strict ordering contract (pass > fail).
-  evaluation: { metric: 'assertion_count', pass_at_least: 1, fail_at_most: 0 },
+  evaluation: { metric: 'unestablished_assertion', pass_at_least: 1, fail_at_most: 0 },
   severity: 'warning',
   status: RuleStatus.ACTIVE,
   local_decision: (context) => {
@@ -61,13 +61,15 @@ export const CT_INT_003: RuleMetadata = {
       };
     }
 
-    // A negative verdict still needs COMPLETE evidence. In the engine this is
-    // also enforced by step 4 (the rule minimum); the local decision repeats it
-    // because the hook is public and can be invoked directly on a record.
-    if (!requiresCompleteForNegativeVerdict(record.coverage.status, CollectionStatus.COMPLETE)) {
+    // A negative verdict still needs decidable evidence. The signal record's
+    // completeness is presence-and-count (ADR-035 amendment 2026-11-18), so
+    // the guard checks availability KNOWN + a finite integer count >= 0 instead
+    // of the assertion_count coverage rank. The hook is public and can be
+    // invoked directly on a record, so it repeats the guard here.
+    if (!(record.availability === Availability.KNOWN && Number.isInteger(count) && count >= 0)) {
       return {
         result: RuleResult.INDETERMINATE,
-        reason: `${CT_INT_003.id}: unestablished_assertions=${count} but coverage.status ${record.coverage.status} is below required COMPLETE — an incomplete scan cannot prove this verdict`,
+        reason: `${CT_INT_003.id}: unestablished_assertions=${count} but availability is ${record.availability} — an undecidable signal cannot prove this verdict`,
         location: record.location,
       };
     }

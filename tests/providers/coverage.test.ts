@@ -2,7 +2,13 @@ import { join, resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
 
 import { parseCoverageReport, applyCoverageReport } from '../../src/providers/coverage';
-import { Availability, CollectionStatus, EVIDENCE_SCOPE_TEST_BODY, Provenance } from '../../src/core/evidence';
+import {
+  Availability,
+  CollectionStatus,
+  EVIDENCE_SCOPE_TEST_BODY,
+  EvidenceStrength,
+  Provenance,
+} from '../../src/core/evidence';
 import { evaluateRule, evaluateTests } from '../../src/core/evaluation';
 import { toJson } from '../../src/reporters/json';
 import { CT_COV_001 } from '../../src/rules/ct-cov-001';
@@ -1459,5 +1465,17 @@ describe('per-declaration location (Q3 parity)', () => {
       coverageMap: { 'from.ts': 'to.ts' },
     });
     expect(advisory.tests![0].evidence.line_coverage.location).toBeUndefined();
+  });
+});
+
+describe('task 5 — provider-set EvidenceStrength surfaces on evidence record in JSON', () => {
+  it('missing report yields UNSUPPORTED strength on the synthesized record and in JSON output', () => {
+    const out = applyCoverageReport(analysisWith('subject.ts', [1]), join(TMP, 'definitely-missing.json'));
+    expect(out.evidence.line_coverage.evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);
+    const json = JSON.parse(toJson(out, evaluateRule(CT_COV_001, out), evaluateTests(CT_COV_001, out))) as Record<
+      string,
+      any
+    >;
+    expect(json.evidence.line_coverage.evidenceStrength).toBe('UNSUPPORTED');
   });
 });

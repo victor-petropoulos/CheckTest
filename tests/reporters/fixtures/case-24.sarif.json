@@ -42,7 +42,8 @@
           },
           "properties": {
             "result": "PASS",
-            "testId": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0"
+            "testId": "<fixture-root>/case-24-vitest-standard/sample.test.ts#it@4:0",
+            "evidenceStrength": "EXECUTION_ESTABLISHED"
           },
           "locations": [
             {

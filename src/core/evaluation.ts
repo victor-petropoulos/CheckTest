@@ -356,9 +356,18 @@ function decide(rule: RuleMetadata, scope: ScopeView, explicitRuleIds: ExplicitR
     );
   }
 
-  // Step 4 — rule-level completeness: ALL required evidence must meet the minimum.
+  // Step 4 — rule-level completeness: required evidence must meet the minimum.
   // A record exactly AT the rule's minimum is let through; whether step 7 may
   // return PASS or FAIL on it is decided there, not here (asymmetric coverage).
+  //
+  // Per-type completeness policy (ADR-035 amendment 2026-11-18): a type marked
+  // 'signal' uses presence-and-count semantics (record present + availability
+  // KNOWN + finite integer count >= 0) and skips the COVERAGE_RANK ladder;
+  // the default 'rank' keeps the existing comparison. Only the rule's metric
+  // type is completeness-gated here; other required types (e.g. assertion_count
+  // on CT-INT-003) contribute presence (above) and conflicts (step 6) only,
+  // so a recognized-but-unestablished assertion reaches the FAIL hook instead
+  // of being blocked by the assertion_count coverage rank.
   for (const type of required_evidence) {
     const record = lookup(scope, type);
     if (record === undefined) {
@@ -368,7 +377,29 @@ function decide(rule: RuleMetadata, scope: ScopeView, explicitRuleIds: ExplicitR
         `${rule.id}: required evidence '${type}' is absent from the analysis envelope`,
       );
     }
-    if (COVERAGE_RANK[record.coverage.status] < COVERAGE_RANK[rule.minimum_evidence_completeness]) {
+    if (type !== rule.evaluation.metric) {
+      continue;
+    }
+    const policy = rule.evidence_completeness?.[type] ?? 'rank';
+    if (policy === 'signal') {
+      const count = typeof record.value === 'number' ? record.value : record.unestablished_assertions?.count;
+      if (record.availability !== Availability.KNOWN || !Number.isInteger(count) || (count as number) < 0) {
+        if (record.availability !== Availability.KNOWN) {
+          return finding(
+            rule,
+            rule.unknown_evidence_policy,
+            `${rule.id}: availability is ${record.availability} for '${type}'${suffix(record.reason)}`,
+            record,
+          );
+        }
+        return finding(
+          rule,
+          RuleResult.INDETERMINATE,
+          `${rule.id}: signal count for '${type}' is not a finite integer >= 0${suffix(record.reason)}`,
+          record,
+        );
+      }
+    } else if (COVERAGE_RANK[record.coverage.status] < COVERAGE_RANK[rule.minimum_evidence_completeness]) {
       return finding(
         rule,
         RuleResult.INDETERMINATE,
@@ -380,7 +411,15 @@ function decide(rule: RuleMetadata, scope: ScopeView, explicitRuleIds: ExplicitR
 
   // Step 5 — availability. NOT_APPLICABLE is folded in with UNKNOWN: either way the
   // collector declined to produce a decidable value, so no numeric verdict follows.
+  // Signal-policy metric types already had availability verified in step 4.
   for (const type of required_evidence) {
+    if (type !== rule.evaluation.metric) {
+      continue;
+    }
+    const policy = rule.evidence_completeness?.[type] ?? 'rank';
+    if (policy === 'signal') {
+      continue;
+    }
     const record = lookup(scope, type) as EvidenceRecord;
     if (record.availability !== Availability.KNOWN) {
       return finding(

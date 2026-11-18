@@ -394,6 +394,16 @@ Known limitations:
 - **Stale ≠ definitive.** A report whose `source_revision` disagrees with the analysed
   revision yields `UNKNOWN` records carrying the mismatch reason instead of a
   definitive score (roadmap:1088).
+- **Legacy revision keys (provider-API surface only).** `parseMutationReport` resolves
+  the report revision via a `pick()` chain that also reads the legacy option keys
+  `source_revision`, `sourceRevision` and `revision` (`src/providers/mutation.ts:268-269`).
+  A library caller who omits `mutationSourceRevision` but supplies one of these keys
+  gets it used as the report revision; if it happens to equal `analyzedRevision` the
+  freshness check treats the report as revision-matched (KNOWN score, decided verdict),
+  weakening the missing-vs-mismatch distinction **on that API path only**
+  (owner ruling D6, 2026-11-18: keys kept as documented surface with this caveat).
+  Not reachable via the CLI: `src/cli.ts:747-754` forwards only `analyzedRevision`,
+  `coverageMap`, and the explicit `--mutation-source-revision` flag.
 - **Score is emitted only when honest.** The score follows Stryker's metric:
   `detected = Killed + Timeout`, `valid = detected + Survived + NoCoverage`,
   `score = detected / valid`. `CompileError`, `RuntimeError`, `Ignored` and `Pending`
@@ -511,13 +521,21 @@ Aggregation: weakest-strength at subject level (`aggregateSubjectStrength`); per
 
 `evidenceStrength` is independent of `availability` and of `collection status`. A strength never turns `UNKNOWN` into `KNOWN`, and an observed form is never upgraded to execution-established by inference. `Availability.UNKNOWN` stays `UNKNOWN` regardless of strength.
 
-### 24.4 Report exposure (deferral — Package 6)
+### 24.4 Report exposure (findings today; evidence records in task 5)
 
-`evidenceStrength` is recorded on the in-memory `EvidenceRecord` but is **not yet present in JSON or SARIF output**: `serializeEvidence` (`src/reporters/json.ts:77-130`) builds its field set explicitly and does not copy `evidenceStrength`, and the SARIF reporter (`src/reporters/sarif.ts`) does not reference it either. Report-visible exposure of `evidenceStrength` is implemented by tasks **6.1** and **6.2** (Package 6). Package 1 acceptance therefore does **not** count report exposure as satisfied: report-visible `evidenceStrength` lands in Package 6 by design.
+`evidenceStrength` IS present in JSON output today, but only on findings, not on evidence records:
 
-**Note (1.6b):** evidence/completeness state IS exposed in reports today via the existing `availability`/`coverage.status`/`completeness` fields; the D10 `evidenceStrength` dimension specifically lands in Package 6 by design (tasks 6.1/6.2). Package 1 must NOT be recorded as satisfying report exposure of `evidenceStrength` alone.
+- `src/core/evaluation.ts:133-134` copies `record.evidenceStrength` onto the `RuleFinding` when the evidence record carries one (absent otherwise — never defaulted).
+- `src/core/result.ts:128` carries `evidenceStrength?: EvidenceStrength` on `RuleFinding`.
+- `src/reporters/json.ts:148` serializes it via `setIfPresent(json, 'evidenceStrength', finding.evidenceStrength)` (present-when-present; omitted, never an empty string, when the rule declared none).
 
-**Source:** `src/core/evidence.ts:50-79` (enum + doc comments), `src/adapters/typescript/regex-assertion-count.ts:44-77` (`classifyFormStrength`), `src/adapters/typescript/collector.ts:323-331`, `:410-420`, `src/adapters/python/collector.ts:136-156` (`AST_SCRIPT` classify), `:374-409` (native `countAsserts`), `:635-644` (`testEvidence`), `:718-768` (`buildSubjectEvidence`/`aggregateSubjectStrength`), `src/reporters/json.ts:77-130` (`serializeEvidence`), `src/reporters/sarif.ts`.
+Evidence *records* are not yet exposed: `serializeEvidence` (`src/reporters/json.ts:77-130`) builds its field set explicitly and does not copy `evidenceStrength` from the record. That additive optional field lands in task 5 (providers + `serializeEvidence`). The SARIF reporter (`src/reporters/sarif.ts`) still does not reference it; SARIF placement is resolved in task 5.
+
+Package 1 acceptance therefore counts report exposure on findings as satisfied today; report-visible `evidenceStrength` on evidence records lands in task 5 by design.
+
+**Note (1.6b):** evidence/completeness state IS exposed in reports today via the existing `availability`/`coverage.status`/`completeness` fields; the D10 `evidenceStrength` dimension is exposed on findings today and on evidence records in task 5. Package 1 must NOT be recorded as satisfying report exposure on evidence records alone.
+
+**Source:** `src/core/evidence.ts:50-79` (enum + doc comments), `src/adapters/typescript/regex-assertion-count.ts:44-77` (`classifyFormStrength`), `src/adapters/typescript/collector.ts:323-331`, `:410-420`, `src/adapters/python/collector.ts:136-156` (`AST_SCRIPT` classify), `:374-409` (native `countAsserts`), `:635-644` (`testEvidence`), `:718-768` (`buildSubjectEvidence`/`aggregateSubjectStrength`), `src/core/evaluation.ts:133-134`, `src/core/result.ts:128`, `src/reporters/json.ts:148`, `src/reporters/json.ts:77-130` (`serializeEvidence`), `src/reporters/sarif.ts`.
 
 ## 25. Coverage Input Formats and File Identity Matching (Phase 9 Package 2, task 2.2)
 
@@ -565,6 +583,6 @@ Cross-reference: Coverage-input file identity is in §25; declaration/test ident
 - **Registration is explicit** and re-registering an id replaces the entry (`src/rules/registry.ts:175-181`). Validation covers id shape, classification, thresholds, severity, status and advisory fields (`:34-150`); evidence policy fields are immutable via config (§21).
 - **Report exposure differs by format.** JSON carries `ruleStatus` on each finding (`src/reporters/json.ts:133-138`); SARIF carries `status` (and `deprecatedSince` when present) on the rule descriptor (`src/reporters/sarif.ts:161-178`). See the §17 asymmetry note.
 - **Historical posture.** ADR-030 (`docs/adr/030-draft-rules-produce-no-verdicts.md`) recorded the earlier "draft rules produce no verdicts" decision and was amended by ADR-031 for CT-COV-001. Its blanket statement about future draft rules is superseded for opt-in runs by the D6 enforcement above; the ADR is retained as history, not rewritten here.
-- **Today's registry** contains six rules, all `active`: CT-INT-001, CT-INT-003, CT-INT-004, CT-COV-001, CT-MUT-001, CT-DEMO-001 (`README.md:97-108`; rule files `src/rules/ct-*.ts` each declare `RuleStatus.ACTIVE`). No draft or deprecated rule is registered, so the gates above are contract behavior for future rules, not currently exercised by a shipped rule.
+- **Today's registry** contains five registered rules, all `active`: CT-INT-001, CT-INT-003, CT-INT-004, CT-COV-001, CT-MUT-001 (`src/cli.ts` `main()` — five `registerRule` calls, observed at `:437-441` on 2026-11-17; rule files `src/rules/ct-{int-001,int-003,int-004,cov-001,mut-001}.ts` each declare `RuleStatus.ACTIVE`). `src/rules/ct-demo-001.ts` declares `RuleStatus.ACTIVE` (`ct-demo-001.ts:30`) but is an unregistered N/A-path stub, registered only in tests (`tests/integration/fixtures.test.ts:179`); it is not a shipped rule. No draft or deprecated rule is registered, so the gates above are contract behavior for future rules, not currently exercised by a shipped rule.
 
 **Source:** `src/core/rule.ts:39-84`; `src/core/evaluation.ts:311-317`; `src/rules/registry.ts:34-150,163-181`; `src/reporters/json.ts:133-138`; `src/reporters/sarif.ts:161-178`; `README.md:95-108`; `docs/adr/030-draft-rules-produce-no-verdicts.md`.

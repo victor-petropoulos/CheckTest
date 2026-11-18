@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
 
-import { parseMutationReport, applyMutationReport } from '../../src/providers/mutation';
+import { parseMutationReport, applyMutationReport, MutationReportOptions } from '../../src/providers/mutation';
 import { Availability, CollectionStatus, EVIDENCE_SCOPE_TEST_BODY, Provenance } from '../../src/core/evidence';
 import {
   AnalysisOutput,
@@ -371,5 +371,104 @@ describe('mutation provider — mutationSourceRevision wiring (phase9 3.2)', () 
   it('no mutation report at all → no mutation_score evidence key', () => {
     const out = analysisWith('src/a.ts');
     expect(out.evidence.mutation_score).toBeUndefined();
+  });
+});
+
+// CT-MUT-001 wiring unit (plan 2026-11-18-ct-mut-001-wiring-seam.md task 2).
+// The provider today has NO mapping input: a test-scoped subject whose report
+// key is the SOURCE file degrades to UNKNOWN. A coverage-map-style
+// `<testfile>=<srckey>` entry must redirect the subject to the report key,
+// exactly as applyCoverageReport does (coverage.ts:513-551), while keeping the
+// evidence FILE-LEVEL ONLY (roadmap:1086) — never a per-declaration record.
+describe('mutation provider — coverage-map-style mapping (CT-MUT-001 wiring unit)', () => {
+  const TEST_FILE = '/abs/dir/sample.test.ts';
+  const SRC_KEY = 'src/index.js';
+
+  /** A schema-v2 report keyed to `srcKey`, one mutant per status. */
+  function reportKeyedTo(srcKey: string, statuses: string[], name: string): string {
+    const mutants = statuses.map((status, i) => ({ id: String(i), mutatorName: 'X', status }));
+    return tmpFile(
+      name,
+      JSON.stringify({
+        schemaVersion: '2',
+        files: { [srcKey]: { language: 'typescript', source: '', mutants } },
+      }),
+    );
+  }
+
+  /**
+   * `coverageMap` is a first-class MutationReportOptions key (task 3); the value
+   * uses the string `<from>=<to>` form, matching how cli.ts stores parsed
+   * --coverage-map values and how toCoverageMappings normalizes a single string.
+   */
+  function mappedOpts(from: string, to: string): MutationReportOptions {
+    return { coverageMap: `${from}=${to}` };
+  }
+
+  it('maps subject to a present report key -> KNOWN score, reason contains "mutation mapped from"', () => {
+    const p = reportKeyedTo(SRC_KEY, ['Survived', 'Killed'], 'ct-mut-001-map-present.json');
+    const out = applyMutationReport(analysisWith(TEST_FILE), p, mappedOpts(TEST_FILE, SRC_KEY));
+    const rec = out.evidence.mutation_score;
+    expect(rec.availability).toBe(Availability.KNOWN);
+    expect(rec.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect((rec.value as Record<string, number>).score).toBe(0.5);
+    // The reason names the mapping, so a mapped score is never silently a score.
+    expect(rec.reason).toContain('mutation mapped from');
+    expect(rec.reason).toContain(TEST_FILE);
+    expect(rec.reason).toContain(SRC_KEY);
+  });
+
+  it('maps subject to an absent report key -> UNKNOWN, reason names mapping and mapped target', () => {
+    const p = reportKeyedTo(SRC_KEY, ['Survived', 'Killed'], 'ct-mut-001-map-absent.json');
+    const mappedTo = 'src/absent.js';
+    const out = applyMutationReport(analysisWith(TEST_FILE), p, mappedOpts(TEST_FILE, mappedTo));
+    const rec = out.evidence.mutation_score;
+    expect(rec.availability).toBe(Availability.UNKNOWN);
+    expect(rec.value).toBeUndefined();
+    expect(rec.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    // Mirrors coverage.ts:547-551: the mapping and the mapped target are named.
+    expect(rec.reason).toContain('mutation mapped from');
+    expect(rec.reason).toContain(mappedTo);
+    expect(rec.reason).toContain('no mutation data for');
+  });
+
+  it('no mapping -> exact-match behavior byte-unchanged', () => {
+    const p = reportKeyedTo(TEST_FILE, ['Survived', 'Killed'], 'ct-mut-001-map-none.json');
+    const exact = applyMutationReport(analysisWith(TEST_FILE), p);
+    expect(exact.evidence.mutation_score.availability).toBe(Availability.KNOWN);
+    expect((exact.evidence.mutation_score.value as Record<string, number>).score).toBe(0.5);
+    // No mapping reason on the exact-match path.
+    expect(exact.evidence.mutation_score.reason).toBeUndefined();
+    // An empty option object changes nothing: the record is byte-identical.
+    const withEmptyOpts = applyMutationReport(analysisWith(TEST_FILE), p, {});
+    expect(withEmptyOpts.evidence.mutation_score).toEqual(exact.evidence.mutation_score);
+    // And a non-matching subject still degrades exactly as before — no basename fallback.
+    const miss = applyMutationReport(analysisWith('/abs/dir/other.test.ts'), p);
+    expect(miss.evidence.mutation_score.availability).toBe(Availability.UNKNOWN);
+    expect(miss.evidence.mutation_score.reason).toBe('no mutation data for /abs/dir/other.test.ts');
+  });
+
+  it('file-level only: out.tests untouched, no per-declaration records', () => {
+    const p = reportKeyedTo(SRC_KEY, ['Survived', 'Killed'], 'ct-mut-001-map-filelevel.json');
+    const base = analysisWith(TEST_FILE);
+    const before: AnalysisOutput = {
+      ...base,
+      tests: [
+        {
+          test: { id: `${TEST_FILE}#it@2:0`, name: 'checks a', line: 2, declaration: 'it' },
+          analysis: base.analysis,
+          evidence: {},
+          declaration_gap: null,
+        },
+      ],
+    };
+    const out = applyMutationReport(before, p, mappedOpts(TEST_FILE, SRC_KEY));
+    // roadmap:1086 — a mapping redirects the LOOKUP, it never writes a scope.
+    expect(out.tests).toEqual(before.tests);
+    expect(out.tests![0].evidence).toEqual({});
+    expect(out.tests![0].evidence.mutation_score).toBeUndefined();
+    const rec = out.evidence.mutation_score;
+    expect(rec.scope).toBe(EVIDENCE_SCOPE_TEST_BODY);
+    expect(rec.location).toBeUndefined();
   });
 });

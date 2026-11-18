@@ -731,6 +731,49 @@ describe('file-level CT-MUT-001 surfacing (plan 6.9b)', () => {
     expect(fileLevel[0].properties.result).toBe('PASS');
   });
 
+  it('CLI --mutation-report: coverage-map-style mapping lands a decided file-level verdict', () => {
+    // The report is keyed to the SOURCE file, not the analyzed test file: only a
+    // --coverage-map entry redirects the subject to that key. Without the
+    // mapping the record degrades to UNKNOWN and CT-MUT-001 stays INDETERMINATE
+    // (RED until task 3 wires options.coverageMap into applyMutationReport).
+    const srcKey = 'src/index.js';
+    const TMP = join(process.env.TMPDIR || tmpdir(), 'checktest-cli-mutation');
+    mkdirSync(TMP, { recursive: true });
+    const p = join(TMP, 'p69b-mapped.json');
+    writeFileSync(
+      p,
+      JSON.stringify({
+        schemaVersion: '2',
+        files: {
+          [srcKey]: {
+            language: 'typescript',
+            source: 'function a() { return true; }',
+            mutants: [
+              { id: '0', mutatorName: 'BooleanLiteral', replacement: 'false', status: 'Survived' },
+              { id: '1', mutatorName: 'BlockStatement', replacement: '{}', status: 'Killed' },
+            ],
+          },
+        },
+      }),
+      'utf8',
+    );
+    const code = runCli(p, ['--coverage-map', `${SUBJECT}=${srcKey}`, '--mutation-source-revision', REV]);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    const json = report();
+    const ev = json.evidence.mutation_score;
+    expect(ev.availability).toBe('KNOWN');
+    expect(ev.coverage.status).toBe('COMPLETE');
+    expect(ev.value.score).toBe(0.5);
+    expect(ev.reason).toContain('mutation mapped from');
+    const fileLevel = json.ruleResults.filter((e: any) => e.test_id === undefined);
+    expect(fileLevel).toHaveLength(1);
+    expect(fileLevel[0].rule_id).toBe('CT-MUT-001');
+    expect(fileLevel[0].result).toBe('PASS');
+    expect(fileLevel[0].reason).toBe('CT-MUT-001: mutation_score=0.5 >= 0.5');
+    expect(fileLevel[0]).not.toHaveProperty('test_id');
+  });
+
   it('Negative: no mutation report -> no extra ruleResults entry (existing behavior preserved)', () => {
     stdout = '';
     const code = main(['--test', SUBJECT, '--type', 'UNIT', '--rule', 'CT-MUT-001']);
@@ -1067,5 +1110,256 @@ describe('CLI --rule lifecycle (D6/D7)', () => {
     expect(code).toBe(0);
     const sarif = JSON.parse(stdout);
     expect(sarif.runs[0].tool.driver.rules[0].properties.deprecatedSince).toBe('1.11.0');
+  });
+});
+
+describe('CLI doctor (Phase 2a)', () => {
+  it('env-probe happy path exits 0 with no stack trace', () => {
+    const code = main(['doctor']);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    expect(stdout).toContain('checktest doctor');
+  });
+
+  it('doctor --json emits kind:doctor and schemaVersion 0.5', () => {
+    const code = main(['doctor', '--json']);
+    expect(code).toBe(0);
+    const json = JSON.parse(stdout);
+    expect(json.kind).toBe('doctor');
+    expect(json.schemaVersion).toBe('0.5');
+  });
+
+  it('doctor --test <file> prints adapterId/decidedBy/reason and exits 0', () => {
+    const code = main(['doctor', '--test', fixture('case-01-standard-assertion'), '--json']);
+    expect(code).toBe(0);
+    const json = JSON.parse(stdout);
+    expect(json.adapterId).toBe('typescript-jest-adapter');
+    expect(json).toHaveProperty('decidedBy');
+    expect(json).toHaveProperty('reason');
+  });
+
+  it('doctor --test /nonexistent.foo exits 2', () => {
+    const code = main(['doctor', '--test', '/nonexistent.foo']);
+    expect(code).toBe(2);
+  });
+
+  it('doctor --bogus-flag exits 1', () => {
+    const code = main(['doctor', '--bogus-flag']);
+    expect(code).toBe(1);
+  });
+});
+
+describe('CLI explain (Phase 2b)', () => {
+  it('registered rule exits 0 and prints all metadata fields', () => {
+    const code = main(['explain', '--rule', 'CT-INT-001']);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    expect(stdout).toContain('checktest explain: CT-INT-001');
+    expect(stdout).toContain('Rationale:');
+    expect(stdout).toContain('Limitations:');
+    expect(stdout).toContain('Docs URL:');
+  });
+
+  it('explain --bogus-flag exits 1 via UsageError path', () => {
+    const code = main(['explain', '--bogus-flag']);
+    expect(code).toBe(1);
+    expect(stderr).toContain('unknown argument');
+  });
+
+  it('explain --rule without value exits 1 via UsageError path', () => {
+    const code = main(['explain', '--rule']);
+    expect(code).toBe(1);
+    expect(stderr).toContain('missing value');
+  });
+
+  it('explain CT-DEMO-001 exits 1 listing registered ids', () => {
+    const code = main(['explain', '--rule', 'CT-DEMO-001']);
+    expect(code).toBe(1);
+    expect(stderr).toContain('registered rules: CT-INT-001, CT-INT-003, CT-INT-004, CT-COV-001, CT-MUT-001');
+  });
+
+  it('explain missing --rule exits 1', () => {
+    const code = main(['explain']);
+    expect(code).toBe(1);
+  });
+
+  it('explain --json emits kind:explain and schemaVersion 0.5', () => {
+    const code = main(['explain', '--rule', 'CT-MUT-001', '--json']);
+    expect(code).toBe(0);
+    const json = JSON.parse(stdout);
+    expect(json.kind).toBe('explain');
+    expect(json.schemaVersion).toBe('0.5');
+    // Full-shape pin: every registered rule carries rationale/limitations/docsUrl;
+    // deprecatedSince/thresholds_inert stay absent (present-when-present).
+    expect(json.id).toBe('CT-MUT-001');
+    expect(typeof json.rationale).toBe('string');
+    expect(typeof json.limitations).toBe('string');
+    expect(typeof json.docsUrl).toBe('string');
+    expect(json).not.toHaveProperty('deprecatedSince');
+    expect(json).not.toHaveProperty('thresholds_inert');
+  });
+
+  it('explain prints threshold lines for a threshold rule (CT-INT-001)', () => {
+    const code = main(['explain', '--rule', 'CT-INT-001']);
+    expect(code).toBe(0);
+    expect(stdout).toContain('  Metric: assertion_count');
+    expect(stdout).toContain('  Pass at least: 1');
+    expect(stdout).toContain('  Fail at most: 0');
+  });
+
+  it('explain unknown id exits 1', () => {
+    const code = main(['explain', '--rule', 'NOPE']);
+    expect(code).toBe(1);
+  });
+});
+
+/**
+ * Phase 2c (task 9) — CLI discoverability + contract pins.
+ *
+ * `doctor --help` / `explain --help` call `process.exit(0)` directly
+ * (src/cli.ts:293-296, :459-462), which the in-process `main()` seam cannot
+ * observe (the spy records the call but execution continues past it). Those
+ * cases therefore drive the real CLI via the same `execFileSync` subprocess
+ * seam already used at :475/:637/:940 for git revisions — no production code
+ * is restructured. Everything else stays on the in-process `main()` seam.
+ */
+describe('CLI discoverability & contract (Phase 2c)', () => {
+  const CLI = join(__dirname, '..', 'src', 'cli.ts');
+
+  /** Run the CLI as a real subprocess; return {code, stdout, stderr}. */
+  function runCli(args: string[]): { code: number; stdout: string; stderr: string } {
+    try {
+      const stdout = execFileSync('npx', ['tsx', CLI, ...args], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      return { code: 0, stdout, stderr: '' };
+    } catch (e: any) {
+      return { code: e.status ?? 1, stdout: e.stdout ?? '', stderr: e.stderr ?? '' };
+    }
+  }
+
+  // (a) --help variants that the in-process seam cannot pin (process.exit(0)).
+  it('doctor --help exits 0, prints Usage, no stack trace', () => {
+    const r = runCli(['doctor', '--help']);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('Usage: checktest');
+    expect(r.stderr).toBe('');
+    expect(r.stdout).not.toContain('    at ');
+  });
+
+  it('explain --help exits 0, prints Usage, no stack trace', () => {
+    const r = runCli(['explain', '--help']);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('Usage: checktest');
+    expect(r.stderr).toBe('');
+    expect(r.stdout).not.toContain('    at ');
+  });
+
+  it('check --help exits 0 (bare --help via check prefix)', () => {
+    const code = main(['check', '--help']);
+    expect(code).toBe(0);
+    expect(stdout).toContain('Usage: checktest');
+    expect(stderr).toBe('');
+  });
+
+  // (b) doctor env-probe: weak-signal non-certainty. The env probe reports
+  // capabilities (frameworks the adapter supports) but never claims a
+  // detected-framework certainty for the cwd.
+  it('doctor --json: no framework-certainty field; adapters carry capabilities', () => {
+    const code = main(['doctor', '--json']);
+    expect(code).toBe(0);
+    const json = report();
+    expect(json.kind).toBe('doctor');
+    expect(json.mode).toBe('env');
+    // No "detected framework" claim — a certainty field would be a lie here.
+    expect(json).not.toHaveProperty('detectedFramework');
+    expect(json).not.toHaveProperty('frameworkCertainty');
+    expect(json).not.toHaveProperty('detected');
+    // Adapters listed with capabilities (frameworks + assertionForms).
+    expect(Array.isArray(json.adapters)).toBe(true);
+    expect(json.adapters.length).toBeGreaterThan(0);
+    for (const a of json.adapters) {
+      expect(a).toHaveProperty('id');
+      expect(a).toHaveProperty('capabilities');
+      expect(a.capabilities).toHaveProperty('frameworks');
+      expect(a.capabilities).toHaveProperty('assertionForms');
+    }
+    // supported.frameworks is the union of adapter capabilities, not a detection.
+    expect(Array.isArray(json.supported.frameworks)).toBe(true);
+    expect(json.supported.frameworks).toContain('jest');
+  });
+
+  // (c) explain usage errors — unknown id exits 1 (registered ok already pinned
+  // at :1110). Variant: unknown id via --json also exits 1 (no JSON on stdout).
+  it('explain --json unknown id exits 1, nothing on stdout', () => {
+    const code = main(['explain', '--rule', 'CT-NOPE', '--json']);
+    expect(code).toBe(1);
+    expect(stdout).toBe('');
+  });
+
+  // (d) JSON shape stability — byte-stable across two invocations in one run.
+  it('doctor --json is byte-stable across two invocations', () => {
+    main(['doctor', '--json']);
+    const first = stdout;
+    stdout = '';
+    main(['doctor', '--json']);
+    const second = stdout;
+    expect(second).toBe(first);
+    expect(() => JSON.parse(first)).not.toThrow();
+  });
+
+  it('explain --json is byte-stable across two invocations', () => {
+    main(['explain', '--rule', 'CT-INT-001', '--json']);
+    const first = stdout;
+    stdout = '';
+    main(['explain', '--rule', 'CT-INT-001', '--json']);
+    const second = stdout;
+    expect(second).toBe(first);
+    expect(JSON.parse(first)).toEqual(JSON.parse(second));
+  });
+
+  // (e) Exit-code contract table pinned per outcome type. The 0/1/2 semantics
+  // (src/cli.ts:15-22) extended to doctor + explain dispatch.
+  it('exit-code contract: doctor dispatch unresolvable -> 2 (no-verdict bucket)', () => {
+    const code = main(['doctor', '--test', '/nonexistent.foo']);
+    expect(code).toBe(2);
+  });
+
+  it('exit-code contract: doctor dispatch resolved -> 0 (diagnostic success)', () => {
+    const code = main(['doctor', '--test', fixture('case-01-standard-assertion')]);
+    expect(code).toBe(0);
+  });
+
+  it('exit-code contract: explain unknown rule -> 1 (usage error)', () => {
+    const code = main(['explain', '--rule', 'CT-NOPE']);
+    expect(code).toBe(1);
+  });
+
+  it('exit-code contract: explain registered rule -> 0 (success)', () => {
+    const code = main(['explain', '--rule', 'CT-INT-001']);
+    expect(code).toBe(0);
+  });
+
+  // 0 = EVALUATED-even-FAIL: a decided FAIL is a successful analysis (cli.ts:15-22).
+  // Already pinned at :79 (case-02 FAIL -> 0); re-pin here as the table's
+  // explicit 0-row so the Phase 2c contract block is self-contained.
+  it('exit-code contract: check FAIL still exits 0 (EVALUATED, not FAILED)', () => {
+    const code = main(['--test', fixture('case-02-no-assertion'), '--type', 'UNIT']);
+    expect(code).toBe(0);
+    expect(report().ruleResults[0].result).toBe('FAIL');
+  });
+
+  // 1 = usage error: unknown flag on the bare check path.
+  it('exit-code contract: unknown flag -> 1 (usage error)', () => {
+    const code = main(['--bogus', 'x']);
+    expect(code).toBe(1);
+  });
+
+  // 2 = no verdict: file declares no tests (case-18, cli.ts:15-22 UD-8).
+  // Already pinned at :269; re-pin as the table's explicit 2-row.
+  it('exit-code contract: no-tests -> 2 (no verdict)', () => {
+    const code = main(['--test', fixture('case-18-no-tests'), '--type', 'UNIT']);
+    expect(code).toBe(2);
   });
 });

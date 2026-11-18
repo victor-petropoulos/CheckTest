@@ -949,3 +949,205 @@ describe('reason field stays evidence-tied (plan 6.4)', () => {
     expect(findingCount).toBeGreaterThan(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// TASK 3 (capability seam, plan .opencode/plans/2026-11-18-int003-capability-seam.md
+// decisions D1/D2/D2b) — step-4 completeness policy truth table.
+//
+// GREEN NOW, must stay GREEN through tasks 4-5 (regression guard): for every
+// existing evidence type (assertion_count, line_coverage, mutation_score) the
+// step-4 gate stays COVERAGE_RANK-based — COVERAGE_RANK[coverage] >=
+// COVERAGE_RANK[minimum] with COMPLETE=3 > PARTIAL=2 > UNAVAILABLE=1. The seam
+// adds a presence-and-count 'signal' policy for the new unestablished_assertion
+// type ONLY (D2b candidate 1); it must not change these rows.
+//
+// The pending block at the bottom pins the POST-SEAM signal semantics. It is
+// RED-by-design at HEAD (type not yet in EVIDENCE_TYPES, ct-int-003.ts not yet
+// switched) and is what task 4 turns GREEN.
+// ---------------------------------------------------------------------------
+describe('step-4 truth table — rank semantics per existing evidence type (regression guard)', () => {
+  // RULE_TEMPLATE + per-type evidence records through the PUBLIC evaluateRule
+  // interface: required evidence present at a given coverage status.
+  function ruleFor(type: EvidenceType): RuleMetadata {
+    // metric must be the per-type record too: step 7 thresholds the metric
+    // record, so a template metric of 'assertion_count' would make a
+    // line_coverage/mutation_score rule INDETERMINATE for the wrong reason.
+    return {
+      ...RULE,
+      id: `CT-TRUTH-${type}`,
+      required_evidence: [type],
+      evaluation: { metric: type, pass_at_least: 1, fail_at_most: 0 },
+    };
+  }
+
+  function recordOfType(type: EvidenceType, coverage: CollectionStatus): EvidenceRecord {
+    return { ...record({ coverage }), type };
+  }
+
+  function analysisFor(type: EvidenceType, coverage: CollectionStatus): AnalysisOutput {
+    const base = analysis({ coverage });
+    return {
+      ...base,
+      evidence: { [type]: recordOfType(type, coverage) },
+      capabilities: { [type]: CapabilityStatus.AVAILABLE },
+    };
+  }
+
+  const ALL_TYPES: readonly EvidenceType[] = ['assertion_count', 'line_coverage', 'mutation_score'];
+
+  it.each(ALL_TYPES)('%s: COMPLETE >= COMPLETE → record admitted (numeric step decides)', (type) => {
+    const { finding } = evaluateRule(ruleFor(type), analysisFor(type, CollectionStatus.COMPLETE));
+    expect(finding?.result).toBe(RuleResult.PASS); // value 1 >= pass_at_least 1
+  });
+
+  it.each(ALL_TYPES)('%s: PARTIAL < COMPLETE minimum → INDETERMINATE at step 4', (type) => {
+    const { finding } = evaluateRule(ruleFor(type), analysisFor(type, CollectionStatus.PARTIAL));
+    expect(finding?.result).toBe(RuleResult.INDETERMINATE);
+    expect(finding?.reason).toContain('coverage.status PARTIAL');
+  });
+
+  it.each(ALL_TYPES)('%s: UNAVAILABLE < COMPLETE minimum → INDETERMINATE at step 4', (type) => {
+    const { finding } = evaluateRule(ruleFor(type), analysisFor(type, CollectionStatus.UNAVAILABLE));
+    expect(finding?.result).toBe(RuleResult.INDETERMINATE);
+    expect(finding?.reason).toContain('coverage.status UNAVAILABLE');
+  });
+
+  it.each(ALL_TYPES)('%s: PARTIAL coverage clears a PARTIAL minimum (asymmetric, unchanged)', (type) => {
+    const rule: RuleMetadata = { ...ruleFor(type), minimum_evidence_completeness: CollectionStatus.PARTIAL };
+    const { finding } = evaluateRule(rule, analysisFor(type, CollectionStatus.PARTIAL));
+    expect(finding?.result).toBe(RuleResult.PASS);
+  });
+
+  it('COVERAGE_RANK order itself: COMPLETE > PARTIAL > UNAVAILABLE (pins the ladder the seam must not reorder)', () => {
+    const complete = evaluateRule(
+      ruleFor('assertion_count'),
+      analysisFor('assertion_count', CollectionStatus.COMPLETE),
+    );
+    const partial = evaluateRule(ruleFor('assertion_count'), analysisFor('assertion_count', CollectionStatus.PARTIAL));
+    const unavailable = evaluateRule(
+      ruleFor('assertion_count'),
+      analysisFor('assertion_count', CollectionStatus.UNAVAILABLE),
+    );
+    expect(complete.finding?.result).toBe(RuleResult.PASS);
+    expect(partial.finding?.result).toBe(RuleResult.INDETERMINATE);
+    expect(unavailable.finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('existing shipped rules keep their minima (CT-INT-001/004/COV/MUT unchanged by the seam)', () => {
+    // Verbatim from src/rules/*.ts at HEAD d2daf16 — note CT-INT-004 is the
+    // asymmetric PARTIAL-minimum rule (ct-int-004.ts:51), not COMPLETE.
+    expect(CT_INT_001.required_evidence).toEqual(['assertion_count']);
+    expect(CT_INT_001.minimum_evidence_completeness).toBe(CollectionStatus.COMPLETE);
+    expect(CT_INT_001.evaluation.metric).toBe('assertion_count');
+    expect(CT_INT_004.required_evidence).toEqual(['assertion_count']);
+    expect(CT_INT_004.minimum_evidence_completeness).toBe(CollectionStatus.PARTIAL);
+    expect(CT_INT_004.evaluation.metric).toBe('assertion_count');
+    expect(CT_COV_001.required_evidence).toEqual(['line_coverage']);
+    expect(CT_COV_001.minimum_evidence_completeness).toBe(CollectionStatus.COMPLETE);
+    expect(CT_MUT_001.required_evidence).toEqual(['mutation_score']);
+    expect(CT_MUT_001.minimum_evidence_completeness).toBe(CollectionStatus.COMPLETE);
+  });
+});
+
+describe('step-4 signal policy for unestablished_assertion — POST-SEAM truth table (RED until task 4)', () => {
+  // POST-SEAM: CT-INT-003's required_evidence includes 'unestablished_assertion'
+  // whose completeness policy is presence+count ('signal'), NOT the rank ladder.
+  // A signal record with coverage PARTIAL (the honest collector status for a
+  // recognized-but-unestablished assertion, collector.ts:397-404) must reach
+  // the local hook and yield FAIL on count > 0 — instead of being refused at
+  // step 4 by COVERAGE_RANK[PARTIAL] < COVERAGE_RANK[COMPLETE] (current HEAD
+  // behavior, pinned above and in tests/rules/ct-int-003.test.ts).
+  it('signal record with count>0 on PARTIAL coverage → FAIL (RED until task 4)', () => {
+    const collected: AnalysisOutput = {
+      subject: { id: 's', name: 'sample', file: 'sample.test.ts', language: 'typescript' },
+      analysis: {
+        status: AnalysisStatus.SUCCESS,
+        completeness: Completeness.COMPLETE,
+        scope: 'test-body',
+        test_type: { value: TestType.UNIT, source: ClassificationSource.EXPLICIT },
+      },
+      evidence: {
+        assertion_count: {
+          ...record({ coverage: CollectionStatus.PARTIAL }),
+          unestablished_assertions: {
+            count: 1,
+            reasons: ['assertion is inside a callback; callback execution cannot be established statically'],
+          },
+        },
+        unestablished_assertion: {
+          type: 'unestablished_assertion',
+          value: 1,
+          availability: Availability.KNOWN,
+          provenance: Provenance.DIRECT,
+          source: 'test-adapter',
+          collector_version: '0.0.0',
+          scope: 'test-body',
+          coverage: {
+            status: CollectionStatus.PARTIAL,
+            supported_frameworks: ['jest', 'vitest', 'mocha'],
+            supported_assertion_forms: ['expect-to-be'],
+          },
+          unestablished_assertions: {
+            count: 1,
+            reasons: ['assertion is inside a callback; callback execution cannot be established statically'],
+          },
+        },
+      },
+      capabilities: { assertion_count: CapabilityStatus.AVAILABLE },
+    };
+    const { finding } = evaluateRule(CT_INT_003, collected);
+    expect(finding?.result).toBe(RuleResult.FAIL);
+  });
+
+  it('signal record with count 0 → PASS (present-only convention preserved, RED until task 4)', () => {
+    const collected: AnalysisOutput = {
+      subject: { id: 's', name: 'sample', file: 'sample.test.ts', language: 'typescript' },
+      analysis: {
+        status: AnalysisStatus.SUCCESS,
+        completeness: Completeness.COMPLETE,
+        scope: 'test-body',
+        test_type: { value: TestType.UNIT, source: ClassificationSource.EXPLICIT },
+      },
+      evidence: {
+        assertion_count: record({ value: 1 }),
+        unestablished_assertion: {
+          type: 'unestablished_assertion',
+          value: 0,
+          availability: Availability.KNOWN,
+          provenance: Provenance.DIRECT,
+          source: 'test-adapter',
+          collector_version: '0.0.0',
+          scope: 'test-body',
+          coverage: {
+            status: CollectionStatus.COMPLETE,
+            supported_frameworks: ['jest', 'vitest', 'mocha'],
+            supported_assertion_forms: ['expect-to-be'],
+          },
+          unestablished_assertions: { count: 0, reasons: [] },
+        },
+      },
+      capabilities: { assertion_count: CapabilityStatus.AVAILABLE },
+    };
+    const { finding } = evaluateRule(CT_INT_003, collected);
+    expect(finding?.result).toBe(RuleResult.PASS);
+  });
+
+  it('signal record absent → INDETERMINATE "required evidence absent" (RED until task 4)', () => {
+    // Post-seam CT-INT_003.required_evidence includes unestablished_assertion;
+    // an envelope without the signal record must be refused, not guessed.
+    const collected: AnalysisOutput = {
+      subject: { id: 's', name: 'sample', file: 'sample.test.ts', language: 'typescript' },
+      analysis: {
+        status: AnalysisStatus.SUCCESS,
+        completeness: Completeness.COMPLETE,
+        scope: 'test-body',
+        test_type: { value: TestType.UNIT, source: ClassificationSource.EXPLICIT },
+      },
+      evidence: { assertion_count: record({ value: 1 }) },
+      capabilities: { assertion_count: CapabilityStatus.AVAILABLE },
+    };
+    const { finding } = evaluateRule(CT_INT_003, collected);
+    expect(finding?.result).toBe(RuleResult.INDETERMINATE);
+    expect(finding?.reason).toContain("'unestablished_assertion'");
+  });
+});
