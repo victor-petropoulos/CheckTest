@@ -27,3 +27,10 @@ jobs:
           git diff --exit-code -- src tests
       - name: smoke CLI
         run: node dist/src/cli.js --version && node dist/src/cli.js check --test tests/cli.test.ts --type UNIT > report.json && jq -e '.analysisStatus' report.json
+      - name: rule catalog drift check
+        run: |
+          set -euo pipefail
+          npx --yes tsx scripts/gen-rule-catalog.ts
+          git diff --exit-code -- docs/rules/catalog.md
+      - name: markdown link check
+        run: npx --yes tsx scripts/check-doc-links.ts

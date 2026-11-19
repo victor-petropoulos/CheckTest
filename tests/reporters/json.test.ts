@@ -23,6 +23,9 @@ import { RuleMetadata } from '../../src/core/rule';
 import { EvaluationStatus, RuleResult } from '../../src/core/result';
 import { collectAnalysis } from '../../src/adapters/typescript/collector';
 import { CT_INT_001 } from '../../src/rules/ct-int-001';
+import { registerRule } from '../../src/rules/registry';
+import { runAnalysis } from '../../src/cli';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 
 const RULE: RuleMetadata = {
@@ -662,5 +665,50 @@ describe('toJson — self-contained finding field contract (plan 6.5)', () => {
 
     // location absent when record carries none (never fabricated)
     expect(finding).not.toHaveProperty('location');
+  });
+});
+
+describe('toJson — evidenceStrength exposure golden (case-26, real pipeline)', () => {
+  // docs/limitations.md §24.4: strength is exposed on JSON evidence records
+  // AND findings. probe-mixed has one straight-line test (EXECUTION_ESTABLISHED)
+  // and one callback-nested test (SYNTAX_OBSERVED), so one run pins BOTH values.
+  const root = join(__dirname, '..', 'fixtures', 'int003-probes');
+  const file = join(root, 'probe-mixed.test.ts');
+
+  // Registration is explicit in main() (src/cli.ts:589), never an import side
+  // effect — a direct runAnalysis caller registers its rule first, exactly as
+  // tests/cli.test.ts does before its own runAnalysis calls.
+  beforeAll(() => {
+    registerRule(CT_INT_001);
+  });
+
+  // runAnalysis is the CLI's own collect→evaluate→serialize composition
+  // (src/cli.ts:719), so the golden matches CLI stdout byte-for-byte modulo
+  // the fixture-root normalization — including the adapter/decidedBy envelope
+  // keys the CLI stamps post-collect (src/cli.ts:760-761).
+  function report(): string {
+    return runAnalysis({ test: file, type: TestType.UNIT, rule: 'CT-INT-001', format: 'json' })
+      .report.split(root)
+      .join('<fixture-root>');
+  }
+
+  it('matches the committed byte-exact JSON golden', () => {
+    const golden = readFileSync(join(__dirname, 'fixtures', 'case-26.json'), 'utf8');
+    expect(report()).toBe(golden);
+  });
+
+  it('carries BOTH strengths on evidence records AND findings (§24.4 locations 1+2)', () => {
+    const json = JSON.parse(report()) as Record<string, any>;
+    // Established scope: straight-line assertion.
+    expect(json.testResults[0].evidence.assertion_count.evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
+    expect(json.testResults[0].ruleResults[0].evidenceStrength).toBe(EvidenceStrength.EXECUTION_ESTABLISHED);
+    // Unestablished scope: callback-nested assertion.
+    expect(json.testResults[1].evidence.assertion_count.evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
+    expect(json.testResults[1].ruleResults[0].evidenceStrength).toBe(EvidenceStrength.SYNTAX_OBSERVED);
+    // The flattened list carries the same values in scope order.
+    expect(json.ruleResults.map((f: any) => f.evidenceStrength)).toEqual([
+      EvidenceStrength.EXECUTION_ESTABLISHED,
+      EvidenceStrength.SYNTAX_OBSERVED,
+    ]);
   });
 });

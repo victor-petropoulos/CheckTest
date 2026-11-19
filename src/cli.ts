@@ -42,7 +42,7 @@ import { defaultRegistry, resolveAdapter } from './adapters/registry';
 import { typescriptAdapter } from './adapters/typescript/adapter';
 import { applyCoverageReport } from './providers/coverage';
 import { applyMutationReport } from './providers/mutation';
-import { TestType } from './core/analysis';
+import { AnalysisStatus, Completeness, TestType } from './core/analysis';
 import { applyConfigToRule, CheckTestConfig, loadConfig, UsageError } from './core/config';
 import { evaluateRule, evaluateTests } from './core/evaluation';
 import { EvaluationStatus } from './core/result';
@@ -102,10 +102,11 @@ const USAGE = [
   'reached no verdict (including a file that declares no tests), and 1 on a usage',
   'error or a failed run.',
   '',
-  'Usage: checktest doctor [--json] [--test <path>] [--config <path>]',
+  'Usage: checktest doctor [--json] [--test <path>] [--adapter <id>] [--config <path>]',
   '',
   '  --json          emit machine-readable JSON (kind: doctor)',
   '  --test <path>   probe adapter dispatch for <path> (prints adapterId/decidedBy/reason)',
+  '  --adapter <id>  explicit adapter id for the dispatch probe (unregistered ids fall through)',
   '  --config <path> validate an explicit config file (read-only)',
   '',
   'Exits 0 on diagnostic success, 2 when dispatch is unresolvable, 1 on usage error.',
@@ -278,12 +279,14 @@ interface DoctorArgs {
   json: boolean;
   testPath?: string;
   configPath?: string;
+  adapter?: string;
 }
 
 function parseDoctorArgs(args: readonly string[]): DoctorArgs {
   let json = false;
   let testPath: string | undefined;
   let configPath: string | undefined;
+  let adapter: string | undefined;
   for (let i = 0; i < args.length; i += 1) {
     const flag = args[i];
     if (flag === '--json') {
@@ -298,7 +301,7 @@ function parseDoctorArgs(args: readonly string[]): DoctorArgs {
       process.stdout.write(`${VERSION}\n`);
       process.exit(0);
     }
-    if (flag !== '--test' && flag !== '--config') {
+    if (flag !== '--test' && flag !== '--config' && flag !== '--adapter') {
       throw new UsageError(`unknown argument '${flag}'`);
     }
     const value = args[i + 1];
@@ -307,16 +310,25 @@ function parseDoctorArgs(args: readonly string[]): DoctorArgs {
     }
     if (flag === '--test') {
       testPath = value;
-    } else {
+    } else if (flag === '--config') {
       configPath = value;
+    } else {
+      // No id validation here, mirroring check's --adapter parse: an
+      // unregistered id falls through to the structural layers inside
+      // resolveAdapter (src/adapters/registry.ts:90-93).
+      adapter = value;
     }
     i += 1;
   }
-  return { json, testPath, configPath };
+  return { json, testPath, configPath, adapter };
 }
 
-function runDoctorDispatch(testPath: string, json: boolean): number {
-  let resolution = resolveAdapter(testPath, {}, { manifestExists: (name) => existsSync(name) });
+function runDoctorDispatch(testPath: string, json: boolean, adapter?: string): number {
+  // ADR-034 precedence (flag > manifest > extension): thread the explicit id
+  // through the SAME resolveAdapter call shape as check (runAnalysis). An
+  // unregistered id falls through the structural layers
+  // (src/adapters/registry.ts:90-93) — never a fake success.
+  let resolution = resolveAdapter(testPath, { adapter }, { manifestExists: (name) => existsSync(name) });
   if (!existsSync(testPath)) {
     resolution = { adapterId: null, decidedBy: 'unsupported', reason: 'no adapter matched' };
   }
@@ -324,6 +336,7 @@ function runDoctorDispatch(testPath: string, json: boolean): number {
     kind: 'doctor',
     schemaVersion: REPORT_SCHEMA_VERSION,
     mode: 'dispatch',
+    requestedAdapter: adapter ?? null,
     adapterId: resolution.adapterId,
     decidedBy: resolution.decidedBy,
     reason: resolution.reason,
@@ -333,8 +346,11 @@ function runDoctorDispatch(testPath: string, json: boolean): number {
   } else {
     const verdict =
       resolution.adapterId === null || resolution.decidedBy === 'unsupported' ? 'no adapter matched' : 'resolved';
+    // Show requested vs resolved only when they differ (an unregistered id
+    // fell through, or the missing-file override applied).
+    const requestedLine = adapter !== undefined && adapter !== resolution.adapterId ? `Requested: ${adapter}\n` : '';
     process.stdout.write(
-      `checktest doctor (dispatch)\nTest: ${testPath}\nAdapter: ${resolution.adapterId ?? 'none'} (${resolution.decidedBy}) ${verdict}\n`,
+      `checktest doctor (dispatch)\nTest: ${testPath}\n${requestedLine}Adapter: ${resolution.adapterId ?? 'none'} (${resolution.decidedBy}) ${verdict}\n`,
     );
   }
   if (resolution.adapterId === null || resolution.decidedBy === 'unsupported') {
@@ -424,7 +440,7 @@ function runDoctor(args: readonly string[]): number {
   }
   try {
     if (parsed.testPath !== undefined) {
-      return runDoctorDispatch(parsed.testPath, parsed.json);
+      return runDoctorDispatch(parsed.testPath, parsed.json, parsed.adapter);
     }
     return runDoctorEnv(parsed.configPath, parsed.json);
   } catch (error) {
@@ -644,6 +660,46 @@ export function main(argv: readonly string[]): number {
       // ADR-034: dispatch found no adapter → no analysis at all → the same
       // "no verdict" bucket as an all-FAILED run (exit 2), not a usage error.
       process.stderr.write(`checktest: ${error.message}\n`);
+      if (options.format === FORMAT_JSON) {
+        // UNIT 5: stable no-verdict envelope on stdout. JSON is the DEFAULT
+        // format (check has no --json flag), so a machine consumer piping
+        // stdout always gets parseable JSON — never an empty stream it must
+        // special-case. Additive-only: this path emitted NO stdout before, so
+        // every existing report stays byte-identical.
+        //
+        // POLICY — KEEP schemaVersion 0.5 (docs/product-contract.md:82-88):
+        //   "Version 0.5 adds OPTIONAL `adapter`/`decidedBy` envelope fields;
+        //    additive only, nothing removed or renamed"
+        //   "Bumped only when report shape changes meaningfully, never per run"
+        // A new payload on a previously-empty path removes/renames nothing.
+        //
+        // No adapter → no analysis → evaluationStatus FAILED ("A required
+        // analysis step failed — the rule was not evaluated",
+        // src/core/result.ts:36-41) and completeness NOT_APPLICABLE
+        // (src/core/analysis.ts:20-25). No invented rule verdicts:
+        // ruleResults/testResults empty, summary zeroed with the SAME field
+        // names as the reporter's summarize() (src/reporters/json.ts:234-241).
+        // `kind` follows the doctor/explain machine-payload convention.
+        //
+        // SARIF path deliberately UNCHANGED: no envelope, stderr prose + exit 2
+        // only (stdout stays empty, as before). Documented in README Exit Codes.
+        const envelope = {
+          kind: 'check',
+          schemaVersion: REPORT_SCHEMA_VERSION,
+          analysisStatus: AnalysisStatus.UNSUPPORTED,
+          evaluationStatus: EvaluationStatus.FAILED,
+          completeness: Completeness.NOT_APPLICABLE,
+          reasonCode: 'NO_ADAPTER_MATCHED',
+          reason:
+            `no adapter matched for ${options.test}; ` +
+            `run 'checktest doctor --test ${options.test}' to inspect dispatch, or force an adapter with --adapter <id>`,
+          test: { file: options.test },
+          ruleResults: [],
+          testResults: [],
+          summary: { total: 0, pass: 0, fail: 0, indeterminate: 0, not_applicable: 0, failed: 0 },
+        };
+        process.stdout.write(`${JSON.stringify(envelope, null, 2)}\n`);
+      }
       return 2;
     }
     if (error instanceof UsageError) {

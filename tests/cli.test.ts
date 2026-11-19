@@ -957,10 +957,12 @@ describe('CLI adapter dispatch (Phase 8 task B3, ADR-034)', () => {
     expect(report().ruleResults[0].result).toBe('PASS');
   });
 
-  it('file with extension NO adapter claims (.rs) -> exit 2 UNSUPPORTED: no adapter matched', () => {
-    // python adapter registered (C4): the unsupported-dispatch CLI case moved
-    // from .py to .rs (an extension no adapter declares) so it keeps testing
-    // the UNSUPPORTED path; .py now resolves to the python adapter.
+  // Manifest-free tmpdir cwd, following the established pattern below: in the
+  // repo root the manifest layer (package.json) would decide before the
+  // extension layer is ever reached (src/adapters/registry.ts:99-104), so a
+  // .rs file there resolves to the TS adapter and never hits unsupported
+  // dispatch.
+  function withUnsupportedRs<T>(fn: (rs: string) => T): T {
     const dir = join(tmpdir(), `checktest-b3-${Date.now()}`);
     mkdirSync(dir, { recursive: true });
     const rs = join(dir, 'sample.test.rs');
@@ -968,14 +970,66 @@ describe('CLI adapter dispatch (Phase 8 task B3, ADR-034)', () => {
     const cwd = process.cwd();
     process.chdir(dir); // no package.json here -> manifest layer cannot match TS adapter
     try {
-      const code = main(['--test', rs, '--type', 'UNIT']);
-      expect(code).toBe(2);
-      expect(stderr).toContain('UNSUPPORTED: no adapter matched for');
-      expect(stdout).toBe('');
+      return fn(rs);
     } finally {
       process.chdir(cwd);
       rmRf(dir);
     }
+  }
+
+  it('file with extension NO adapter claims (.rs) -> exit 2, UNSUPPORTED envelope on stdout (default JSON)', () => {
+    // python adapter registered (C4): the unsupported-dispatch CLI case moved
+    // from .py to .rs (an extension no adapter declares) so it keeps testing
+    // the UNSUPPORTED path; .py now resolves to the python adapter.
+    withUnsupportedRs((rs) => {
+      const code = main(['--test', rs, '--type', 'UNIT']);
+      expect(code).toBe(2);
+      expect(stderr).toContain('UNSUPPORTED: no adapter matched for');
+      // UNIT 5: JSON is the default format (check has no --json flag); the
+      // no-verdict envelope now rides stdout instead of leaving it empty.
+      const json = report();
+      expect(json.kind).toBe('check');
+      expect(json.schemaVersion).toBe('0.5');
+      expect(json.analysisStatus).toBe('UNSUPPORTED');
+      expect(json.evaluationStatus).toBe('FAILED');
+      expect(json.completeness).toBe('NOT_APPLICABLE');
+      expect(json.reasonCode).toBe('NO_ADAPTER_MATCHED');
+      expect(json.test).toEqual({ file: rs });
+      // No invented verdicts: empty results, zeroed summary (field names
+      // mirror src/reporters/json.ts summarize()).
+      expect(json.ruleResults).toEqual([]);
+      expect(json.testResults).toEqual([]);
+      expect(json.summary).toEqual({
+        total: 0,
+        pass: 0,
+        fail: 0,
+        indeterminate: 0,
+        not_applicable: 0,
+        failed: 0,
+      });
+    });
+  });
+
+  it('unsupported .rs with --format sarif -> exit 2, stdout stays empty (SARIF path unchanged)', () => {
+    // Baseline captured BEFORE the UNIT 5 change (manifest-free cwd, built
+    // CLI): stdout 0 bytes, stderr prose, exit 2. SARIF gets no no-verdict
+    // envelope this cycle — documented in README Exit Codes.
+    withUnsupportedRs((rs) => {
+      const code = main(['--test', rs, '--type', 'UNIT', '--format', 'sarif']);
+      expect(code).toBe(2);
+      expect(stderr).toContain('UNSUPPORTED: no adapter matched for');
+      expect(stdout).toBe('');
+    });
+  });
+
+  it('unsupported envelope reason suggests doctor --test and --adapter (human-friendly)', () => {
+    withUnsupportedRs((rs) => {
+      const code = main(['--test', rs, '--type', 'UNIT']);
+      expect(code).toBe(2);
+      const json = report();
+      expect(json.reason).toContain(`doctor --test ${rs}`);
+      expect(json.reason).toContain('--adapter <id>');
+    });
   });
 });
 
@@ -1146,6 +1200,126 @@ describe('CLI doctor (Phase 2a)', () => {
   it('doctor --bogus-flag exits 1', () => {
     const code = main(['doctor', '--bogus-flag']);
     expect(code).toBe(1);
+  });
+
+  // UNIT 4 (ADR-034): --adapter threads the explicit id through the SAME
+  // resolveAdapter call as check (flag > manifest > extension). An
+  // unregistered id falls through the structural layers
+  // (src/adapters/registry.ts:90-93) — never a fake success.
+  const pyFixture = join(__dirname, 'adapters', 'python', 'fixtures', 'unittest_sample.py');
+
+  // Manifest-free tmpdir cwd, following the established pattern at :964-978:
+  // in the repo root the manifest layer (package.json) would decide before
+  // the extension layer is ever reached.
+  function withManifestFreeCwd<T>(tag: string, fn: (dir: string) => T): T {
+    const dir = join(tmpdir(), `checktest-doctor-${tag}-${Date.now()}`);
+    mkdirSync(dir, { recursive: true });
+    const cwd = process.cwd();
+    process.chdir(dir);
+    try {
+      return fn(dir);
+    } finally {
+      process.chdir(cwd);
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  it('doctor --test <.py> without --adapter: automatic dispatch unchanged, requestedAdapter null', () => {
+    withManifestFreeCwd('auto', () => {
+      const code = main(['doctor', '--test', pyFixture, '--json']);
+      expect(code).toBe(0);
+      const json = JSON.parse(stdout);
+      expect(json.requestedAdapter).toBeNull();
+      expect(json.adapterId).toBe('python-pytest-adapter');
+      expect(json.decidedBy).toBe('extension');
+      expect(json.reason).toBeNull();
+    });
+  });
+
+  it('doctor --adapter python-pytest-adapter on a .py fixture: decidedBy flag', () => {
+    const code = main(['doctor', '--test', pyFixture, '--adapter', 'python-pytest-adapter', '--json']);
+    expect(code).toBe(0);
+    const json = JSON.parse(stdout);
+    expect(json.requestedAdapter).toBe('python-pytest-adapter');
+    expect(json.adapterId).toBe('python-pytest-adapter');
+    expect(json.decidedBy).toBe('flag');
+    expect(json.reason).toBeNull();
+  });
+
+  it('doctor and check select the SAME adapter for the same --adapter id (parity)', () => {
+    main(['doctor', '--test', pyFixture, '--adapter', 'python-pytest-adapter', '--json']);
+    const doctorJson = JSON.parse(stdout);
+    stdout = '';
+    const code = main(['check', '--test', pyFixture, '--adapter', 'python-pytest-adapter']);
+    expect(code).toBe(0);
+    const checkJson = JSON.parse(stdout);
+    expect(checkJson.adapter).toBe(doctorJson.adapterId);
+    expect(checkJson.decidedBy).toBe(doctorJson.decidedBy);
+  });
+
+  it('doctor --adapter nope-adapter on .py: unregistered id falls through to extension (honest outcome)', () => {
+    withManifestFreeCwd('fallthrough-py', () => {
+      const code = main(['doctor', '--test', pyFixture, '--adapter', 'nope-adapter', '--json']);
+      expect(code).toBe(0);
+      const json = JSON.parse(stdout);
+      expect(json.requestedAdapter).toBe('nope-adapter');
+      expect(json.adapterId).toBe('python-pytest-adapter');
+      expect(json.decidedBy).toBe('extension');
+      expect(json.reason).toBeNull();
+    });
+  });
+
+  it('doctor --adapter nope-adapter on .rs: fall-through ends unsupported, exit 2', () => {
+    withManifestFreeCwd('fallthrough-rs', (dir) => {
+      const rs = join(dir, 'sample.test.rs');
+      writeFileSync(rs, 'fn test_x() {}\n');
+      const code = main(['doctor', '--test', rs, '--adapter', 'nope-adapter', '--json']);
+      expect(code).toBe(2);
+      const json = JSON.parse(stdout);
+      expect(json.requestedAdapter).toBe('nope-adapter');
+      expect(json.adapterId).toBeNull();
+      expect(json.decidedBy).toBe('unsupported');
+      expect(json.reason).toBe('no adapter matched');
+    });
+  });
+
+  it('doctor --test <.rs> without --adapter: still unsupported, exit 2 (unchanged)', () => {
+    withManifestFreeCwd('unsupported-rs', (dir) => {
+      const rs = join(dir, 'sample.test.rs');
+      writeFileSync(rs, 'fn test_x() {}\n');
+      const code = main(['doctor', '--test', rs, '--json']);
+      expect(code).toBe(2);
+      const json = JSON.parse(stdout);
+      expect(json.requestedAdapter).toBeNull();
+      expect(json.adapterId).toBeNull();
+      expect(json.decidedBy).toBe('unsupported');
+    });
+  });
+
+  it('doctor human output shows Requested line only when requested differs from resolved', () => {
+    withManifestFreeCwd('human', () => {
+      const code = main(['doctor', '--test', pyFixture, '--adapter', 'nope-adapter']);
+      expect(code).toBe(0);
+      expect(stdout).toContain('Requested: nope-adapter');
+      expect(stdout).toContain('Adapter: python-pytest-adapter (extension) resolved');
+      stdout = '';
+      main(['doctor', '--test', pyFixture, '--adapter', 'python-pytest-adapter']);
+      expect(stdout).not.toContain('Requested:');
+    });
+  });
+
+  it('doctor --adapter without value exits 1 via UsageError path', () => {
+    const code = main(['doctor', '--test', pyFixture, '--adapter']);
+    expect(code).toBe(1);
+    expect(stderr).toContain('missing value');
+  });
+
+  it('doctor --adapter without --test stays env mode (flag scopes to the dispatch probe)', () => {
+    const code = main(['doctor', '--adapter', 'python-pytest-adapter', '--json']);
+    expect(code).toBe(0);
+    const json = JSON.parse(stdout);
+    expect(json.mode).toBe('env');
+    expect(json).not.toHaveProperty('requestedAdapter');
   });
 });
 

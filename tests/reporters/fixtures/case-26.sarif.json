@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "CheckTest",
+          "version": "0.1.0",
+          "rules": [
+            {
+              "id": "CT-INT-001",
+              "shortDescription": {
+                "text": "assertion-required"
+              },
+              "fullDescription": {
+                "text": "A test should contain at least one executable verification of an observable outcome."
+              },
+              "properties": {
+                "severity": "error",
+                "category": "integrity",
+                "status": "active",
+                "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+                "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+                "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9"
+              }
+            }
+          ]
+        }
+      },
+      "properties": {
+        "analysisStatus": "SUCCESS",
+        "evaluationStatus": "EVALUATED",
+        "completeness": "COMPLETE"
+      },
+      "results": [
+        {
+          "ruleId": "CT-INT-001",
+          "level": "none",
+          "message": {
+            "text": "CT-INT-001: assertion_count=1 >= 1"
+          },
+          "properties": {
+            "result": "PASS",
+            "testId": "<fixture-root>/probe-mixed.test.ts#test@1:0",
+            "evidenceStrength": "EXECUTION_ESTABLISHED"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "<fixture-root>/probe-mixed.test.ts"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CT-INT-001",
+          "level": "note",
+          "message": {
+            "text": "CT-INT-001: coverage.status PARTIAL for 'assertion_count' is below required COMPLETE (1 of 1 recognized assertion(s) have unestablished executability: expect(20).toBe(20) — assertion is inside a callback; callback execution cannot be established statically)"
+          },
+          "properties": {
+            "result": "INDETERMINATE",
+            "testId": "<fixture-root>/probe-mixed.test.ts#test@5:0",
+            "evidenceStrength": "SYNTAX_OBSERVED"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "<fixture-root>/probe-mixed.test.ts"
+                },
+                "region": {
+                  "startLine": 5
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

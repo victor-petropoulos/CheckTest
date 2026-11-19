@@ -107,24 +107,45 @@ Supported: Istanbul JSON, c8 JSON, per-test-run derived shape. Raw vitest covera
 
 ### Exit Codes
 
-| Code | Meaning                                                                 |
-| ---- | ----------------------------------------------------------------------- |
-| `0`  | Verdict produced (PASS, FAIL, INDETERMINATE, or UNSUPPORTED analysis)   |
-| `1`  | Usage error or runtime crash                                            |
-| `2`  | No verdict — engine reached no conclusion (e.g. file declares no tests) |
+| Code | Meaning                                                                                                 |
+| ---- | ------------------------------------------------------------------------------------------------------- |
+| `0`  | Verdict produced (PASS, FAIL, INDETERMINATE, or UNSUPPORTED analysis)                                   |
+| `1`  | Usage error or runtime crash                                                                            |
+| `2`  | No verdict — engine reached no conclusion (e.g. file declares no tests, or no adapter matched the file) |
 
 The `doctor` and `explain` subcommands share the same 0/1/2 contract: `0` = diagnostic success, `1` = usage error (unknown flag / rule / id), `2` = unresolvable dispatch (`doctor --test <path>` with no matching adapter). `explain` has no exit-2 case — an unknown `--rule` is a usage error (1).
+
+Exit 2 is the no-verdict bucket, not an error severity. When `check` cannot dispatch an adapter for the test file, it exits 2 with a diagnostic on stderr. In the default JSON format it also writes a stable no-verdict envelope to stdout (additive, `schemaVersion` 0.5 — no rule verdicts are invented):
+
+```json
+{
+  "kind": "check",
+  "schemaVersion": "0.5",
+  "analysisStatus": "UNSUPPORTED",
+  "evaluationStatus": "FAILED",
+  "completeness": "NOT_APPLICABLE",
+  "reasonCode": "NO_ADAPTER_MATCHED",
+  "reason": "no adapter matched for <path>; run 'checktest doctor --test <path>' to inspect dispatch, or force an adapter with --adapter <id>",
+  "test": { "file": "<path>" },
+  "ruleResults": [],
+  "testResults": [],
+  "summary": { "total": 0, "pass": 0, "fail": 0, "indeterminate": 0, "not_applicable": 0, "failed": 0 }
+}
+```
+
+`evaluationStatus: FAILED` here means no verdict was reached (the rule was never evaluated) — never a rule FAIL. With `--format sarif` no envelope is emitted: stdout stays empty and the diagnostic rides stderr, unchanged.
 
 ### Discoverability
 
 Two read-only subcommands help orient a new user without running an analysis.
 
-**`doctor`** — environment probe (manifests, registered adapters + capabilities, config validity). Add `--json` for machine-readable output; add `--test <path>` to probe adapter dispatch for a single file.
+**`doctor`** — environment probe (manifests, registered adapters + capabilities, config validity). Add `--json` for machine-readable output; add `--test <path>` to probe adapter dispatch for a single file; add `--adapter <id>` to force the adapter for that probe (an unregistered id falls through to the manifest/extension layers, same as `check`).
 
 ```sh
 checktest doctor            # human-readable env probe (exits 0)
 checktest doctor --json     # machine-readable env probe (kind: doctor, schemaVersion 0.5)
 checktest doctor --test tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts
+checktest doctor --test <path> --adapter <id>   # explicit adapter for the dispatch probe
 ```
 
 `doctor --test <path>` output (verbatim, exit 0):
@@ -225,7 +246,7 @@ See [supported syntax](./docs/supported-syntax.md) for assertion forms and [fram
 
 ## Agent Skill (using-checktest)
 
-The repo ships the `using-checktest` skill — the operating guide for using CheckTest *with* an AI coding agent (verdict semantics, exit-code honesty, evidence-interpretation rules, common mistakes).
+The repo ships the `using-checktest` skill — the operating guide for using CheckTest _with_ an AI coding agent (verdict semantics, exit-code honesty, evidence-interpretation rules, common mistakes).
 
 - In-repo path: [`.agents/skills/using-checktest/SKILL.md`](./.agents/skills/using-checktest/SKILL.md).
 - npm installs: the skill file ships in the published `checktest-cli` package (`package.json` `files` includes `.agents/skills`) — find it at `node_modules/checktest-cli/.agents/skills/using-checktest/SKILL.md`.
@@ -372,6 +393,328 @@ The repo ships the `using-checktest` skill — the operating guide for using Che
 ```
 
 **schemaVersion 0.5.** The report envelope optionally carries `adapter` and `decidedBy` keys between `schemaVersion` and `testResults`; `decidedBy` records the dispatch layer (`flag`/`manifest`/`extension`/`unsupported`, ADR-034). The example block above already shows `0.5` + `adapter` + `decidedBy`.
+
+### Richer example: evidence strength and unestablished assertions
+
+The example above shows a single straight-line assertion. The report below is a real run over a file with two declarations — one straight-line assertion and one assertion nested inside a callback — and shows `evidenceStrength` on the evidence record AND on the finding, plus the `unestablished_assertions` signal. Generated with the default JSON format (paths are repo-relative, exactly as the CLI emits them when invoked with a relative `--test` path):
+
+```sh
+checktest check --test tests/fixtures/int003-probes/probe-mixed.test.ts --type UNIT
+```
+
+- `established scope` (line 1): straight-line `expect(10).toBe(10)` — executing the test proves the assertion ran, so its `assertion_count` evidence record and its `PASS` finding both carry `evidenceStrength: "EXECUTION_ESTABLISHED"`.
+- `unestablished scope` (line 5): `expect(20).toBe(20)` inside `[1].forEach(...)` — the assertion form is visible in source, but callback execution cannot be established statically. Its evidence record carries `evidenceStrength: "SYNTAX_OBSERVED"` and `unestablished_assertions: { "count": 1, "reasons": [...] }`, and its finding is `INDETERMINATE` (unestablished evidence never produces `FAIL`).
+- The file-level `evidence.assertion_count` aggregate carries the weakest strength (`SYNTAX_OBSERVED`) and `availability: "UNKNOWN"`. Strength and availability are independent axes: a strength value never turns `UNKNOWN` into `KNOWN`. An omitted `evidenceStrength` means no strength value was supplied and MUST NOT be read as `EXECUTION_ESTABLISHED`.
+
+```json
+{
+  "test": {
+    "id": "tests/fixtures/int003-probes/probe-mixed.test.ts",
+    "name": "probe-mixed.test.ts",
+    "file": "tests/fixtures/int003-probes/probe-mixed.test.ts",
+    "language": "typescript",
+    "framework": "jest",
+    "type": "UNIT"
+  },
+  "analysisStatus": "SUCCESS",
+  "evaluationStatus": "EVALUATED",
+  "completeness": "COMPLETE",
+  "scope": "test-body",
+  "test_type": {
+    "value": "UNIT",
+    "source": "EXPLICIT"
+  },
+  "capabilities": {
+    "assertion_forms": "PARTIAL",
+    "custom_helper_resolution": "UNAVAILABLE",
+    "runtime_execution": "UNAVAILABLE",
+    "framework_detection": "PARTIAL"
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 1,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "collector_version": "0.1.0",
+      "scope": "test-body",
+      "coverage": {
+        "status": "PARTIAL",
+        "supported_frameworks": ["jest", "vitest", "mocha"],
+        "supported_assertion_forms": [
+          "expect-to-be",
+          "expect-to-equal",
+          "expect-to-be-truthy",
+          "expect-to-be-falsy",
+          "expect-to-throw",
+          "expect-rejects-to-throw",
+          "expect-to-match-snapshot",
+          "expect-to-contain",
+          "expect-matcher-utils",
+          "expect-to-match-object",
+          "expect-to-have-been-called-times"
+        ]
+      },
+      "reason": "framework 'jest' derived from bare-global test declarations and expect() usage with no framework import; bare globals cannot distinguish jest from mocha/chai/jasmine, so assertions are counted only when the matcher matches a supported form | 1 of 2 recognized assertion(s) have unestablished executability: expect(20).toBe(20) — assertion is inside a callback; callback execution cannot be established statically",
+      "location": {
+        "file": "tests/fixtures/int003-probes/probe-mixed.test.ts",
+        "line": 2
+      },
+      "evidenceStrength": "SYNTAX_OBSERVED"
+    }
+  },
+  "ruleResults": [
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": ["assertion_count"],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "EXECUTION_ESTABLISHED",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "test_id": "tests/fixtures/int003-probes/probe-mixed.test.ts#test@1:0",
+      "completeness": "COMPLETE",
+      "location": {
+        "file": "tests/fixtures/int003-probes/probe-mixed.test.ts",
+        "line": 2
+      }
+    },
+    {
+      "rule_id": "CT-INT-001",
+      "result": "INDETERMINATE",
+      "reason": "CT-INT-001: coverage.status PARTIAL for 'assertion_count' is below required COMPLETE (1 of 1 recognized assertion(s) have unestablished executability: expect(20).toBe(20) — assertion is inside a callback; callback execution cannot be established statically)",
+      "evidence": ["assertion_count"],
+      "ruleStatus": "active",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+      "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+      "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+      "evidenceStrength": "SYNTAX_OBSERVED",
+      "provenance": "DIRECT",
+      "availability": "UNKNOWN",
+      "test_id": "tests/fixtures/int003-probes/probe-mixed.test.ts#test@5:0",
+      "completeness": "COMPLETE",
+      "location": {
+        "file": "tests/fixtures/int003-probes/probe-mixed.test.ts",
+        "line": 6
+      }
+    }
+  ],
+  "schemaVersion": "0.5",
+  "adapter": "typescript-jest-adapter",
+  "decidedBy": "manifest",
+  "testResults": [
+    {
+      "test": {
+        "id": "tests/fixtures/int003-probes/probe-mixed.test.ts#test@1:0",
+        "name": "established scope",
+        "line": 1,
+        "declaration": "test"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": ["jest", "vitest", "mocha"],
+            "supported_assertion_forms": [
+              "expect-to-be",
+              "expect-to-equal",
+              "expect-to-be-truthy",
+              "expect-to-be-falsy",
+              "expect-to-throw",
+              "expect-rejects-to-throw",
+              "expect-to-match-snapshot",
+              "expect-to-contain",
+              "expect-matcher-utils",
+              "expect-to-match-object",
+              "expect-to-have-been-called-times"
+            ]
+          },
+          "location": {
+            "file": "tests/fixtures/int003-probes/probe-mixed.test.ts",
+            "line": 2
+          },
+          "evidenceStrength": "EXECUTION_ESTABLISHED"
+        },
+        "unestablished_assertion": {
+          "value": 0,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": ["jest", "vitest", "mocha"],
+            "supported_assertion_forms": [
+              "expect-to-be",
+              "expect-to-equal",
+              "expect-to-be-truthy",
+              "expect-to-be-falsy",
+              "expect-to-throw",
+              "expect-rejects-to-throw",
+              "expect-to-match-snapshot",
+              "expect-to-contain",
+              "expect-matcher-utils",
+              "expect-to-match-object",
+              "expect-to-have-been-called-times"
+            ]
+          },
+          "unestablished_assertions": {
+            "count": 0,
+            "reasons": []
+          },
+          "evidenceStrength": "SYNTAX_OBSERVED"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": ["assertion_count"],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "EXECUTION_ESTABLISHED",
+          "provenance": "DIRECT",
+          "availability": "KNOWN",
+          "test_id": "tests/fixtures/int003-probes/probe-mixed.test.ts#test@1:0",
+          "completeness": "COMPLETE",
+          "location": {
+            "file": "tests/fixtures/int003-probes/probe-mixed.test.ts",
+            "line": 2
+          }
+        }
+      ]
+    },
+    {
+      "test": {
+        "id": "tests/fixtures/int003-probes/probe-mixed.test.ts#test@5:0",
+        "name": "unestablished scope",
+        "line": 5,
+        "declaration": "test"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "PARTIAL",
+            "supported_frameworks": ["jest", "vitest", "mocha"],
+            "supported_assertion_forms": [
+              "expect-to-be",
+              "expect-to-equal",
+              "expect-to-be-truthy",
+              "expect-to-be-falsy",
+              "expect-to-throw",
+              "expect-rejects-to-throw",
+              "expect-to-match-snapshot",
+              "expect-to-contain",
+              "expect-matcher-utils",
+              "expect-to-match-object",
+              "expect-to-have-been-called-times"
+            ]
+          },
+          "reason": "1 of 1 recognized assertion(s) have unestablished executability: expect(20).toBe(20) — assertion is inside a callback; callback execution cannot be established statically",
+          "location": {
+            "file": "tests/fixtures/int003-probes/probe-mixed.test.ts",
+            "line": 6
+          },
+          "unestablished_assertions": {
+            "count": 1,
+            "reasons": ["assertion is inside a callback; callback execution cannot be established statically"]
+          },
+          "evidenceStrength": "SYNTAX_OBSERVED"
+        },
+        "unestablished_assertion": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "PARTIAL",
+            "supported_frameworks": ["jest", "vitest", "mocha"],
+            "supported_assertion_forms": [
+              "expect-to-be",
+              "expect-to-equal",
+              "expect-to-be-truthy",
+              "expect-to-be-falsy",
+              "expect-to-throw",
+              "expect-rejects-to-throw",
+              "expect-to-match-snapshot",
+              "expect-to-contain",
+              "expect-matcher-utils",
+              "expect-to-match-object",
+              "expect-to-have-been-called-times"
+            ]
+          },
+          "unestablished_assertions": {
+            "count": 1,
+            "reasons": ["assertion is inside a callback; callback execution cannot be established statically"]
+          },
+          "evidenceStrength": "SYNTAX_OBSERVED"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "INDETERMINATE",
+          "reason": "CT-INT-001: coverage.status PARTIAL for 'assertion_count' is below required COMPLETE (1 of 1 recognized assertion(s) have unestablished executability: expect(20).toBe(20) — assertion is inside a callback; callback execution cannot be established statically)",
+          "evidence": ["assertion_count"],
+          "ruleStatus": "active",
+          "description": "A test should contain at least one executable verification of an observable outcome.",
+          "rationale": "A test without an executable assertion verifies nothing, so its verdict would rest on the absence of evidence (SPEC:490-525).",
+          "limitations": "Executability after return/throw and inside callbacks is unresolved (plan A7); unestablished assertion constructs are excluded from the count, so a helper-built assertion is not established.",
+          "docsUrl": "https://github.com/victor-petropoulos/CheckTest/blob/main/docs/supported-syntax.md#assertion-forms-11-forms-a9",
+          "evidenceStrength": "SYNTAX_OBSERVED",
+          "provenance": "DIRECT",
+          "availability": "UNKNOWN",
+          "test_id": "tests/fixtures/int003-probes/probe-mixed.test.ts#test@5:0",
+          "completeness": "COMPLETE",
+          "location": {
+            "file": "tests/fixtures/int003-probes/probe-mixed.test.ts",
+            "line": 6
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "pass": 1,
+    "fail": 0,
+    "indeterminate": 1,
+    "not_applicable": 0,
+    "failed": 0
+  }
+}
+```
 
 ## Documentation
 

@@ -35,12 +35,21 @@ import {
   TestScopeResult,
   TestType,
 } from '../../src/core/analysis';
-import { Availability, CollectionStatus, EvidenceLocation, EvidenceRecord, Provenance } from '../../src/core/evidence';
+import {
+  Availability,
+  CollectionStatus,
+  EvidenceLocation,
+  EvidenceRecord,
+  EvidenceStrength,
+  Provenance,
+} from '../../src/core/evidence';
 import { RuleMetadata } from '../../src/core/rule';
 import { RuleResult } from '../../src/core/result';
 import { COLLECTOR_VERSION } from '../../src/adapters/typescript/support';
 import { collectAnalysis } from '../../src/adapters/typescript/collector';
 import { CT_INT_001 } from '../../src/rules/ct-int-001';
+import { registerRule } from '../../src/rules/registry';
+import { runAnalysis } from '../../src/cli';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -556,5 +565,41 @@ describe('toSarif — self-contained field contract (plan 6.5)', () => {
     expect(r.message).toHaveProperty('text');
     expect(r).toHaveProperty('properties');
     expect(r.properties).toHaveProperty('result');
+  });
+});
+
+describe('toSarif — evidenceStrength exposure golden (case-26, real pipeline)', () => {
+  // docs/limitations.md §24.4 location 3: strength rides on result properties.
+  // Same fixture as the JSON golden: one EXECUTION_ESTABLISHED result (PASS)
+  // and one SYNTAX_OBSERVED result (INDETERMINATE). runAnalysis (src/cli.ts:719)
+  // is the CLI's own composition, so the golden matches CLI stdout byte-for-byte
+  // modulo the fixture-root normalization — the same convention as case-24.
+  const root = join(__dirname, '..', 'fixtures', 'int003-probes');
+  const file = join(root, 'probe-mixed.test.ts');
+
+  // Registration is explicit in main() (src/cli.ts:589), never an import side
+  // effect — a direct runAnalysis caller registers its rule first, exactly as
+  // tests/cli.test.ts does before its own runAnalysis calls.
+  beforeAll(() => {
+    registerRule(CT_INT_001);
+  });
+
+  function sarifReport(): string {
+    return runAnalysis({ test: file, type: TestType.UNIT, rule: 'CT-INT-001', format: 'sarif' })
+      .report.split(root)
+      .join('<fixture-root>');
+  }
+
+  it('matches the committed byte-exact SARIF golden', () => {
+    const golden = readFileSync(join(__dirname, 'fixtures', 'case-26.sarif.json'), 'utf8');
+    expect(sarifReport()).toBe(golden);
+  });
+
+  it('carries BOTH strengths on result properties (§24.4 location 3)', () => {
+    const log = JSON.parse(sarifReport()) as Record<string, any>;
+    expect(log.runs[0].results.map((r: any) => r.properties.evidenceStrength)).toEqual([
+      EvidenceStrength.EXECUTION_ESTABLISHED,
+      EvidenceStrength.SYNTAX_OBSERVED,
+    ]);
   });
 });
