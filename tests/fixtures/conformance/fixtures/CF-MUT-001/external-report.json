@@ -1,0 +1,8 @@
+{
+  "fixtureInput": "external file-level mutation supplied by harness",
+  "format": "stryker-file-level",
+  "detected": 3,
+  "valid": 4,
+  "score": 0.75,
+  "note": "Illustrative input only; provider parsing belongs to the external provider, not the adapter."
+}

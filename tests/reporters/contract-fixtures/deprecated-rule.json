@@ -1,0 +1,109 @@
+{
+  "test": {
+    "id": "sample.test.ts",
+    "name": "sample.test.ts",
+    "file": "sample.test.ts",
+    "language": "typescript",
+    "framework": "jest",
+    "type": "UNIT"
+  },
+  "analysisStatus": "SUCCESS",
+  "evaluationStatus": "EVALUATED",
+  "completeness": "INCOMPLETE",
+  "scope": "test-body",
+  "test_type": {
+    "value": "UNIT",
+    "source": "DEFAULT"
+  },
+  "capabilities": {
+    "assertion_forms": "PARTIAL"
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 0,
+      "availability": "UNKNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "collector_version": "0.1.0",
+      "scope": "test-body",
+      "coverage": {
+        "status": "PARTIAL",
+        "supported_frameworks": ["jest"],
+        "supported_assertion_forms": ["expect-to-be"]
+      },
+      "reason": "assertion is inside a callback; callback execution cannot be established statically"
+    }
+  },
+  "ruleResults": [
+    {
+      "rule_id": "CT-INT-001",
+      "result": "INDETERMINATE",
+      "reason": "CT-INT-001: coverage.status PARTIAL for 'assertion_count' is below required COMPLETE",
+      "evidence": ["assertion_count"],
+      "ruleStatus": "deprecated",
+      "description": "A test should contain at least one executable verification of an observable outcome.",
+      "evidenceStrength": "SYNTAX_OBSERVED",
+      "provenance": "DIRECT",
+      "availability": "UNKNOWN",
+      "test_id": "sample.test.ts#test@3:0",
+      "completeness": "INCOMPLETE"
+    }
+  ],
+  "schemaVersion": "0.5",
+  "adapter": "typescript-jest-adapter",
+  "decidedBy": "flag",
+  "deprecatedSince": "1.2.0",
+  "testResults": [
+    {
+      "test": {
+        "id": "sample.test.ts#test@3:0",
+        "name": "callback assertion",
+        "line": 3,
+        "declaration": "test"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "INCOMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 0,
+          "availability": "UNKNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "PARTIAL",
+            "supported_frameworks": ["jest"],
+            "supported_assertion_forms": ["expect-to-be"]
+          },
+          "unestablished_assertions": {
+            "count": 1,
+            "reasons": ["assertion is inside a callback"]
+          },
+          "evidenceStrength": "SYNTAX_OBSERVED"
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "INDETERMINATE",
+          "reason": "CT-INT-001: coverage.status PARTIAL for 'assertion_count' is below required COMPLETE",
+          "evidence": ["assertion_count"],
+          "ruleStatus": "deprecated",
+          "test_id": "sample.test.ts#test@3:0",
+          "completeness": "INCOMPLETE"
+        }
+      ],
+      "deprecatedSince": "1.2.0"
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "pass": 0,
+    "fail": 0,
+    "indeterminate": 1,
+    "not_applicable": 0,
+    "failed": 0
+  }
+}

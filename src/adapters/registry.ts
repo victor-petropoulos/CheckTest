@@ -19,6 +19,13 @@
  * Ambiguity rule: if the manifest layer matches MORE THAN ONE registered
  * adapter, the layer is inconclusive and dispatch FALLS THROUGH to the
  * extension layer (and, if that fails, to unsupported) rather than guessing.
+ *
+ * Extension affinity (WP10 F1, 2026-11-21): a manifest candidate must BOTH
+ * match a manifest signature AND claim the file extension — a repo-root
+ * package.json therefore cannot route a `.py` file to the TypeScript adapter.
+ * The ambiguity rule above applies to the affinity-filtered candidate set.
+ * Layer ORDER is unchanged: flag > manifest > extension (ADR-034); only WHICH
+ * adapter the manifest layer may select is narrowed.
  */
 
 import { extname } from 'path';
@@ -94,11 +101,18 @@ export function resolveAdapter(
   }
 
   // 2. Manifest signature (middle): read candidate signatures from the adapter
-  //    contract, never a hardcoded language list. More than one candidate ->
-  //    inconclusive -> fall through to extension.
+  //    contract, never a hardcoded language list. Candidates are also filtered
+  //    by extension affinity (WP10 F1): a manifest candidate must claim the
+  //    file's extension, so a manifest from an unrelated ecosystem cannot route
+  //    the file. More than one candidate -> inconclusive -> fall through to
+  //    extension.
   const manifestCandidates = registry
     .list()
-    .filter((adapter) => adapter.manifestSignatures.some((name) => fsState.manifestExists(name)));
+    .filter(
+      (adapter) =>
+        adapter.manifestSignatures.some((name) => fsState.manifestExists(name)) &&
+        adapter.extensions.some((ext) => extname(filePath) === ext),
+    );
   if (manifestCandidates.length === 1) {
     return { adapterId: manifestCandidates[0].id, decidedBy: 'manifest', reason: null };
   }

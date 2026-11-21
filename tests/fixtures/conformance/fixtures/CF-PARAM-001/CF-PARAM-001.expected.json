@@ -1,0 +1,13 @@
+{
+  "fixtureId": "CF-PARAM-001",
+  "schemaVersionExpectation": "0.5",
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it.each" }] }, "python": { "count": 1, "sites": [{ "line": 4 }], "declarationToken": "NOT_VERIFIED" } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "INCOMPLETE" },
+  "expectedEvidence": { "perTest": { "assertion_count": { "value": null, "availability": "UNKNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "PARTIAL", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" }, "unclassified_constructs": { "count": 1, "reasons": ["parameterized construct"] } } }, "fileLevel": {} },
+  "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
+  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "INDETERMINATE", "test_id_present": true }],
+  "expectedExplanation": "Generated cases are not expanded into invented declarations; uncertainty preserved.",
+  "expectedDiagnostics": { "reasons": ["parameterized construct"] },
+  "attribution": { "level": "individual-test" },
+  "knownLimitations": ["pytest decorator expansion NOT_VERIFIED; not semantically equivalent to it.each. No cross-language evidence equality expected. TS it.each cases documented INDETERMINATE at docs/rules/catalog.md:221-222."]
+}

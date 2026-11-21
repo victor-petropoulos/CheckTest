@@ -1,0 +1,13 @@
+{
+  "fixtureId": "CF-SETUP-001",
+  "schemaVersionExpectation": "0.5",
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 5, "declaration": "it", "setupAssertionLine": 3 }] }, "python": { "count": 1, "sites": [{ "line": 7, "setupAssertionLine": 5 }], "declarationToken": "NOT_VERIFIED" } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "COMPLETE" },
+  "expectedEvidence": { "perTest": { "assertion_count": { "value": 0, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } }, "fileLevel": {} },
+  "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
+  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "FAIL", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "PASS", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }],
+  "expectedExplanation": "Setup assertion is outside the test-body construct; the test body has no assertion.",
+  "expectedDiagnostics": { "reasons": [] },
+  "attribution": { "level": "individual-test" },
+  "knownLimitations": ["Scope limitation only; runtime setup may assert. pytest finalizer semantics NOT_VERIFIED."]
+}

@@ -1,0 +1,13 @@
+{
+  "fixtureId": "CF-INCOMP-001",
+  "schemaVersionExpectation": "0.5",
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it", "unresolvedCallLine": 3 }] }, "python": { "count": 1, "sites": [{ "line": 1, "unresolvedCallLine": 2 }], "declarationToken": "NOT_VERIFIED" } },
+  "expectedEnvelope": { "analysisStatus": "FAILED", "evaluationStatus": "FAILED", "completeness": "INCOMPLETE" },
+  "expectedEvidence": { "perTest": { "assertion_count": { "value": null, "availability": "UNKNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "UNAVAILABLE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } }, "fileLevel": {} },
+  "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
+  "expectedFindings": [],
+  "expectedExplanation": "The engine was never asked; evaluationStatus FAILED is the absence of a verdict, not a rule FAIL.",
+  "expectedDiagnostics": { "reasons": ["unresolvable test body"] },
+  "attribution": { "level": "individual-test" },
+  "knownLimitations": ["Python twin's exact collector status NOT_VERIFIED at WP5; confirm before asserting cross-language equality."]
+}

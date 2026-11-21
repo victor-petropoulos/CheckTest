@@ -17,6 +17,36 @@ jobs:
       - run: npm install --frozen-lockfile
       - run: npm run build
       - run: npm test -- --coverage
+      - name: checkchange gate (Option A)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          # Coverage artifact must exist: a crashed test step can leave none.
+          if [ ! -f coverage/coverage-final.json ] && [ ! -f coverage/lcov.info ]; then
+            echo "::warning::coverage artifact missing — checkchange skipped (self-disable)"
+            exit 0
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$BASE_REF" ]; then
+            BASE="origin/$BASE_REF"
+          else
+            BASE="$EVENT_BEFORE"
+          fi
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="master"
+          fi
+          echo "checkchange base ref: $BASE"
+          CC_EXIT=0
+          npx --yes checkchange@0.5.6 check --base "$BASE" --coverage-file coverage/coverage-final.json --json > cc.json || CC_EXIT=$?
+          cat cc.json
+          GATE=$(jq -r '.gate // "NOT_EVALUATED"' cc.json) || GATE=""
+          echo "checkchange gate: $GATE (process exit $CC_EXIT)"
+          case "$GATE" in
+            PASS|NOT_EVALUATED) exit 0 ;;
+            WARN|FAILED) exit 1 ;;
+            *) echo "::error::unreadable checkchange gate (process exit $CC_EXIT)"; exit 1 ;;
+          esac
       - run: npm run typecheck
       - name: format check
         run: |

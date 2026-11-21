@@ -1,0 +1,106 @@
+{
+  "fixtureId": "CF-DISC-001",
+  "schemaVersionExpectation": "0.5",
+  "expectedDiscovery": {
+    "ts": {
+      "count": 2,
+      "sites": [
+        {
+          "line": 4,
+          "declaration": "it"
+        },
+        {
+          "line": 7,
+          "declaration": "it"
+        }
+      ]
+    },
+    "python": {
+      "count": 2,
+      "sites": [
+        {
+          "line": 1
+        },
+        {
+          "line": 4
+        }
+      ],
+      "declarationToken": "NOT_VERIFIED"
+    }
+  },
+  "expectedEnvelope": {
+    "analysisStatus": "SUCCESS",
+    "evaluationStatus": "EVALUATED",
+    "completeness": "COMPLETE"
+  },
+  "expectedEvidence": {
+    "perTest": {
+      "assertion_count": {
+        "value": 1,
+        "availability": "KNOWN",
+        "provenance": "DIRECT",
+        "source": "ADAPTER_SOURCE",
+        "collector_version": "0.1.0",
+        "scope": "test-body",
+        "coverage": {
+          "status": "COMPLETE",
+          "supported_frameworks": "ADAPTER_FRAMEWORKS",
+          "supported_assertion_forms": "ADAPTER_FORMS"
+        }
+      }
+    },
+    "fileLevel": {}
+  },
+  "expectedApplicability": [
+    "CT-INT-001",
+    "CT-INT-003",
+    "CT-INT-004"
+  ],
+  "expectedFindings": {
+    "ts": [
+      {
+        "rule_id": "CT-INT-001",
+        "result": "PASS",
+        "test_id_present": true
+      },
+      {
+        "rule_id": "CT-INT-003",
+        "result": "PASS",
+        "test_id_present": true
+      },
+      {
+        "rule_id": "CT-INT-004",
+        "result": "PASS",
+        "test_id_present": true
+      }
+    ],
+    "python": [
+      {
+        "rule_id": "CT-INT-001",
+        "result": "PASS",
+        "test_id_present": true
+      },
+      {
+        "rule_id": "CT-INT-003",
+        "result": "PASS",
+        "test_id_present": true
+      },
+      {
+        "rule_id": "CT-INT-004",
+        "result": "PASS",
+        "test_id_present": true
+      }
+    ]
+  },
+  "expectedExplanation": "One established assertion per discovered test body.",
+  "expectedDiagnostics": {
+    "reasons": []
+  },
+  "attribution": {
+    "level": "individual-test",
+    "note": "Each test has its own evidence map; no sibling sharing."
+  },
+  "knownLimitations": [
+    "Python declaration token NOT_VERIFIED at WP5; pin from collector in WP6."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "fixtureId": "CF-COND-001",
+  "schemaVersionExpectation": "0.5",
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it", "assertionLine": 5 }] }, "python": { "count": 1, "sites": [{ "line": 1, "assertionLine": 4 }], "declarationToken": "NOT_VERIFIED" } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "INCOMPLETE" },
+  "expectedEvidence": { "perTest": { "assertion_count": { "value": 1, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "evidenceStrength": "SYNTAX_OBSERVED", "coverage": { "status": "PARTIAL", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" }, "unestablished_assertions": { "count": 1, "reasons": ["conditional assertion"] } } }, "fileLevel": {} },
+  "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
+  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "FAIL", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }],
+  "expectedExplanation": "Static shape does not establish conditional execution; CT-INT-003 reports the unestablished signal with collector reasons.",
+  "expectedDiagnostics": { "reasons": ["conditional assertion"] },
+  "attribution": { "level": "individual-test" },
+  "knownLimitations": ["No dataflow/branch analysis. If WP6 observes no decidable signal, CT-INT-003 must be INDETERMINATE and this sidecar amended with evidence."]
+}

@@ -1,0 +1,13 @@
+{
+  "fixtureId": "CF-HELPER-001",
+  "schemaVersionExpectation": "0.5",
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 3, "declaration": "it", "helperCallLine": 5 }] }, "python": { "count": 1, "sites": [{ "line": 4, "helperCallLine": 5 }], "declarationToken": "NOT_VERIFIED" } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "INCOMPLETE" },
+  "expectedEvidence": { "perTest": { "assertion_count": { "value": null, "availability": "UNKNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "PARTIAL", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" }, "unclassified_constructs": { "count": 1, "reasons": ["unresolvable custom assertion helper"] } } }, "fileLevel": {} },
+  "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
+  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "INDETERMINATE", "test_id_present": true }],
+  "expectedExplanation": "Cross-file helper resolution is out of scope; an unclassified construct is absence of evidence, never a FAIL.",
+  "expectedDiagnostics": { "reasons": ["unresolvable custom assertion helper"] },
+  "attribution": { "level": "individual-test" },
+  "knownLimitations": ["TS helper patterns verified at src/adapters/typescript/support.ts:66-74; Python helper-name detection NOT_VERIFIED at WP5."]
+}

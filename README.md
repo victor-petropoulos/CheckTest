@@ -109,13 +109,13 @@ Supported: Istanbul JSON, c8 JSON, per-test-run derived shape. Raw vitest covera
 
 | Code | Meaning                                                                                                 |
 | ---- | ------------------------------------------------------------------------------------------------------- |
-| `0`  | Verdict produced (PASS, FAIL, INDETERMINATE, or UNSUPPORTED analysis)                                   |
+| `0`  | At least one test scope reached a rule verdict (`PASS`, `FAIL`, `INDETERMINATE`, or `N/A`). `FAIL` also exits 0; exit code is not a verdict. |
 | `1`  | Usage error or runtime crash                                                                            |
 | `2`  | No verdict — engine reached no conclusion (e.g. file declares no tests, or no adapter matched the file) |
 
-The `doctor` and `explain` subcommands share the same 0/1/2 contract: `0` = diagnostic success, `1` = usage error (unknown flag / rule / id), `2` = unresolvable dispatch (`doctor --test <path>` with no matching adapter). `explain` has no exit-2 case — an unknown `--rule` is a usage error (1).
+`doctor` uses `0` = diagnostic success, `1` = usage error (unknown flag / id), `2` = unresolvable dispatch (`doctor --test <path>` with no matching adapter). `explain` uses `0` = rule printed and `1` = missing/unregistered `--rule`; it has no exit-2 case.
 
-Exit 2 is the no-verdict bucket, not an error severity. When `check` cannot dispatch an adapter for the test file, it exits 2 with a diagnostic on stderr. In the default JSON format it also writes a stable no-verdict envelope to stdout (additive, `schemaVersion` 0.5 — no rule verdicts are invented):
+Exit 2 is the no-verdict bucket, not an error severity. When `check` cannot dispatch an adapter (dispatch throws `UnsupportedDispatchError`), it exits 2 with a diagnostic on stderr. In the default JSON format it also writes a stable no-verdict envelope to stdout (additive, `schemaVersion` 0.5 — no rule verdicts are invented). A file that resolves an adapter but declares no tests also exits 2; its report is the normal FAILED-evaluation envelope with empty verdict lists. Live inventory in this checkout resolves most paths via `package.json` (verify with `doctor --test <path>`):
 
 ```json
 {
@@ -718,7 +718,13 @@ checktest check --test tests/fixtures/int003-probes/probe-mixed.test.ts --type U
 
 ## Documentation
 
-| Doc                                                    | Content                                                     |
-| ------------------------------------------------------ | ----------------------------------------------------------- |
+| Doc | Content |
+| --- | --- |
 | [docs/supported-syntax.md](./docs/supported-syntax.md) | Assertion forms, declaration types, straight-line body rule |
-| [docs/limitations.md](./docs/limitations.md)           | Known gaps and intentional boundaries                       |
+| [docs/limitations.md](./docs/limitations.md) | Known gaps and intentional boundaries |
+| [docs/architecture.md](./docs/architecture.md) | Evaluation lifecycle, adapter/evidence/rule/reporting model |
+| [docs/evaluation-model.md](./docs/evaluation-model.md) | Verdict, evidence and analysis-condition semantics |
+| [docs/product-contract.md](./docs/product-contract.md) | Authoritative report/determinism/exit-code contract |
+| [docs/reporting-contract.md](./docs/reporting-contract.md) | Wire contract: envelope, evidence, findings, testResults, summary, SARIF mapping, compatibility |
+| [docs/exit-codes.md](./docs/exit-codes.md) | Exit-code matrix per command, with source anchors |
+| [docs/rules/catalog.md](./docs/rules/catalog.md) | Per-rule data, applicability, evidence and limitations |

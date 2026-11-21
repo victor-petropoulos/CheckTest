@@ -1,0 +1,110 @@
+{
+  "test": {
+    "id": "sample.test.ts",
+    "name": "sample.test.ts",
+    "file": "sample.test.ts",
+    "language": "typescript",
+    "framework": "jest",
+    "type": "UNIT"
+  },
+  "analysisStatus": "SUCCESS",
+  "evaluationStatus": "EVALUATED",
+  "completeness": "COMPLETE",
+  "scope": "test-body",
+  "test_type": {
+    "value": "UNIT",
+    "source": "EXPLICIT"
+  },
+  "capabilities": {
+    "assertion_forms": "AVAILABLE"
+  },
+  "evidence": {
+    "mutation_score": {
+      "value": 0.25,
+      "availability": "KNOWN",
+      "provenance": "EXTERNAL",
+      "source": "stryker",
+      "collector_version": "0.1.0",
+      "scope": "file",
+      "coverage": {
+        "status": "COMPLETE",
+        "supported_frameworks": ["stryker"],
+        "supported_assertion_forms": []
+      },
+      "provider": "stryker",
+      "provider_version": "10.1.1",
+      "source_revision": "unknown"
+    }
+  },
+  "ruleResults": [
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": ["assertion_count"],
+      "ruleStatus": "active",
+      "test_id": "sample.test.ts#it@4:0",
+      "completeness": "COMPLETE"
+    },
+    {
+      "rule_id": "CT-MUT-001",
+      "result": "FAIL",
+      "reason": "CT-MUT-001: mutation_score=0.25 < 0.5",
+      "evidence": ["mutation_score"],
+      "ruleStatus": "active",
+      "provenance": "EXTERNAL",
+      "availability": "KNOWN",
+      "completeness": "COMPLETE"
+    }
+  ],
+  "schemaVersion": "0.5",
+  "adapter": "typescript-jest-adapter",
+  "decidedBy": "manifest",
+  "testResults": [
+    {
+      "test": {
+        "id": "sample.test.ts#it@4:0",
+        "name": "adds two numbers",
+        "line": 4,
+        "declaration": "it"
+      },
+      "analysisStatus": "SUCCESS",
+      "evaluationStatus": "EVALUATED",
+      "completeness": "COMPLETE",
+      "evidence": {
+        "assertion_count": {
+          "value": 1,
+          "availability": "KNOWN",
+          "provenance": "DIRECT",
+          "source": "typescript-jest-adapter",
+          "collector_version": "0.1.0",
+          "scope": "test-body",
+          "coverage": {
+            "status": "COMPLETE",
+            "supported_frameworks": ["jest"],
+            "supported_assertion_forms": ["expect-to-be"]
+          }
+        }
+      },
+      "ruleResults": [
+        {
+          "rule_id": "CT-INT-001",
+          "result": "PASS",
+          "reason": "CT-INT-001: assertion_count=1 >= 1",
+          "evidence": ["assertion_count"],
+          "ruleStatus": "active",
+          "test_id": "sample.test.ts#it@4:0",
+          "completeness": "COMPLETE"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "pass": 1,
+    "fail": 1,
+    "indeterminate": 0,
+    "not_applicable": 0,
+    "failed": 1
+  }
+}

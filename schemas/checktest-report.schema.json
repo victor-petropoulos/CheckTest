@@ -1,0 +1,608 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://checktest.dev/schemas/checktest-report.schema.json",
+  "title": "CheckTest check report (schemaVersion 0.5)",
+  "description": "Wire contract for a CheckTest `check` report at schemaVersion 0.5, describing the shape emitted by src/reporters/json.ts and the CLI no-adapter envelope in src/cli.ts. Stability policy (ADR-042, docs/product-contract.md section 3): 0.5 is additive only — nothing removed, renamed or reshaped; optional keys append after fixed keys; the version is bumped only when the report shape changes meaningfully, never per run. Consumers should check `schemaVersion` first and ignore unknown keys, so this schema accepts unknown keys at every level (additionalProperties: true). A normal check report has no `kind` key; the JSON-only no-adapter envelope is the $defs.noAdapterEnvelope variant. This file is descriptive, not generative: the reporter remains the single producer.",
+  "type": "object",
+  "required": [
+    "test",
+    "analysisStatus",
+    "evaluationStatus",
+    "completeness",
+    "scope",
+    "test_type",
+    "capabilities",
+    "evidence",
+    "ruleResults",
+    "schemaVersion",
+    "testResults",
+    "summary"
+  ],
+  "properties": {
+    "test": {
+      "description": "Identity of the analyzed file. Per-test identities live in testResults[].test.",
+      "$ref": "#/$defs/testSubject"
+    },
+    "analysisStatus": {
+      "description": "Whether the collector could analyze the input at all. An UNSUPPORTED analysis is still a completed analysis: it is reported here, not as a verdict, and keeps exit 0 when any scope reached a verdict.",
+      "$ref": "#/$defs/analysisStatus"
+    },
+    "evaluationStatus": {
+      "description": "Whether the rule engine reached a verdict across the evaluation scopes. FAILED means NO verdict was produced (the rule was never evaluated: an aborted scope, or zero scopes). It is not a rule FAIL and not an analysis failure.",
+      "$ref": "#/$defs/evaluationStatus"
+    },
+    "completeness": {
+      "description": "Evidence completeness at file scope, independent of analysisStatus and of any verdict.",
+      "$ref": "#/$defs/completeness"
+    },
+    "scope": {
+      "type": "string",
+      "description": "The analysis construct the collector scanned (e.g. 'test-body'). This is not the subject identity: attribution is structural, through the file-level `evidence` map versus each testResults[].evidence map."
+    },
+    "test_type": {
+      "description": "The declared or classified test type plus how it was decided. An inferred classification is never authoritative.",
+      "$ref": "#/$defs/testTypeAssignment"
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Named collector capability statuses the caller could rely on. Keys are adapter-defined capability ids.",
+      "additionalProperties": {
+        "$ref": "#/$defs/capabilityStatus"
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "description": "File-level aggregate evidence, keyed by evidence type id. The map key names the evidence type, so the record never repeats it. A per-declaration evidence map appears in testResults[].evidence; the two levels are the structural attribution boundary.",
+      "additionalProperties": {
+        "$ref": "#/$defs/evidenceRecord"
+      }
+    },
+    "ruleResults": {
+      "type": "array",
+      "description": "The flattened, authoritative findings list in scope order — one list, with no separate file-level aggregate verdict beside it. An aborted scope contributes no entry (never a synthetic verdict).",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "schemaVersion": {
+      "const": "0.5",
+      "description": "Wire-contract version. 0.5 adds the OPTIONAL adapter/decidedBy envelope fields and the JSON-only no-adapter envelope, all additive: nothing removed or renamed. Bumped only when the report shape changes meaningfully, never per run."
+    },
+    "kind": {
+      "type": "string",
+      "description": "Present ONLY on the no-adapter envelope variant (value 'check'); a normal check report omits it, following the doctor/explain machine-payload convention."
+    },
+    "adapter": {
+      "type": "string",
+      "description": "Id of the adapter that produced the analysis. Optional and present-only; absent means the envelope predates adapter identity or no adapter ran."
+    },
+    "decidedBy": {
+      "description": "Which dispatch layer selected the adapter. Optional and present-only; only meaningful together with `adapter`. 'unsupported' never reaches the report because it takes the no-adapter envelope path.",
+      "enum": ["flag", "manifest", "extension"]
+    },
+    "deprecatedSince": {
+      "type": "string",
+      "description": "Version in which the evaluated rule was deprecated. Present ONLY when the rule declares one; omitted, never an empty string."
+    },
+    "reasonCode": {
+      "type": "string",
+      "description": "Machine-readable reason for a non-report outcome. Present ONLY on the no-adapter envelope ('NO_ADAPTER_MATCHED'); normal reports omit it."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Human-readable explanation. Present on the no-adapter envelope; normal findings carry their own per-verdict `reason`."
+    },
+    "testResults": {
+      "type": "array",
+      "description": "One record per test declaration the engine evaluated, in declaration order. Empty when no declaration was evaluated (including a file that supplied zero tests); a subject-level fallback verdict is never copied onto a declaration.",
+      "items": {
+        "$ref": "#/$defs/testResult"
+      }
+    },
+    "summary": {
+      "description": "Verdict counts across evaluation scopes. `failed` counts scopes that did NOT end in a clean PASS: a FAIL verdict PLUS a scope the engine aborted (evaluationStatus FAILED), which has no verdict and appears in no per-result counter. Consequently total need not equal pass + fail + indeterminate + not_applicable when aborted scopes exist.",
+      "$ref": "#/$defs/summary"
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "testType": {
+      "type": "string",
+      "description": "Test type. UNKNOWN is the default and is never silently inferred as one of the other values.",
+      "enum": ["UNIT", "COMPONENT", "INTEGRATION", "CONTRACT", "E2E", "UNKNOWN"]
+    },
+    "classificationSource": {
+      "type": "string",
+      "description": "How test_type.value was decided. INFERRED is never authoritative.",
+      "enum": ["EXPLICIT", "INFERRED", "DEFAULT"]
+    },
+    "testTypeAssignment": {
+      "type": "object",
+      "required": ["value", "source"],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/testType"
+        },
+        "source": {
+          "$ref": "#/$defs/classificationSource"
+        }
+      },
+      "additionalProperties": true
+    },
+    "testSubject": {
+      "type": "object",
+      "description": "Identity of the analyzed file. `framework` and `type` are present only when the collector knew them.",
+      "required": ["id", "name", "file", "language"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "framework": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/testType"
+        }
+      },
+      "additionalProperties": true
+    },
+    "analysisStatus": {
+      "type": "string",
+      "description": "Collector status: SUCCESS = required steps ran and returned interpretable output; UNSUPPORTED = source, language, framework or capability outside supported scope; FAILED = a required step failed or its output could not be interpreted.",
+      "enum": ["SUCCESS", "UNSUPPORTED", "FAILED"]
+    },
+    "evaluationStatus": {
+      "type": "string",
+      "description": "Engine reach: EVALUATED = the rule was decided and a finding exists; FAILED = a required analysis step failed and the rule was never asked, so no RuleResult exists and none is invented. FAILED is never a verdict, never a rule FAIL, and never laundered into INDETERMINATE. Across several scopes, EVALUATED wins if ANY scope produced a verdict.",
+      "enum": ["EVALUATED", "FAILED"]
+    },
+    "completeness": {
+      "type": "string",
+      "description": "Evidence completeness. Separate from analysisStatus and from verdicts; NOT_APPLICABLE is used only where explicitly justified.",
+      "enum": ["COMPLETE", "INCOMPLETE", "NOT_APPLICABLE"]
+    },
+    "capabilityStatus": {
+      "type": "string",
+      "enum": ["AVAILABLE", "PARTIAL", "UNAVAILABLE"]
+    },
+    "provenance": {
+      "type": "string",
+      "description": "Where an evidence value came from. This is not a confidence score.",
+      "enum": ["DIRECT", "DERIVED", "EXTERNAL"]
+    },
+    "availability": {
+      "type": "string",
+      "description": "Whether the collector could decide the value at all. Independent of provenance and of evidenceStrength; the three axes never substitute for one another.",
+      "enum": ["KNOWN", "UNKNOWN", "NOT_APPLICABLE"]
+    },
+    "collectionStatus": {
+      "type": "string",
+      "description": "Collection coverage for one evidence type: COMPLETE = the scan ran to completion; PARTIAL = some forms were unscannable; UNAVAILABLE = the collector could not scan.",
+      "enum": ["COMPLETE", "PARTIAL", "UNAVAILABLE"]
+    },
+    "evidenceStrength": {
+      "type": "string",
+      "description": "How an assertion was established along the syntax-to-execution axis. Never a substitute for availability: a strength never turns UNKNOWN into KNOWN, and an omitted strength must not be read as EXECUTION_ESTABLISHED.",
+      "enum": ["SYNTAX_OBSERVED", "EXECUTION_ESTABLISHED", "UNSUPPORTED"]
+    },
+    "ruleResult": {
+      "type": "string",
+      "description": "The rule's verdict. N/A means the rule does not apply to this subject; INDETERMINATE means it applies but evidence is insufficient, incomplete or conflicting.",
+      "enum": ["PASS", "FAIL", "INDETERMINATE", "N/A"]
+    },
+    "ruleStatus": {
+      "type": "string",
+      "description": "Lifecycle status of the rule that produced the finding. Required: a finding is one rule's verdict, so its lifecycle state is part of that verdict's identity.",
+      "enum": ["active", "draft", "deprecated"]
+    },
+    "location": {
+      "type": "object",
+      "description": "A source position the collector can point at. Never fabricated: the key is absent when no position is known.",
+      "required": ["file", "line"],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Present only when known; never a fabricated or null column."
+        }
+      },
+      "additionalProperties": true
+    },
+    "evidenceCoverage": {
+      "type": "object",
+      "required": ["status", "supported_frameworks", "supported_assertion_forms"],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/collectionStatus"
+        },
+        "supported_frameworks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "supported_assertion_forms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "evidenceConflict": {
+      "type": "object",
+      "description": "A second, disagreeing value for the same evidence type. Both values and their provenance are preserved; a conflict does not by itself imply incompleteness — the rule applies its conflicting-evidence policy.",
+      "required": ["value", "source", "provenance", "collector_version"],
+      "properties": {
+        "value": {
+          "description": "The conflicting value. null when the provider reported none (JSON has no undefined)."
+        },
+        "source": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "collector_version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "countReasons": {
+      "type": "object",
+      "description": "Count plus the reasons for it, attached to a per-declaration evidence record. Present-only: the producing field itself is omitted when the adapter has nothing to report.",
+      "required": ["count", "reasons"],
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "evidenceRecord": {
+      "type": "object",
+      "description": "One normalized evidence item. `type` is deliberately absent: the map key this record sits under already names it, and repeating it would be the only field needing a rename. `scope` names the analysis construct scanned, not the subject: it never says WHICH test or file the value belongs to. Attribution is structural (file-level evidence map vs per-declaration testResults[].evidence). The mutation_score record is file-level by design and must NEVER be read as individual-test attribution.",
+      "required": ["value", "availability", "provenance", "source", "collector_version", "scope", "coverage"],
+      "properties": {
+        "value": {
+          "description": "The evidence value. null (not absent) when the producer had no value, so the field set never depends on what the collector knew."
+        },
+        "availability": {
+          "$ref": "#/$defs/availability"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "source": {
+          "type": "string",
+          "description": "Collector id, e.g. 'typescript-jest-adapter'."
+        },
+        "collector_version": {
+          "type": "string",
+          "description": "Constant version string; no timestamps."
+        },
+        "scope": {
+          "type": "string",
+          "description": "The analysis construct scanned (e.g. 'test-body'). Not the subject identity."
+        },
+        "coverage": {
+          "$ref": "#/$defs/evidenceCoverage"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Required whenever the value is unknown, partial or unavailable. Present-only otherwise."
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        },
+        "conflicts": {
+          "type": "array",
+          "description": "Present only when populated: an empty array carries no information, so the producer drops it. A populated array preserves both disagreeing values with their provenance.",
+          "items": {
+            "$ref": "#/$defs/evidenceConflict"
+          }
+        },
+        "provider": {
+          "type": "string",
+          "description": "Provider identity. Present-only and only meaningful when provenance is EXTERNAL."
+        },
+        "provider_version": {
+          "type": "string",
+          "description": "Provider/tool version. Present-only and only meaningful when provenance is EXTERNAL."
+        },
+        "source_revision": {
+          "type": "string",
+          "description": "Source revision the external evidence was derived from. Present-only and only meaningful when provenance is EXTERNAL."
+        },
+        "unestablished_assertions": {
+          "description": "Per-declaration unestablished-assertion signal. Present-only on per-declaration records; file-level aggregate records leave it unset.",
+          "$ref": "#/$defs/countReasons"
+        },
+        "unclassified_constructs": {
+          "description": "Per-declaration unclassified-construct signal. Present-only on per-declaration records.",
+          "$ref": "#/$defs/countReasons"
+        },
+        "property_based": {
+          "type": "boolean",
+          "description": "Present-only when the producer detected property-based (@given) cases. Detection-affirmative only; a count is not case-exhaustive."
+        },
+        "evidenceStrength": {
+          "description": "HOW the evidence was established. Present-only; omitted when the producer classifies no strength.",
+          "$ref": "#/$defs/evidenceStrength"
+        }
+      },
+      "additionalProperties": true
+    },
+    "finding": {
+      "type": "object",
+      "description": "One rule's verdict for one scope. `reason` is always present — no silent verdicts. Optional metadata is copied from the evaluated rule, never re-authored, and omitted (not empty) when the rule declares none.",
+      "required": ["rule_id", "result", "reason", "evidence", "ruleStatus"],
+      "properties": {
+        "rule_id": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/$defs/ruleResult"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why this verdict was reached. Always present."
+        },
+        "evidence": {
+          "type": "array",
+          "description": "Evidence TYPE ids the rule consulted, in evaluation order — not evidence records. The records live in the envelope or per-test evidence map.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ruleStatus": {
+          "$ref": "#/$defs/ruleStatus"
+        },
+        "description": {
+          "type": "string",
+          "description": "The rule's own description, copied from its metadata. Present-only."
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why the rule exists, copied from its metadata. Present-only."
+        },
+        "limitations": {
+          "type": "string",
+          "description": "What the verdict does NOT establish, copied from the rule's metadata. Present-only."
+        },
+        "docsUrl": {
+          "type": "string",
+          "description": "Reference into the rule's own definition. Present-only."
+        },
+        "evidenceStrength": {
+          "description": "Strength of the evidence the verdict rests on, copied from the referenced evidence record. Present-only; never a certainty score.",
+          "$ref": "#/$defs/evidenceStrength"
+        },
+        "provenance": {
+          "description": "Provenance derived from the evidence record the finding references. Absent when no such record exists — never fabricated.",
+          "$ref": "#/$defs/provenance"
+        },
+        "availability": {
+          "description": "Availability derived from the evidence record the finding references. Absent when no such record exists — never fabricated.",
+          "$ref": "#/$defs/availability"
+        },
+        "test_id": {
+          "type": "string",
+          "description": "Test identity of the per-test scope this finding belongs to. Present ONLY for a per-test scope: a subject-level finding (including the file-level mutation finding) omits it, and that absence is the non-attribution marker. Never implies test attribution when absent."
+        },
+        "completeness": {
+          "description": "Completeness of the scope the finding was decided in. Present-only.",
+          "$ref": "#/$defs/completeness"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": true
+    },
+    "testIdentity": {
+      "type": "object",
+      "description": "Identity of one test declaration site. The id is deterministic: <file>#<declaration>@<line>:<index>, with no clock or randomness.",
+      "required": ["id", "name", "line", "declaration"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based source line of the declaration call."
+        },
+        "declaration": {
+          "type": "string",
+          "description": "Source form, e.g. 'it' or 'it.each'."
+        },
+        "framework": {
+          "type": "string",
+          "description": "Per-declaration framework. Present-only: the TypeScript adapter carries none."
+        }
+      },
+      "additionalProperties": true
+    },
+    "testResult": {
+      "type": "object",
+      "description": "One declaration's slice of the report: its own identity, analysis status, evidence and findings. Nothing here is derived from a sibling, so a per-test FAIL cannot be masked by a file-level PASS and a file-level FAIL cannot be attributed to a test that did not earn it.",
+      "required": ["test", "analysisStatus", "evaluationStatus", "completeness", "evidence", "ruleResults"],
+      "properties": {
+        "test": {
+          "$ref": "#/$defs/testIdentity"
+        },
+        "analysisStatus": {
+          "$ref": "#/$defs/analysisStatus"
+        },
+        "evaluationStatus": {
+          "$ref": "#/$defs/evaluationStatus"
+        },
+        "completeness": {
+          "$ref": "#/$defs/completeness"
+        },
+        "evidence": {
+          "type": "object",
+          "description": "This declaration's evidence only, keyed by evidence type id. References never reach a sibling declaration.",
+          "additionalProperties": {
+            "$ref": "#/$defs/evidenceRecord"
+          }
+        },
+        "ruleResults": {
+          "type": "array",
+          "description": "This scope's findings: zero when the scope was aborted, never a stand-in verdict.",
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        },
+        "deprecatedSince": {
+          "type": "string",
+          "description": "Version in which the evaluated rule was deprecated. Present-only."
+        }
+      },
+      "additionalProperties": true
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total", "pass", "fail", "indeterminate", "not_applicable", "failed"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of evaluation scopes."
+        },
+        "pass": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fail": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Scopes whose rule verdict is FAIL. Does not include aborted scopes."
+        },
+        "indeterminate": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_applicable": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Scopes that did NOT end in a clean PASS: FAIL verdicts PLUS scopes the engine aborted (evaluationStatus FAILED), which produced no verdict. Dual meaning is DOCUMENTED here only; no additional wire key disambiguates it at 0.5."
+        }
+      },
+      "additionalProperties": true
+    },
+    "noAdapterSummary": {
+      "type": "object",
+      "description": "The zeroed summary of the no-adapter envelope: absence of analysis is explicit, never a PASS or FAIL.",
+      "required": ["total", "pass", "fail", "indeterminate", "not_applicable", "failed"],
+      "properties": {
+        "total": { "const": 0 },
+        "pass": { "const": 0 },
+        "fail": { "const": 0 },
+        "indeterminate": { "const": 0 },
+        "not_applicable": { "const": 0 },
+        "failed": { "const": 0 }
+      },
+      "additionalProperties": true
+    },
+    "noAdapterEnvelope": {
+      "type": "object",
+      "description": "The JSON-only no-verdict envelope emitted on stdout when no adapter matches the test file (default JSON format). It is a no-verdict statement, not an error object and not a rule report: schemaVersion stays 0.5 (ADR-042) and the SARIF path is deliberately unchanged (stderr prose, empty stdout, exit 2). evaluationStatus FAILED here means no analysis ran, so no verdict was produced.",
+      "required": [
+        "kind",
+        "schemaVersion",
+        "analysisStatus",
+        "evaluationStatus",
+        "completeness",
+        "reasonCode",
+        "reason",
+        "test",
+        "ruleResults",
+        "testResults",
+        "summary"
+      ],
+      "properties": {
+        "kind": {
+          "const": "check"
+        },
+        "schemaVersion": {
+          "const": "0.5"
+        },
+        "analysisStatus": {
+          "const": "UNSUPPORTED"
+        },
+        "evaluationStatus": {
+          "const": "FAILED"
+        },
+        "completeness": {
+          "const": "NOT_APPLICABLE"
+        },
+        "reasonCode": {
+          "const": "NO_ADAPTER_MATCHED"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable diagnostic naming the file, suggesting `checktest doctor --test <path>` and `--adapter <id>`."
+        },
+        "test": {
+          "type": "object",
+          "description": "Subject identity is limited to the file because no adapter ran.",
+          "required": ["file"],
+          "properties": {
+            "file": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "ruleResults": {
+          "type": "array",
+          "description": "Always empty in the shipped 0.5 envelope: no rule was evaluated, and no verdict is invented.",
+          "maxItems": 0
+        },
+        "testResults": {
+          "type": "array",
+          "description": "Always empty in the shipped 0.5 envelope.",
+          "maxItems": 0
+        },
+        "summary": {
+          "$ref": "#/$defs/noAdapterSummary"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

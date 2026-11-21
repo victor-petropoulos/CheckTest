@@ -143,7 +143,9 @@ export interface Adapter {
   /**
    * File extensions this adapter claims, e.g. ['.ts', '.tsx']. The extension
    * convention is the LOWEST-priority dispatch layer (ADR-034), used only when
-   * neither an explicit flag nor a manifest signature resolves.
+   * neither an explicit flag nor a manifest signature resolves. Extensions also
+   * gate manifest-layer candidacy (extension affinity, WP10 F1 2026-11-21): a
+   * manifest candidate must claim the file's extension; dispatch order unchanged.
    */
   readonly extensions: readonly string[];
   /**

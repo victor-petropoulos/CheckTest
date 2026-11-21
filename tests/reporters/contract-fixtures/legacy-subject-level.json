@@ -1,0 +1,62 @@
+{
+  "test": {
+    "id": "sample.test.ts",
+    "name": "sample.test.ts",
+    "file": "sample.test.ts",
+    "language": "typescript",
+    "framework": "jest",
+    "type": "UNIT"
+  },
+  "analysisStatus": "SUCCESS",
+  "evaluationStatus": "EVALUATED",
+  "completeness": "COMPLETE",
+  "scope": "test-body",
+  "test_type": {
+    "value": "UNIT",
+    "source": "EXPLICIT"
+  },
+  "capabilities": {
+    "assertion_forms": "AVAILABLE"
+  },
+  "evidence": {
+    "assertion_count": {
+      "value": 1,
+      "availability": "KNOWN",
+      "provenance": "DIRECT",
+      "source": "typescript-jest-adapter",
+      "collector_version": "0.1.0",
+      "scope": "test-body",
+      "coverage": {
+        "status": "COMPLETE",
+        "supported_frameworks": ["jest"],
+        "supported_assertion_forms": ["expect-to-be"]
+      },
+      "location": {
+        "file": "sample.test.ts",
+        "line": 3
+      }
+    }
+  },
+  "ruleResults": [
+    {
+      "rule_id": "CT-INT-001",
+      "result": "PASS",
+      "reason": "CT-INT-001: assertion_count=1 >= 1",
+      "evidence": ["assertion_count"],
+      "ruleStatus": "active",
+      "provenance": "DIRECT",
+      "availability": "KNOWN",
+      "completeness": "COMPLETE"
+    }
+  ],
+  "schemaVersion": "0.5",
+  "testResults": [],
+  "summary": {
+    "total": 1,
+    "pass": 1,
+    "fail": 0,
+    "indeterminate": 0,
+    "not_applicable": 0,
+    "failed": 0
+  }
+}

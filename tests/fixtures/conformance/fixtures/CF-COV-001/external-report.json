@@ -1,0 +1,6 @@
+{
+  "fixtureInput": "external mapped coverage supplied by harness",
+  "format": "file-level-mapped-coverage",
+  "coveredLines": 3,
+  "note": "Illustrative input only; provider parsing belongs to the external provider, not the adapter."
+}

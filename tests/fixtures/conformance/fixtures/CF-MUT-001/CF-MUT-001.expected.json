@@ -1,0 +1,21 @@
+{
+  "fixtureId": "CF-MUT-001",
+  "schemaVersionExpectation": "0.5",
+  "sources": ["sample.ts", "external-report.json"],
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it" }] } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "COMPLETE" },
+  "expectedEvidence": {
+    "fileLevel": { "mutation_score": { "value": 0.75, "availability": "KNOWN", "provenance": "EXTERNAL", "source": "EXTERNAL_MUTATION_PROVIDER", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } },
+    "perTest": { "mutation_score": "MUST_BE_ABSENT", "assertion_count": { "value": 1, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } }
+  },
+  "expectedApplicability": ["CT-MUT-001", "CT-INT-001", "CT-INT-003", "CT-INT-004"],
+  "expectedFindings": [{ "rule_id": "CT-MUT-001", "result": "PASS", "test_id_present": false }],
+  "expectedExplanation": "File-level detected/valid score meets the fixed 0.5 threshold; no per-declaration claim is derived.",
+  "expectedDiagnostics": { "reasons": [] },
+  "attribution": {
+    "level": "file",
+    "test_id_present": false,
+    "note": "GAP 6: suite/file-level mutation result MUST NOT become an individual-test result without a supported relationship. None is claimed here."
+  },
+  "knownLimitations": ["Missing/unreadable/malformed/revision-mismatched/zero-valid-mutants report yields INDETERMINATE, never FAIL. No schemaVersion bump."]
+}

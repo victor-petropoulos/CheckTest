@@ -1,0 +1,21 @@
+{
+  "fixtureId": "CF-COV-001",
+  "schemaVersionExpectation": "0.5",
+  "sources": ["sample.ts", "external-report.json"],
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it" }] } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "COMPLETE" },
+  "expectedEvidence": {
+    "fileLevel": { "line_coverage": { "value": 1, "availability": "KNOWN", "provenance": "EXTERNAL", "source": "EXTERNAL_COVERAGE_PROVIDER", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } },
+    "perTest": { "line_coverage": "MUST_BE_ABSENT", "assertion_count": { "value": 1, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } }
+  },
+  "expectedApplicability": ["CT-COV-001", "CT-INT-001", "CT-INT-003", "CT-INT-004"],
+  "expectedFindings": [{ "rule_id": "CT-COV-001", "result": "PASS", "test_id_present": false }],
+  "expectedExplanation": "Mapped coverage establishes that the production file was exercised; it does not identify a test body.",
+  "expectedDiagnostics": { "reasons": [] },
+  "attribution": {
+    "level": "file",
+    "test_id_present": false,
+    "note": "GAP 6: file-level metric MUST NOT be written into testResults[].evidence and MUST NOT gain a test_id. --per-test-run is a separate supported relationship and is out of scope for this fixture."
+  },
+  "knownLimitations": ["Missing/stale/partial/mismatched report yields INDETERMINATE, never FAIL. Provider hints are declared-but-unconsumed by the adapter."]
+}

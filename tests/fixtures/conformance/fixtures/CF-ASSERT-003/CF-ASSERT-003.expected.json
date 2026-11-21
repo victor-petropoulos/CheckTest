@@ -1,0 +1,13 @@
+{
+  "fixtureId": "CF-ASSERT-003",
+  "schemaVersionExpectation": "0.5",
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it" }] }, "python": { "count": 1, "sites": [{ "line": 1 }], "declarationToken": "NOT_VERIFIED" } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "COMPLETE" },
+  "expectedEvidence": { "perTest": { "assertion_count": { "value": 2, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } }, "fileLevel": {} },
+  "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
+  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "PASS", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "PASS", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }],
+  "expectedExplanation": "Two recognized assertion forms in one test body.",
+  "expectedDiagnostics": { "reasons": [] },
+  "attribution": { "level": "individual-test" },
+  "knownLimitations": ["Form-based count, not a semantic count of distinct checks."]
+}

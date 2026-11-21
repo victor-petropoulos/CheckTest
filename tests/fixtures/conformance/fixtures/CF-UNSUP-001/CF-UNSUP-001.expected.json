@@ -1,0 +1,88 @@
+{
+  "fixtureId": "CF-UNSUP-001",
+  "schemaVersionExpectation": "0.5",
+  "expectedDiscovery": {
+    "ts": {
+      "count": 1,
+      "sites": [
+        {
+          "line": 2,
+          "declaration": "it"
+        }
+      ]
+    },
+    "python": {
+      "count": 1,
+      "sites": [
+        {
+          "line": 4
+        }
+      ],
+      "declarationToken": "NOT_VERIFIED"
+    }
+  },
+  "expectedEnvelope": {
+    "analysisStatus": "SUCCESS",
+    "evaluationStatus": "EVALUATED",
+    "completeness": "INCOMPLETE"
+  },
+  "expectedEvidence": {
+    "perTest": {
+      "assertion_count": {
+        "value": null,
+        "availability": "UNKNOWN",
+        "provenance": "DIRECT",
+        "source": "ADAPTER_SOURCE",
+        "collector_version": "0.1.0",
+        "scope": "test-body",
+        "coverage": {
+          "status": "PARTIAL",
+          "supported_frameworks": "ADAPTER_FRAMEWORKS",
+          "supported_assertion_forms": "ADAPTER_FORMS"
+        },
+        "unclassified_constructs": {
+          "count": 1,
+          "reasons": [
+            "unsupported-form (hypothesis @given unrecognized assertion shape) [python]; 'assert' is not a supported assertion form [ts]"
+          ]
+        }
+      }
+    },
+    "fileLevel": {}
+  },
+  "expectedApplicability": [
+    "CT-INT-001",
+    "CT-INT-003",
+    "CT-INT-004"
+  ],
+  "expectedFindings": [
+    {
+      "rule_id": "CT-INT-001",
+      "result": "INDETERMINATE",
+      "test_id_present": true
+    },
+    {
+      "rule_id": "CT-INT-003",
+      "result": "INDETERMINATE",
+      "test_id_present": true
+    },
+    {
+      "rule_id": "CT-INT-004",
+      "result": "INDETERMINATE",
+      "test_id_present": true
+    }
+  ],
+  "expectedExplanation": "Unsupported syntax is absence of evidence, never a fabricated zero-assertion PASS or a negative finding.",
+  "expectedDiagnostics": {
+    "reasons": [
+      "'assert' is not a supported assertion form",
+      "unsupported-form"
+    ]
+  },
+  "attribution": {
+    "level": "individual-test"
+  },
+  "knownLimitations": [
+    "TS namespace list verified at src/adapters/typescript/support.ts:64 and src/adapters/typescript/collector.ts:749-755 (reason: \"'assert' is not a supported assertion form\"); Python hypothesis @given gap reason UNSUPPORTED_FORM_GAP='unsupported-form' at src/adapters/python/support.ts:52-53. Exact TS reason wording must be pinned by WP6."
+  ]
+}

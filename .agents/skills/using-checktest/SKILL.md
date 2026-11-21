@@ -1,6 +1,6 @@
 ---
 name: using-checktest
-description: Use when reviewing or changing automated tests, interpreting CheckTest JSON/SARIF, or diagnosing unsupported/incomplete analysis. Advisory evidence only — never a merge gate.
+description: Use CheckTest to collect deterministic, evidence-based findings about automated tests when creating, modifying, refactoring, or reviewing tests, or when investigating test-analysis results. Use it as supporting evidence, never as a substitute for test execution or engineering judgment.
 ---
 
 <!--
@@ -12,230 +12,123 @@ Authored at ~/.config/opencode/skills/using-checktest/SKILL.md.
      /Users/victorpetropoulos/.agents/skills/using-checktest/SKILL.md
 -->
 
-# Overview
+# Using CheckTest
 
-CheckTest gives deterministic, evidence-backed, per-test verdicts from static analysis of a test file. It never runs the test. Advisory only: phases 0-4 use it as supporting evidence, not a gate. Verdict, exit code, and CI block are three different things.
+Baseline for every command and output shown here: verified live at commit `f77c38f` on 2026-11-20. Consult `checktest --help`, `checktest doctor --json`, and `checktest explain --rule <id>` for anything that may have changed since. Detailed command inventory and worked scenarios: [command reference](references/command-reference.md) and [examples](references/examples.md).
 
-# When to Use
+## What it is
 
-- Reviewing or changing automated tests.
-- Interpreting `checktest check` JSON or `--format sarif` output.
-- Diagnosing UNSUPPORTED / INDETERMINATE / INCOMPLETE analysis.
-- Checking which adapter/rule/assertion forms exist in this checkout.
-- Explaining a rule id via `checktest explain`.
+CheckTest is a deterministic, evidence-based analysis tool for evaluating measurable characteristics of individual automated tests.
 
-# Policy (advisory)
+It examines test source code and supported external evidence, collects observations, and evaluates those observations against explicit rules. An LLM never determines a rule verdict.
 
-- Run CheckTest on ALL changed test files. Opt out only for unsupported/irrelevant files (Q2 ruling: all_changed_with_optout).
-- Inspect the test yourself first. CheckTest is a second opinion.
-- NEVER edit a test solely to please a verdict. FAIL is a question, not an order.
-- Preserve non-PASS/FAIL outcomes: rule verdicts INDETERMINATE and N/A; analysisStatus UNSUPPORTED (not a verdict); no-verdict; analyzer failure. Do not convert them to PASS/FAIL in prose.
+It produces structured findings with verdicts, evidence, explanations, and information about analysis completeness.
 
-# Workflow
+CheckTest is designed to support human developers and AI coding agents. It can be used to review tests written by people, AI agents, or both.
 
-1. Identify changed test files (git diff). Include all; opt out with a stated reason for unsupported/irrelevant.
-2. `doctor` ONLY when environment/dispatch is unclear. `doctor --test <path>` probes adapter selection. Not a habit.
-3. Per file: `checktest check --test <path> --type <TYPE>`. Pass `--type` ONLY when declared type known (UNIT | COMPONENT | INTEGRATION | CONTRACT | E2E). Else omit — default UNKNOWN, never inferred from file.
-4. Read the report, not just summary: per-test `testResults[]` verdicts; `ruleResults[].rule_id`/`.result`/`.reason`; `location` (file+line); `evidence.assertion_count` (`availability`, `provenance`, `evidenceStrength`, `coverage.status`); `analysisStatus` (SUCCESS|FAILED|UNSUPPORTED); `completeness` (COMPLETE|INCOMPLETE|NOT_APPLICABLE); `adapter`/`decidedBy`; rule `limitations`/`docsUrl`; `capabilities`.
-5. Independent inspection: open file at `location.line`. Confirm or disagree; record in Review line.
-6. Dynamic facts come from tools: `doctor --json` lists current adapters/extensions/frameworks/assertion forms; `explain --rule <id>` gives current rule meaning. Defer to docs below for static inventories.
+**CheckTest evaluates evidence. You remain responsible for engineering judgment.**
 
-Multi-file: one `check` per file (no repeatable `--test`). Explicit list, sorted order, per-file JSON + exit code. JSON is the default format — `check` has no `--json` flag; parse the JSON, never human-readable output.
+## What it does not do
 
-```bash
-files=(tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts tests/adapters/python/fixtures/unittest_sample.py)
-out=$(mktemp -d); i=0
-while IFS= read -r f; do
-  i=$((i+1))
-  checktest check --test "$f" > "$out/$i-$(basename "$f").json"
-  printf '%s exit=%s\n' "$f" "$?"
-done < <(printf '%s\n' "${files[@]}" | LC_ALL=C sort)
-```
+CheckTest analyzes one declared test in one `--test` file, statically, without executing it.
 
-Unsupported file (e.g. `.rs`): its JSON is the no-verdict envelope (`analysisStatus UNSUPPORTED`, `reasonCode NO_ADAPTER_MATCHED`, exit 2); other files' results are untouched.
+It does not establish that a test verifies the correct business requirement, guarantee that a test will catch a production defect, or determine whether a change should be merged.
 
-# Requires
+It is not a universal test-quality score, an automatic test-rewriting tool, or a replacement for test execution, coverage collection, mutation testing, or code review. It is not a merge gate; CI policy that consumes its output is a separate decision above the tool.
 
-- `checktest` reachable via `npx tsx src/cli.ts` in this repo (or installed CLI).
-- One test file path per `check`.
-- No test execution, no network, no implicit config discovery (`--config` explicit-path-only).
+## When to use it
 
-# Commands (verified live, HEAD a6babd7)
+Use CheckTest when:
 
-```bash
-npx tsx src/cli.ts doctor
-npx tsx src/cli.ts doctor --test tests/cli.test.ts
-npx tsx src/cli.ts doctor --test /tmp/no-such-file.xyz --json
-npx tsx src/cli.ts explain --rule CT-INT-001
-npx tsx src/cli.ts check --test tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts --type UNIT
-```
+- Creating or modifying automated tests.
+- Changing assertions, test structure, fixtures, helpers, setup/teardown, or test data that affect evaluated tests.
+- Refactoring existing tests.
+- Reviewing a change that includes automated tests, including tests generated by an AI coding agent.
+- Investigating CheckTest findings or measurable test-quality concerns.
+- Interpreting CheckTest JSON or SARIF output.
+- Diagnosing unsupported, incomplete, or indeterminate analysis.
+- Modifying CheckTest rules, adapters, evidence models, or reporting.
+- Discovering which adapters, rules, and assertion forms are currently supported.
 
-Trimmed real outputs:
+Do not activate the skill merely because the word "test" appears: unrelated production code, documentation, UI components, or infrastructure do not warrant a run. The skill may still be consulted when planning test-related work that does not warrant a full evaluation.
 
-```
-$ npx tsx src/cli.ts doctor
-checktest doctor
-Node: v24.18.1
-Manifests:
-  package.json: present
-  pyproject.toml: absent
-  setup.py: absent
-  requirements.txt: absent
-Adapters:
-  typescript-jest-adapter 0.1.0 (.ts, .tsx, .js, .jsx) hints: istanbul, c8, stryker
-  python-pytest-adapter 0.1.0 (.py) hints: coverage-py, pytest-cov, mutmut
-Config: not supplied (validity checked only with --config)
-Supported extensions: .ts, .tsx, .js, .jsx, .py
-Supported frameworks: jest, vitest, mocha, pytest, unittest
-EXIT=0
+Before invoking, decide: did this task create or modify an evaluated test, change its assertions or structure, change helpers/fixtures/data it depends on, change evidence CheckTest uses, or is a previous report no longer current for the present test and evidence state? If none of these apply, a new run is generally unnecessary. For a change review, analyze all changed automated test files that are applicable. If a file is excluded, state why.
 
-$ npx tsx src/cli.ts doctor --test tests/cli.test.ts
-checktest doctor (dispatch)
-Test: tests/cli.test.ts
-Adapter: typescript-jest-adapter (manifest) resolved
-EXIT=0
+## Validating CheckTest itself
 
-$ npx tsx src/cli.ts doctor --test /tmp/no-such-file.xyz --json
-{
-  "kind": "doctor",
-  "schemaVersion": "0.5",
-  "mode": "dispatch",
-  "adapterId": null,
-  "decidedBy": "unsupported",
-  "reason": "no adapter matched"
-}
-EXIT=2
+Changing CheckTest's rules, adapters, evidence models, or reporting is not validated by a normal test-level `check`. Run the authoritative repository suites instead:
 
-$ npx tsx src/cli.ts explain --rule CT-INT-001
-checktest explain: CT-INT-001
-Name: assertion-required
-Category: integrity
-Applies to: UNIT, COMPONENT, INTEGRATION, CONTRACT, E2E
-Required evidence: assertion_count
-Analysis scope: test-body
-Minimum evidence completeness: COMPLETE
-Unknown evidence policy: INDETERMINATE
-Conflicting evidence policy: INDETERMINATE
-Evaluation:
-  Metric: assertion_count
-  Pass at least: 1
-  Fail at most: 0
-Status: active
-EXIT=0
+- Conformance: `tests/conformance/` — `typescript.conformance.test.ts`, `python.conformance.test.ts`, `external-evidence.conformance.test.ts`.
+- Regression and goldens: `tests/integration/` — `goldens.test.ts`, `corpus-goldens.test.ts`, `cross-adapter-evidence.test.ts`, `fixtures.test.ts`.
+- Adapter contract and registry: `tests/adapters/adapter-contract.test.ts`, `tests/adapters/registry-integration.test.ts`.
+- Full gate: `npm test -- --coverage`. Narrow to one suite with `npm test -- <path>`.
 
-$ npx tsx src/cli.ts check --test tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts --type UNIT
-{
-  "test": { "name": "sample.test.ts", "language": "typescript", "framework": "jest", "type": "UNIT" },
-  "analysisStatus": "SUCCESS",
-  "evaluationStatus": "EVALUATED",
-  "completeness": "COMPLETE",
-  "scope": "test-body",
-  "ruleResults": [{
-    "rule_id": "CT-INT-001",
-    "result": "PASS",
-    "reason": "CT-INT-001: assertion_count=1 >= 1",
-    "evidenceStrength": "EXECUTION_ESTABLISHED",
-    "provenance": "DIRECT",
-    "availability": "KNOWN",
-    "location": { "line": 9 }
-  }],
-  "schemaVersion": "0.5",
-  "adapter": "typescript-jest-adapter",
-  "decidedBy": "manifest",
-  "summary": { "total": 1, "pass": 1, "fail": 0, ... }
-}
-EXIT=0
+`doctor` and `explain` confirm adapter registration, dispatch, and rule meaning; they are capability probes and never substitute for the suites above.
 
-$ npx tsx src/cli.ts check --test tests/fixtures/ct-int-001/case-02-no-assertion/sample.test.ts --type UNIT
-  "rule_id": "CT-INT-001",
-  "result": "FAIL",
-  "reason": "CT-INT-001: assertion_count=0 <= 0",
-  "summary": { "total": 1, "pass": 0, "fail": 1, ... }
-EXIT=0     <-- FAIL still exits 0
-```
+After such a change, rerun the affected conformance and regression coverage and report the original and new outcomes. Suite runs are pass/fail gates; `PASS`, `FAIL`, `INDETERMINATE`, and `N/A` are rule verdicts on individual test evaluations, not suite results.
 
-# Exit codes — read JSON, not status
+## Basic workflow
 
-- `0` = analysis succeeded: at least one scope reached a verdict — PASS, FAIL, INDETERMINATE or N/A. **Exit 0 is NOT PASS** (verified: case-02 FAIL exits 0).
-- `1` = usage error/crash (unknown flag, missing/unregistered `--rule`); prose on stderr.
-- `2` = no verdict produced — no scope reached any verdict. Covers all-evaluations-FAILED, files declaring no recognized tests EVEN WITH `analysisStatus SUCCESS` (ruleResults/testResults empty, evaluationStatus FAILED — verified live on a tstyche `__typetests__` file), and doctor dispatch unresolvable/no adapter.
-- `doctor` reuses 0/1/2: 0 diagnostic success, 2 unresolvable dispatch, 1 usage error.
-- `explain`: 0 success, 1 missing/unregistered rule (+ registered id list); no exit-2 case.
-- Gate/CI blocking is separate policy above this layer. CheckTest never blocks on its own in phases 0-4.
+1. Identify the relevant automated test files.
+2. Determine whether CheckTest is installed or available in the repository. For local repository execution, `npx --yes tsx src/cli.ts` is the in-repo form; an installed `checktest` binary takes the same arguments. Do not assume the global executable is installed.
+3. Consult `checktest --help` if the CLI invocation or options are unclear.
+4. Use `checktest doctor --json` when adapter selection or supported capabilities are unclear. `doctor --test <path>` probes dispatch for a single file. Not a habit.
+5. Use `checktest explain --rule <id>` when a rule's meaning, applicability, or evidence requirements are unclear.
+6. Analyze each applicable file with `checktest check --test <path>`. Scope is exactly one file per `check` — there is no repeatable `--test`, no per-test selection flag, and no repository-wide mode at this baseline. Choose the narrowest scope that satisfies the task; multi-file changes get one check per file (loop pattern in the [command reference](references/command-reference.md)).
+7. Supply `--type` only when the test type is known from reliable context (`UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`). Do not infer it from a filename; the default is `UNKNOWN`.
+8. When a rule needs external evidence, attach it with `--coverage-report`, `--coverage-map`, `--per-test-run`, `--source-revision`, `--mutation-report`, or `--mutation-source-revision`, and confirm the declared revision matches the current state. Never reuse stale evidence as current proof. Mutation evidence is file-level only; never claim per-test attribution for it.
+9. Execute, capture the report (JSON is the default; `--format sarif` emits SARIF 2.1.0; `check` has no `--json` flag), and record the exit code and stderr.
+10. Verify completion before interpreting anything: the process ended, the intended adapter ran (`adapter`, `decidedBy`), the report parses, and `analysisStatus`, `evaluationStatus`, and `completeness` are inspected. A failed command, missing report, or partial analysis is not a successful evaluation.
+11. Read the individual results and evidence, inspect the source at the reported `location`, and decide independently whether any change is warranted.
 
-# Output schema summary
+## Selecting an adapter
 
-- All JSON carries `schemaVersion: "0.5"`.
-- `kind` discriminator observed on `doctor` and `explain`; `doctor` also has `mode: env|dispatch`. `check` report carried `schemaVersion`, `analysisStatus`, `ruleResults`, `testResults`, `summary` — no `kind` value observed in live output; verify before relying on one.
-- `check` report fields: `test{}`, `analysisStatus`, `evaluationStatus`, `completeness`, `scope`, `test_type{value,source}`, `capabilities{}`, `evidence{}`, `ruleResults[]`, `testResults[]`, `summary{total,pass,fail,indeterminate,not_applicable,failed}`, `schemaVersion`, `adapter`, `decidedBy`.
-- evidence record: `value`, `availability` (KNOWN|UNKNOWN|NOT_APPLICABLE), `provenance` (DIRECT|DERIVED|EXTERNAL), `source`, `collector_version`, `scope`, `coverage{status (COMPLETE|PARTIAL|UNAVAILABLE),...}`, `location{file,line}`, `evidenceStrength` (SYNTAX_OBSERVED|EXECUTION_ESTABLISHED|UNSUPPORTED).
-- rule result: `rule_id`, `result` (PASS|FAIL|INDETERMINATE|N/A), `reason`, `evidence[]`, `ruleStatus`, `description`, `rationale`, `limitations`, `docsUrl`, `evidenceStrength`, `provenance`, `availability`, `test_id`, `completeness`, `location`.
-- `analysisStatus` (SUCCESS|UNSUPPORTED|FAILED) is the analysis lifecycle, and `evaluationStatus` (EVALUATED|FAILED) says whether the engine reached a verdict at all — neither is a rule verdict. Rule verdicts are only the `result` values PASS|FAIL|INDETERMINATE|N/A; UNSUPPORTED is never a verdict.
-- SARIF: `--format sarif` emits SARIF 2.1.0. Same advisory rules.
+1. Identify the language and framework from the file.
+2. Ask `checktest doctor --json` for registered adapters, extensions, frameworks, and assertion forms. Never hardcode an inventory; capabilities change between releases.
+3. Confirm the relevant constructs are supported before analyzing.
+4. Use the documented adapter id. Pass `--adapter <id>` only to force one; default resolution is flag, then manifest, then extension (ADR-034).
+5. Never invent an adapter id or substitute an unrelated adapter for an unsupported construct, and never fabricate normalized evidence. Report unsupported language or framework combinations honestly.
 
-# Supported / unsupported — ask, do not hardcode
+## Interpret results correctly
 
-- Current adapters/extensions/frameworks/assertion forms: `npx tsx src/cli.ts doctor --json` (`adapters[].capabilities.assertionForms`, `supported{}`).
-- Rule applicability/required evidence/policy/limitations: `npx tsx src/cli.ts explain --rule <id>`.
-- Static pointers: `docs/supported-syntax.md` (framework allowlist, assertion forms, executability, declaration forms, per-test evidence, Python, coverage formats, provenance, evidence strength) and `docs/limitations.md` (§1 no control-flow, §2 no cross-file helpers, §3 no runtime I/O, §11 unestablishable declarations never FAIL, §24 evidence strength, §25 coverage formats, §27 rule lifecycle).
-- Never paste a version-specific form inventory into prose.
+Rule verdicts:
 
-# External evidence freshness
+- `PASS`: available evidence satisfies the rule. Record the rule and evidence; do not claim the test is universally good or that all quality concerns were evaluated.
+- `FAIL`: available evidence establishes that the rule's condition is not satisfied. Read the rule (`explain`), the evidence, and the test at the reported location; confirm the evidence supports the finding before deciding anything. A FAIL is a reason to investigate, not an instruction to change code, and its importance in context is your call.
+- `INDETERMINATE`: available evidence cannot establish PASS or FAIL. Name the missing or ambiguous evidence, collect more when it would materially change the evaluation, rerun, and if uncertainty remains report it. Never present it as PASS.
+- `N/A`: the rule does not apply. Not a failure, not proof of quality, and never force applicability.
 
-- Attach with `--coverage-report <path>`, `--coverage-map from=to`, `--per-test-run`, `--source-revision <rev>`, `--mutation-report <path>`, `--mutation-source-revision <rev>`.
-- Revision mismatch = stale evidence. Staleness/traceability is a field, not part of identity (Q1 ruling: identity_excludes_git). Do not present stale evidence as proof.
-- Mismatched/unparseable external evidence → INDETERMINATE, never FAIL.
-- File identity matching is strict; no basename guess as exact match.
-- Mutation evidence lands ONLY with a matching map: `--mutation-report <path>` plus `--coverage-map <testFile>=<report files key>` (the report's `files` key). Without a matching entry the file-level `mutation_score` is absent → CT-MUT-001 INDETERMINATE (verified across the MUT-001 corpus). Omit `--mutation-source-revision` and the report revision is `unknown` → mismatch → UNKNOWN → INDETERMINATE; supply the real rev when known.
-- Legacy revision keys (`source_revision`/`sourceRevision`/`revision` opts) are a library/provider-API surface only — not CLI-reachable; documented caveat: docs/limitations.md §19.
+Keep rule verdicts separate from analysis status, evaluation status, and completeness. In particular:
 
-# Common mistakes
+- `UNSUPPORTED` is an analysis status, not a rule verdict. Name the unsupported capability; do not claim the affected analysis was completed; consider a supported alternative.
+- `INCOMPLETE` describes an analysis or evidence limitation. Name what was not evaluated and why; rerun once the cause is addressed.
+- A no-verdict report (`evaluationStatus FAILED`, empty `ruleResults`, exit `2`) is neither PASS nor FAIL. `FAILED` is never a rule `FAIL`.
+- Exit code `0` does not mean PASS — a FAIL also exits `0`. Inspect the JSON report.
+- Exit codes: `check` — `0` at least one scope reached a verdict, `1` usage error or crash, `2` no verdict. `doctor` — `0` diagnostic success, `1` usage error, `2` unresolvable dispatch. `explain` — `0` printed, `1` unknown or missing `--rule`. Full matrix in the [command reference](references/command-reference.md).
+- Do not convert INDETERMINATE, N/A, UNSUPPORTED, or missing results into PASS or FAIL.
 
-- Exit 0 as PASS (verified false). UNSUPPORTED as failure. INDETERMINATE as FAIL. N/A as PASS.
-- Trusting `summary` without per-test `ruleResults` + `location`.
-- Trusting goldens without adapter attribution (`adapter`, `decidedBy`) and capability note.
-- Guessing `--type` from filename. Hardcoding form/extension lists.
-- `doctor` on every file "just in case".
-- Editing a test to make verdict green.
+## Investigating a finding
 
-# Rationalization table
+Before recommending any action: read the rule description and its intended measurement; inspect the evidence values and their `availability`, `provenance`, and `evidenceStrength`; read the test at the reported location and understand its purpose; check that the evidence is attributed to the right test; and note any limitation that changes interpretation.
 
-| Rationalization             | Reality                                         |
-| --------------------------- | ----------------------------------------------- |
-| Exit 0 means pass.          | 0 = verdict produced; FAIL also exits 0.        |
-| UNSUPPORTED = broken test.  | No analysis path; out of evidence, not failure. |
-| INDETERMINATE is soft FAIL. | Different bucket; converting overclaims.        |
-| Golden passed.              | Only for that adapter + declared completeness.  |
-| CheckTest FAIL ⇒ edit test. | Advisory; independent judgment wins.            |
-| I know supported forms.     | Ask `doctor --json`; inventories change.        |
+Distinguish which situation you are looking at: a legitimate finding, a false positive, a rule-applicability problem, an adapter defect, an evidence-collection or evidence-attribution defect, an incomplete analysis, an unsupported construct, or a product defect. If you cannot tell, report the uncertainty instead of inventing a conclusion.
 
-# Red flags — stop, do not overclaim
+## Remediating a confirmed finding
 
-- "CheckTest says FAIL, so test is wrong." / "Exit 0, all good."
-- "UNSUPPORTED / INDETERMINATE → count as FAIL/PASS."
-- "Golden passed" without adapter/coverage note.
-- Claiming gate/block/merge decision from CheckTest output.
-- Presenting mismatched-revision coverage/mutation as current.
+Only after the finding is confirmed: decide whether a change is warranted; make the smallest change that preserves what the test is meant to establish; never weaken an assertion or delete coverage merely to clear a FAIL; rerun the affected tests, then CheckTest; compare the new result with the original and report the outcome. A PASS obtained by weakening a test is not an improvement.
 
-# Dealing with feedback
+## Dispositions stay separate from verdicts
 
-| Output                                                        | Action                                                   |
-| ------------------------------------------------------------- | -------------------------------------------------------- |
-| PASS                                                          | Supporting evidence only; still inspect.                 |
-| FAIL                                                          | Question test; inspect at `location.line`; no auto-edit. |
-| INDETERMINATE                                                 | Report unknown policy; not PASS/FAIL.                    |
-| N/A (rule result); NOT_APPLICABLE (availability/completeness) | Report as-is.                                            |
-| UNSUPPORTED (analysisStatus, not a verdict)                   | Opt out; state reason.                                   |
-| INCOMPLETE                                                    | Note `capabilities` gap; no inferred zero.               |
-| exit 1                                                        | Fix invocation/rule id.                                  |
-| exit 2                                                        | No verdict: report gap; do not invent verdict.           |
+CheckTest verdicts and workflow decisions are different records. Dispositions: `FIXED`, `ACCEPTED`, `NOT_A_DEFECT`, `NEEDS_EVIDENCE`, `DEFERRED`, `NOT_APPLICABLE`.
 
-# Dogfood reporting template
+Example: a rule returns FAIL, investigation confirms the condition exists, and the team decides it is intentional. The record is: verdict `FAIL`, disposition `ACCEPTED`, and the reason. The original verdict is never rewritten as PASS.
 
-```
-> CheckTest: `<verdict>` — `<rule id>`
-> Evidence: `<observed evidence and location>`
-> Completeness: `<complete/partial/unavailable>`; adapter: `<id>`
-> Rationale/limit: `<what it supports and what it does not establish>`
-> Review: `<agent's independent assessment or disagreement>`
-```
+## When to rerun
+
+Rerun when a relevant test, assertion, structure, helper, fixture, setup/teardown, test data, or required evidence changes; when coverage or mutation evidence is regenerated; when a prior INCOMPLETE cause has been fixed; or when the existing report is stale relative to the current test state. Do not rerun for unrelated production-code changes, unchanged evidence, or a still-valid report. When unsure, verify freshness rather than assume.
+
+## Reporting
+
+When CheckTest findings are relevant, report: whether CheckTest was run and why or why not; the evaluation scope; the adapter and framework; the evidence sources and their revisions; counts by verdict; unsupported capabilities and incomplete analysis; key diagnostics; the findings that need attention; dispositions; whether remediation or a rerun happened; and where the authoritative report lives. Reuse the report's own fields; do not invent a second reporting schema. A template is in the [command reference](references/command-reference.md).
+
+CheckTest is advisory evidence. The final engineering decision remains yours.

@@ -1,6 +1,6 @@
 {
   "name": "checktest-cli",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "description": "Static test-quality analysis: deterministic evidence collector + rule engine",
   "license": "MIT",
   "bin": {
@@ -14,7 +14,8 @@
     ".agents/skills",
     "docs/limitations.md",
     "docs/supported-syntax.md",
-    "docs/rules/catalog.md"
+    "docs/rules/catalog.md",
+    "schemas/checktest-report.schema.json"
   ],
   "engines": {
     "node": ">=18"

@@ -1,0 +1,14 @@
+{
+  "fixtureId": "CF-NORULE-001",
+  "schemaVersionExpectation": "0.5",
+  "expectedDiscovery": { "ts": { "count": 0, "sites": [] }, "python": { "count": 0, "sites": [] } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "FAILED", "completeness": "NOT_APPLICABLE" },
+  "expectedEvidence": { "perTest": {}, "fileLevel": {} },
+  "expectedApplicability": [],
+  "expectedFindings": [],
+  "expectedTestResults": [],
+  "expectedExplanation": "Zero declarations means zero evaluation scopes; no rule is applied and no verdict is invented.",
+  "expectedDiagnostics": { "reasons": [] },
+  "attribution": { "level": "not-applicable", "note": "No evidence exists at any level." },
+  "knownLimitations": ["N/A is unreachable for the five shipped rules (docs/rules/catalog.md:24); CT-DEMO-001 stub deliberately not used (docs/rules/catalog.md:179-183). No-adapter envelope is not exercised here."]
+}

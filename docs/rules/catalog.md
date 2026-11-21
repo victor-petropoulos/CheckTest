@@ -2,7 +2,7 @@
 
 **Type:** Reference (Diátaxis). **Audience:** rule authors, reviewers, and report consumers who need to know what each shipped rule checks and what its verdict does not establish.
 
-**Scope:** the five rules registered by the production CLI and the one unregistered stub. Registration is explicit, never an import side effect (`src/cli.ts`, `main()` registration comment); the five `registerRule` calls are in `src/cli.ts` `main()` (observed at `:573-577` on 2026-11-19; line numbers shift with unrelated CLI edits). Every field value below is read from the rule's `RuleMetadata` declaration; field semantics come from `src/core/rule.ts:138-225`. The per-rule data tables in the GENERATED section below are produced from that same metadata by `scripts/gen-rule-catalog.ts` (CI fails on regeneration drift); the per-rule prose sections are hand-written.
+**Scope:** the five rules registered by the production CLI and the one unregistered stub. Registration is explicit, never an import side effect (`src/cli.ts`, `main()` registration comment); the five `registerRule` calls are in `src/cli.ts` `main()` (observed at `:589-593` on 2026-11-20; line numbers shift with unrelated CLI edits). Every field value below is read from the rule's `RuleMetadata` declaration; field semantics come from `src/core/rule.ts:138-225`. The per-rule data tables in the GENERATED section below are produced from that same metadata by `scripts/gen-rule-catalog.ts` (CI fails on regeneration drift); the per-rule prose sections are hand-written.
 
 ## Field schema
 
@@ -180,7 +180,7 @@ Generated from `RuleMetadata` by `scripts/gen-rule-catalog.ts` — do not edit t
 
 `src/rules/ct-demo-001.ts` exists **solely to exercise the engine's N/A path**: it applies only to UNIT, so a COMPONENT fixture case proves the applicability guard short-circuits first; it is not a real quality rule and reports no verdict about component tests (`src/rules/ct-demo-001.ts:1-10`). Its metadata (`src/rules/ct-demo-001.ts:17-31`) declares `applies_to: [UNIT]` (`:22`), `severity: info` (`:29`), and `status: RuleStatus.ACTIVE` (`:30`), but **status alone does not make a rule shipped** — registration is the composition point (`src/cli.ts`, `main()` registration block).
 
-Evidence of non-registration, verified live: `grep -n registerRule src/cli.ts` returns one import and exactly **five** `registerRule(CT_*)` calls inside `src/cli.ts` `main()` (observed at `:573-577` on 2026-11-19), naming CT-INT-001, CT-INT-003, CT-INT-004, CT-COV-001, CT-MUT-001 — no `CT_DEMO_001`. The stub is registered only inside tests (`tests/integration/fixtures.test.ts:179`) to drive the N/A fixture case (`case-14-not-applicable`); requesting it from the production CLI is rejected as unknown (`tests/rules/rule-contract.test.ts:151,170-173`). Treat it as an unregistered test fixture, not a sixth active rule, when reading `RuleStatus` values in `src/rules/ct-*.ts`.
+Evidence of non-registration, verified live: `grep -n registerRule src/cli.ts` returns one import and exactly **five** `registerRule(CT_*)` calls inside `src/cli.ts` `main()` (observed at `:589-593` on 2026-11-20), naming CT-INT-001, CT-INT-003, CT-INT-004, CT-COV-001, CT-MUT-001 — no `CT_DEMO_001`. The stub is registered only inside tests (`tests/integration/fixtures.test.ts:179`) to drive the N/A fixture case (`case-14-not-applicable`); requesting it from the production CLI is rejected as unknown (`tests/rules/rule-contract.test.ts:151,170-173`). Treat it as an unregistered test fixture, not a sixth active rule, when reading `RuleStatus` values in `src/rules/ct-*.ts`.
 
 ## Baseline representative fixture set — `tests/fixtures/ct-int-001/`
 
@@ -253,7 +253,7 @@ Each contains only a `report.json` (observed via `ls -la`); none is listed in `C
 ## Sources
 
 - Field contract: `src/core/rule.ts:39-55,138-225`.
-- Registration: `src/cli.ts` `main()` — five `registerRule(...)` calls (`:573-577`); registry validation `src/rules/registry.ts:34-150,171-173`.
+- Registration: `src/cli.ts` `main()` — five `registerRule(...)` calls (observed at `:589-593` on 2026-11-20); registry validation `src/rules/registry.ts:34-150,171-173`.
 - Rule metadata: `src/rules/ct-int-001.ts:54-76`, `ct-int-003.ts:29-93`, `ct-int-004.ts:37-91`, `ct-cov-001.ts:15-37`, `ct-mut-001.ts:31-94`; stub `ct-demo-001.ts:1-31`.
 - Rule contracts: `docs/rules/ct-cov-001-contract.md`, `docs/rules/ct-mut-001-contract.md`.
 - Fixture baseline: `tests/fixtures/ct-int-001/` (44 dirs); `tests/integration/fixtures.test.ts:42-84,202-210,318-329`.

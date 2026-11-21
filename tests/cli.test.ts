@@ -1033,6 +1033,56 @@ describe('CLI adapter dispatch (Phase 8 task B3, ADR-034)', () => {
   });
 });
 
+describe('CLI adapter dispatch from repo root (WP10 F1, ADR-034)', () => {
+  // WP10 F1 (plan task 1b): these run from the REPO ROOT (jest default cwd, NO
+  // process.chdir escape) so the CWD-relative manifest probe (src/cli.ts:737
+  // `(name) => existsSync(name)`) sees the repo-root package.json. Pre-fix that
+  // misroutes every non-TS file to the TS adapter via the manifest layer
+  // (package.json is a TS signature) — see E2E2a/N1 in
+  // .opencode/scratch/checktest-foundation-initiative/wp7-e2e-report.md. Post-fix
+  // the manifest candidates are filtered by extension affinity, so the resolved
+  // adapter is stable across working directories for claimed extensions.
+  const pyPytestFixture = join(__dirname, 'adapters', 'python', 'fixtures', 'pytest_sample.py');
+
+  it('check <.py fixture> from repo root -> exit 0, python-pytest-adapter / extension (was TS/manifest FAILED)', () => {
+    const code = main(['check', '--test', pyPytestFixture, '--type', 'UNIT']);
+    expect(code).toBe(0);
+    const json = report();
+    expect(json.adapter).toBe('python-pytest-adapter');
+    expect(json.decidedBy).toBe('extension');
+  });
+
+  it('check <.rs> from repo root -> exit 2, NO_ADAPTER_MATCHED envelope (was TS/manifest FAILED)', () => {
+    // The .rs fixture lives in a tmpdir (the withUnsupportedRs placement
+    // mechanism, :965-978) but cwd is NOT escaped — it stays at the repo root, so
+    // the CWD-relative manifest probe reproduces F1. The manifest probe reads
+    // cwd, not the file's directory (src/cli.ts:737), so the .rs file location is
+    // irrelevant to dispatch. No .rs is written into the repo working tree.
+    const dir = join(tmpdir(), `checktest-f1-repo-rs-${Date.now()}`);
+    mkdirSync(dir, { recursive: true });
+    const rs = join(dir, 'sample.test.rs');
+    writeFileSync(rs, 'fn test_x() {}\n');
+    try {
+      const code = main(['check', '--test', rs, '--type', 'UNIT']);
+      expect(code).toBe(2);
+      const json = report();
+      expect(json.kind).toBe('check');
+      expect(json.analysisStatus).toBe('UNSUPPORTED');
+      expect(json.reasonCode).toBe('NO_ADAPTER_MATCHED');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('doctor <.py fixture> --json from repo root -> python-pytest-adapter / extension (was TS/manifest)', () => {
+    const code = main(['doctor', '--test', pyPytestFixture, '--json']);
+    expect(code).toBe(0);
+    const json = JSON.parse(stdout);
+    expect(json.adapterId).toBe('python-pytest-adapter');
+    expect(json.decidedBy).toBe('extension');
+  });
+});
+
 describe('CLI --mutation-source-revision (phase9 3.1)', () => {
   const REV = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 
