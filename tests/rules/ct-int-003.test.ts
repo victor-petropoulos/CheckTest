@@ -325,6 +325,55 @@ describe('CT-INT-003 real fixture — case-08-callback through collectAnalysis',
 });
 
 // ---------------------------------------------------------------------------
+// C1 post-fix — subject-scope CT-INT-003 entry now decides.
+//
+// After option (a), the file-level evidence map also carries an
+// `unestablished_assertion` aggregate signal (collector.ts supported()), so the
+// subject-scope CT-INT-003 entry decides instead of returning step-4
+// INDETERMINATE. PRE-FIX characterization (recorded in the implementer notes):
+//   INDETERMINATE: "required evidence 'unestablished_assertion' is absent from
+//   the analysis envelope". The F1 block below asserts the five §11 gap forms
+//   still yield INDETERMINATE (no UNKNOWN laundering).
+describe('C1 — subject-scope CT-INT-003 entry now decides (post-fix)', () => {
+  const fixture = join(__dirname, '..', 'fixtures', 'ct-int-001', 'case-08-callback', 'sample.test.ts');
+
+  it('subject scope FAILS with the callback reason (parity with per-test scopes)', () => {
+    const collected = collectAnalysis(fixture, TestType.UNIT);
+    const { finding } = evaluateRule(CT_INT_003, collected);
+    expect(finding?.result).toBe(RuleResult.FAIL);
+    expect(finding?.reason).toContain(CALLBACK_REASON);
+  });
+
+  it('per-test scopes still decide (FAIL) — unchanged', () => {
+    const collected = collectAnalysis(fixture, TestType.UNIT);
+    const scopes = evaluateTests(CT_INT_003, collected);
+    const perTest = scopes.filter((s) => s.test !== null);
+    expect(perTest.length).toBeGreaterThan(0);
+    expect(perTest.every((s) => s.finding?.result === RuleResult.FAIL)).toBe(true);
+  });
+});
+
+// F1 guard: the five §11 gap forms stay INDETERMINATE at subject scope even
+// under option (a) — no UNKNOWN laundering into KNOWN -> FAIL.
+describe('C1 F1 — §11 gap forms stay INDETERMINATE at subject scope', () => {
+  const gapCases: Array<{ name: string; path: string }> = [
+    { name: 'declaration-only (it.todo)', path: 'case-33-vitest-it-todo' },
+    { name: 'unresolved-body', path: 'case-20-unresolved-body' },
+    { name: 'unsupported-form (it.skip)', path: 'case-49-skipped-modifier-tests' },
+    { name: 'conditional', path: 'case-22-conditional-declaration' },
+    { name: 'aliased', path: 'case-21-dynamic-declaration' },
+  ];
+  for (const { name, path } of gapCases) {
+    it(`${name}: subject scope stays INDETERMINATE`, () => {
+      const f = join(__dirname, '..', 'fixtures', 'ct-int-001', path, 'sample.test.ts');
+      const collected = collectAnalysis(f, TestType.UNIT);
+      const { finding } = evaluateRule(CT_INT_003, collected);
+      expect(finding?.result).toBe(RuleResult.INDETERMINATE);
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // TASK 3 — real-CLI probes (plan task 3 (a)/(b)).
 //
 // The probes live in tests/fixtures/int003-probes/ (tracked; copied verbatim

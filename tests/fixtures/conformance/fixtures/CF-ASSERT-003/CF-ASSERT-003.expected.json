@@ -5,9 +5,20 @@
   "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "COMPLETE" },
   "expectedEvidence": { "perTest": { "assertion_count": { "value": 2, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } }, "fileLevel": {} },
   "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
-  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "PASS", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "PASS", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }],
+  "expectedFindings": {
+    "ts": [
+      { "rule_id": "CT-INT-001", "result": "PASS", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "PASS", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }
+    ],
+    "python": [
+      { "rule_id": "CT-INT-001", "result": "PASS", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }
+    ]
+  },
   "expectedExplanation": "Two recognized assertion forms in one test body.",
   "expectedDiagnostics": { "reasons": [] },
   "attribution": { "level": "individual-test" },
-  "knownLimitations": ["Form-based count, not a semantic count of distinct checks."]
+  "knownLimitations": ["Form-based count, not a semantic count of distinct checks.", "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-PY-6 expectation-side ('Amend expectations'): python CT-INT-003 pins INDETERMINATE; ts branch stays PASS. Findings list converted array->language-keyed object."]
 }

@@ -36,7 +36,13 @@ import {
   Completeness,
   TestType,
 } from '../../src/core/analysis';
-import { Availability, EvidenceConflict, EvidenceRecord, EvidenceStrength } from '../../src/core/evidence';
+import {
+  Availability,
+  CollectionStatus,
+  EvidenceConflict,
+  EvidenceRecord,
+  EvidenceStrength,
+} from '../../src/core/evidence';
 import { evaluateRule, evaluateTests } from '../../src/core/evaluation';
 import { EvaluationStatus, RuleFinding, RuleResult } from '../../src/core/result';
 import { applyCoverageReport, parseCoverageReport } from '../../src/providers/coverage';
@@ -101,6 +107,24 @@ const CASES = [
   'case-48-control-flow',
   'case-49-skipped-modifier-tests',
   'case-50-paths-locations',
+  // Plan task 3 (T3 RED) — matcher-expansion conformance fixtures from the
+  // council FROZEN FORM SET (2-researcher-notes.md): negated family, plain
+  // unknown family, and the OQ1 near-miss that must stay UNKNOWN/INDETERMINATE.
+  'case-51-negated-matchers',
+  'case-52-unknown-matchers',
+  'case-53-nearmiss-negation',
+  'case-54-literal-it-each',
+  'case-55-dynamic-it-each',
+  // Plan task 13 (T13 RED) — supertest LOCAL-VAR false positive (T14 guard).
+  'case-56-supertest-local-var',
+  // T11 (owner ruling 2026-11-22) — .cjs extension characterization: a
+  // CommonJS smoke test must be ANALYZED, not UNSUPPORTED / no-adapter.
+  'case-57-cjs-extension',
+  // C2/S (ruling 2026-11-22) — supertest binding resolution: TRUE case where
+  // the local var's initializer chain carries an HTTP verb (verb-in-initializer
+  // test) and the NEAR-MISS where it does not (stays unrecognized/FAIL).
+  'case-58-supertest-local-var-chain',
+  'case-59-supertest-nearmiss-no-verb-initializer',
 ] as const;
 
 interface ExpectedSidecar {
@@ -225,8 +249,8 @@ function manifestExists(path: string): boolean {
 }
 
 describe('CT-INT-001 fixtures (plan §4)', () => {
-  it('declares exactly the planned cases (41 original + 6 Phase 1d adversarial = 47), each with a sidecar', () => {
-    expect(CASES).toHaveLength(47);
+  it('declares exactly the planned cases (41 original + 6 Phase 1d adversarial + 3 matcher-expansion + 2 it.each-literal/dynamic + 1 supertest-local-var + 1 cjs-extension + 2 supertest binding-resolution (TRUE + NEAR-MISS) = 56), each with a sidecar', () => {
+    expect(CASES).toHaveLength(56);
     for (const caseName of CASES) {
       expect(load(caseName).expected.case).toBe(caseName);
     }
@@ -369,7 +393,8 @@ describe('CT-INT-001 fixture acceptance details (plan task 5)', () => {
  * GROUP P — per-test (plan §4). P1, P2, P3, P4 and P6 are already asserted at
  * the unit level (collector.test.ts per-test records; evaluation.test.ts
  * evaluateTests; reporters/json.test.ts D1 leak), so only the cases not yet
- * covered are added here: P5 (`it.each` → own record, UNKNOWN, never FAIL) and
+ * covered are added here: P5 (`it.each` literal table → own record, rows x
+ * straight-line assertions, KNOWN/PASS, never FAIL) and
  * P7 (assertion after unconditional return in A → A INDETERMINATE, sibling B
  * unchanged). Each is a named `it(...)`; no src/ is touched.
  */
@@ -400,7 +425,7 @@ describe('GROUP P — per-test (plan §4)', () => {
     expect(evaluateTests(CT_INT_001, output)).toEqual([]);
   });
 
-  it('P5: it.each gets its own record, availability UNKNOWN, never FAIL', () => {
+  it('P5: it.each over a literal table counts rows x straight-line assertions, KNOWN, own record', () => {
     const file = writeFixture(
       JEST +
         "it.each([[1, 2]])('adds %i', (a: number, b: number) => {\n" +
@@ -411,25 +436,27 @@ describe('GROUP P — per-test (plan §4)', () => {
     const output = collectAnalysis(file, TestType.UNIT);
     const tests = output.tests ?? [];
     expect(tests).toHaveLength(2);
-    // `it.each` is a declaration with its own identity (form + line), never
-    // folded into the sibling test's record.
+    // T9 literal-table model (7-researcher-notes (a)/(c)): 1 row x 1
+    // straight-line assertion = value 1, KNOWN, COMPLETE. The declaration keeps
+    // its own identity (form + line), never folded into the sibling's record.
     const each = tests.find((t) => t.test.declaration === 'it.each');
     expect(each).toBeDefined();
     const eachRecord = each!.evidence[EVIDENCE_ASSERTION_COUNT];
-    expect(eachRecord.value).toBeUndefined();
-    expect(eachRecord.availability).toBe(Availability.UNKNOWN);
-    expect(each!.declaration_gap).toContain("'it.each'");
+    expect(eachRecord.value).toBe(1);
+    expect(eachRecord.availability).toBe(Availability.KNOWN);
+    expect(eachRecord.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect(each!.declaration_gap).toBeNull();
     // The sibling asserted test carries its own KNOWN value.
     const asserted = tests.find((t) => t.test.name === 'asserted');
     expect(asserted).toBeDefined();
     expect(asserted!.evidence[EVIDENCE_ASSERTION_COUNT].value).toBe(1);
     expect(asserted!.evidence[EVIDENCE_ASSERTION_COUNT].availability).toBe(Availability.KNOWN);
-    // Rule evaluation: `it.each` can never be read as a zero-assertion FAIL
-    // (conservative) → INDETERMINATE; the sibling verdict is unaffected → PASS.
+    // Rule evaluation: a countable table is an established basis → PASS; the
+    // sibling verdict is independent and also PASS.
     const results = evaluateTests(CT_INT_001, output);
     const eachResult = results.find((r) => r.test?.declaration === 'it.each');
     expect(eachResult).toBeDefined();
-    expect(eachResult!.finding?.result).toBe(RuleResult.INDETERMINATE);
+    expect(eachResult!.finding?.result).toBe(RuleResult.PASS);
     const assertedResult = results.find((r) => r.test?.name === 'asserted');
     expect(assertedResult!.finding?.result).toBe(RuleResult.PASS);
   });

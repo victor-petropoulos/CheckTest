@@ -47,7 +47,6 @@ export function evaluationScopes(
   const hasFileLevelMutationEvidence =
     analysis.tests !== undefined &&
     analysis.tests.length > 0 &&
-    evaluations.length > 0 &&
     evaluation.finding !== null &&
     evaluation.finding.rule_id === CT_MUT_001.id &&
     analysis.evidence.mutation_score !== undefined &&

@@ -249,7 +249,7 @@ describe('collectAnalysis — unclassifiable constructs', () => {
 
   it('records an unsupported expect matcher rather than ignoring it', () => {
     const output = collectAnalysis(
-      writeFixture(`${JEST_IMPORT}it('nope', () => { expect(1).toBeGreaterThan(0); });\n`),
+      writeFixture(`${JEST_IMPORT}it('nope', () => { expect(1).toBeOneOf([1,2]); });\n`),
       TestType.UNIT,
     );
     expect(assertionCount(output).availability).toBe(Availability.UNKNOWN);
@@ -353,7 +353,7 @@ describe('collectAnalysis — executability (A7)', () => {
 });
 
 describe('collectAnalysis — test declaration gaps (F)', () => {
-  it('reports each/skip/todo declarations: PARTIAL coverage, INCOMPLETE analysis', () => {
+  it('counts each over a literal table; skip/todo declarations stay gapped', () => {
     const output = collectAnalysis(
       writeFixture(
         `${JEST_IMPORT}it.each([[1, 2]])('adds %i', (a: number, b: number) => {\n  expect(a + b).toBe(b);\n});\nit.skip('skipped', () => {\n  expect(1).toBe(1);\n});\nit.todo('pending');\n`,
@@ -362,15 +362,17 @@ describe('collectAnalysis — test declaration gaps (F)', () => {
     );
     const record = assertionCount(output);
 
-    // Assertions inside each/skip bodies are recognized but their execution
-    // frequency cannot be established statically -> unestablished, value 0.
-    expect(record.value).toBe(0);
+    // T9 — `it.each([[1, 2]])` is one countable literal row x one straight-line
+    // assertion = 1 established; `it.skip`'s body still cannot be established
+    // and `it.todo` has no body, so the FILE stays PARTIAL/UNKNOWN.
+    expect(record.value).toBe(1);
     expect(record.availability).toBe(Availability.UNKNOWN);
     expect(record.coverage.status).toBe(CollectionStatus.PARTIAL);
     expect(record.reason).toContain('unestablished executability');
-    // No declaration is silently omitted: all three are counted and named.
-    expect(record.reason).toContain('3 test declaration(s) recognized, 3 not fully supported');
-    expect(record.reason).toContain("'it.each' is not a supported test declaration form");
+    // No declaration is silently omitted: all three are named, the two gapped
+    // ones are still counted as not fully supported.
+    expect(record.reason).toContain('3 test declaration(s) recognized, 2 not fully supported');
+    expect(record.reason).not.toContain("'it.each' is not a supported test declaration form");
     expect(record.reason).toContain("'it.skip' is not a supported test declaration form");
     expect(record.reason).toContain("'it.todo' declares no executable test body");
     // A capability gap degrades BOTH dimensions, separately (SPEC:366).
@@ -485,7 +487,7 @@ describe('collectAnalysis — declaration boundary coverage (WP1.3)', () => {
     return output.tests ?? [];
   }
 
-  it('it.each gets its own record: value absent, availability UNKNOWN, never FAIL', () => {
+  it('it.each over a literal table: rows x straight-line assertions, KNOWN, never FAIL', () => {
     const output = collectAnalysis(
       writeFixture(
         JEST + "it.each([[1, 2]])('adds %i', (a: number, b: number) => {\n" + '  expect(a + b).toBe(b);\n' + '});\n',
@@ -494,16 +496,47 @@ describe('collectAnalysis — declaration boundary coverage (WP1.3)', () => {
     );
     const record = assertionCount(output);
 
-    expect(record.availability).toBe(Availability.UNKNOWN);
-    expect(record.coverage.status).toBe(CollectionStatus.PARTIAL);
-    expect(record.reason).toContain("'it.each' is not a supported test declaration form");
+    // T9 (7-researcher-notes (a)/(c)): 1 row x 1 straight-line assertion = 1,
+    // fully established — the unsupported-form gap is closed for this shape.
+    expect(record.value).toBe(1);
+    expect(record.availability).toBe(Availability.KNOWN);
+    expect(record.coverage.status).toBe(CollectionStatus.COMPLETE);
 
     const each = perTest(output).find((t) => t.test.declaration === 'it.each');
     expect(each).toBeDefined();
     const eachRecord = each!.evidence[EVIDENCE_ASSERTION_COUNT];
-    expect(eachRecord.value).toBeUndefined();
-    expect(eachRecord.availability).toBe(Availability.UNKNOWN);
-    expect(each!.declaration_gap).toContain("'it.each'");
+    expect(eachRecord.value).toBe(1);
+    expect(eachRecord.availability).toBe(Availability.KNOWN);
+    expect(each!.declaration_gap).toBeNull();
+  });
+
+  it('it.each over a NON-literal table keeps the unsupported-form gap (identifier, call, template)', () => {
+    const tick = String.fromCharCode(96);
+    const output = collectAnalysis(
+      writeFixture(
+        JEST +
+          'const rows = [[1, 2]];\n' +
+          "it.each(rows)('ident %i', (a: number, b: number) => { expect(a + b).toBe(b); });\n" +
+          "it.each(makeRows())('call %i', (a: number, b: number) => { expect(a + b).toBe(b); });\n" +
+          `it.each${tick}a | b\n1 | 2${tick}('tpl', ({ a, b }: { a: number; b: number }) => { expect(a + b).toBe(3); });\n` +
+          'function makeRows(): Array<Array<number>> { return [[1, 2]]; }\n',
+      ),
+      TestType.UNIT,
+    );
+    const record = assertionCount(output);
+
+    // Not statically enumerable without executing the file: no count is
+    // fabricated, so the gap, UNKNOWN availability and absent value stay.
+    expect(record.value).toBe(0);
+    expect(record.availability).toBe(Availability.UNKNOWN);
+    expect(record.coverage.status).toBe(CollectionStatus.PARTIAL);
+    expect(record.reason).toContain("'it.each' is not a supported test declaration form");
+    for (const each of perTest(output).filter((t) => t.test.declaration === 'it.each')) {
+      expect(each.evidence[EVIDENCE_ASSERTION_COUNT].value).toBeUndefined();
+      expect(each.evidence[EVIDENCE_ASSERTION_COUNT].availability).toBe(Availability.UNKNOWN);
+      expect(each.declaration_gap).toContain("'it.each'");
+    }
+    expect(perTest(output).filter((t) => t.test.declaration === 'it.each')).toHaveLength(3);
   });
 
   it('it.skip gets its own record: value absent, availability UNKNOWN, never FAIL', () => {
@@ -773,7 +806,7 @@ describe('D10 evidenceStrength — every shipped assertion form', () => {
 
   it('an unsupported matcher form is UNSUPPORTED', () => {
     const output = collectAnalysis(
-      writeFixture(`${JEST_IMPORT}it('nope', () => { expect(1).toBeGreaterThan(0); });\n`),
+      writeFixture(`${JEST_IMPORT}it('nope', () => { expect(1).toBeOneOf([1,2]); });\n`),
       TestType.UNIT,
     );
     expect(assertionCount(output).evidenceStrength).toBe(EvidenceStrength.UNSUPPORTED);

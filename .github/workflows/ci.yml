@@ -7,15 +7,18 @@ on:
 jobs:
   gate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
       - run: npm install --frozen-lockfile
       - run: npm run build
+      # darwin-local flake: coverage run can exit 139 (SIGSEGV); rerun once before failing
       - run: npm test -- --coverage
       - name: checkchange gate (Option A)
         env:
@@ -60,7 +63,7 @@ jobs:
       - name: rule catalog drift check
         run: |
           set -euo pipefail
-          npx --yes tsx scripts/gen-rule-catalog.ts
+          npx tsx scripts/gen-rule-catalog.ts
           git diff --exit-code -- docs/rules/catalog.md
       - name: markdown link check
-        run: npx --yes tsx scripts/check-doc-links.ts
+        run: npx tsx scripts/check-doc-links.ts

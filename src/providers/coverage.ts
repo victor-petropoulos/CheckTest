@@ -7,6 +7,8 @@
  *
  * Primary format: Istanbul-style JSON `{ covered: { "/abs/file.js": [null|1, ...] } }`.
  * Secondary: c8-style JSON `{ files: { path: { coveredLines: number[] } } }`.
+ * Tertiary: raw vitest/v8 `coverage-final.json` — a flat Istanbul map
+ * `{ "/abs/file.js": { statementMap, s, ... } }` ("shape A"), parsed natively.
  * Anything else (or a missing/unreadable/malformed report) degrades to
  * explicit UNKNOWN records with a reason — never a fabricated zero, never a
  * crash.
@@ -147,6 +149,13 @@ function coverageBlock(status: CollectionStatus): EvidenceRecord['coverage'] {
   };
 }
 
+/** Freshness-failure reason shared by every external-report record (one wording). */
+function freshnessReason(revision: string, analyzed: string | undefined): string {
+  return revision === 'unknown'
+    ? 'report revision unknown; freshness cannot be established'
+    : `source revision mismatch: report ${revision} != analyzed ${analyzed ?? ''}`.trim();
+}
+
 function makeIstanbulRecord(
   provider: string,
   version: string,
@@ -176,11 +185,7 @@ function makeIstanbulRecord(
     provider,
     provider_version: version,
     source_revision: revision,
-    reason: unavailable
-      ? revision === 'unknown'
-        ? 'report revision unknown; freshness cannot be established'
-        : `source revision mismatch: report ${revision} != analyzed ${analyzed ?? ''}`.trim()
-      : undefined,
+    reason: unavailable ? freshnessReason(revision, analyzed) : undefined,
     evidenceStrength: unavailable ? EvidenceStrength.UNSUPPORTED : undefined,
   });
 }
@@ -199,6 +204,29 @@ function parseIstanbul(
     records.set(file, makeIstanbulRecord(provider, version, revision, lines, mismatch, analyzed));
   }
   return records;
+}
+
+/**
+ * Fail-closed record for a report entry whose data is missing or malformed
+ * (F3): never a measured zero. Shared by the c8 and raw-vitest shape-A
+ * parsers; a caller may embed a freshness reason in `reason`.
+ */
+function makeMalformedRecord(provider: string, version: string, revision: string, reason: string): EvidenceRecord {
+  return makeEvidenceRecord({
+    type: 'line_coverage',
+    value: [],
+    availability: Availability.UNKNOWN,
+    provenance: Provenance.EXTERNAL,
+    source: provider,
+    collector_version: version,
+    scope: EVIDENCE_SCOPE_TEST_BODY,
+    coverage: coverageBlock(CollectionStatus.UNAVAILABLE),
+    provider,
+    provider_version: version,
+    source_revision: revision,
+    reason,
+    evidenceStrength: EvidenceStrength.UNSUPPORTED,
+  });
 }
 
 function parseC8(
@@ -225,22 +253,112 @@ function parseC8(
     const unavailable = mismatch || unknownRevision || malformed;
     const availability = unavailable ? Availability.UNKNOWN : Availability.KNOWN;
     const status = unavailable ? CollectionStatus.UNAVAILABLE : CollectionStatus.COMPLETE;
-    const record = makeEvidenceRecord({
-      type: 'line_coverage',
-      value: malformed ? [] : unavailable ? undefined : coveredLines,
-      availability,
-      provenance: Provenance.EXTERNAL,
-      source: provider,
-      collector_version: version,
-      scope: EVIDENCE_SCOPE_TEST_BODY,
-      coverage: coverageBlock(status),
-      provider,
-      provider_version: version,
-      source_revision: revision,
-      reason: malformed ? 'missing or invalid coveredLines array' : undefined,
-      evidenceStrength: unavailable ? EvidenceStrength.UNSUPPORTED : undefined,
-    });
+    const record = malformed
+      ? makeMalformedRecord(provider, version, revision, 'missing or invalid coveredLines array')
+      : makeEvidenceRecord({
+          type: 'line_coverage',
+          value: unavailable ? undefined : coveredLines,
+          availability,
+          provenance: Provenance.EXTERNAL,
+          source: provider,
+          collector_version: version,
+          scope: EVIDENCE_SCOPE_TEST_BODY,
+          coverage: coverageBlock(status),
+          provider,
+          provider_version: version,
+          source_revision: revision,
+          evidenceStrength: unavailable ? EvidenceStrength.UNSUPPORTED : undefined,
+        });
     records.set(file, record);
+  }
+  return records;
+}
+
+/**
+ * Raw vitest/v8 `coverage-final.json` ("shape A"): a FLAT Istanbul map
+ * `{ "<absPath>": { path, statementMap, s, b, f, fnMap, branchMap, meta } }`.
+ * It matches neither the `covered`-nested shape (parseIstanbul) nor the
+ * `files.<path>.coveredLines` shape (parseC8); detected when at least one
+ * top-level entry carries both a `statementMap` object and a hit-count map `s`.
+ */
+function isVitestShapeA(report: Record<string, unknown>): boolean {
+  return Object.values(report).some((entry) => {
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) return false;
+    const rec = entry as Record<string, unknown>;
+    const statementMap = rec.statementMap;
+    const hits = rec.s;
+    return (
+      statementMap !== null &&
+      typeof statementMap === 'object' &&
+      !Array.isArray(statementMap) &&
+      hits !== null &&
+      typeof hits === 'object' &&
+      !Array.isArray(hits)
+    );
+  });
+}
+
+/**
+ * Shape-A conversion — the single native implementation of the derive() recipe
+ * (`validation/cov001-per-test-recipe.sh:124-145`): covered lines are the
+ * sorted unique `statementMap[*].start.line` values whose `s` hit count is > 0.
+ * Returns null when the entry is malformed (fail closed, F3).
+ */
+function shapeACoveredLines(statementMap: Record<string, unknown>, hits: Record<string, unknown>): number[] | null {
+  const lines = new Set<number>();
+  for (const [key, hit] of Object.entries(hits)) {
+    // Fail closed: a non-numeric hit count is not measured data.
+    if (typeof hit !== 'number') return null;
+    if (hit <= 0) continue;
+    const stmt = statementMap[key];
+    const start = stmt !== null && typeof stmt === 'object' ? (stmt as Record<string, unknown>).start : undefined;
+    const line = start !== null && typeof start === 'object' ? (start as Record<string, unknown>).line : undefined;
+    // A positive hit whose statement location cannot be established is malformed:
+    // skipping it would silently shrink the measured line set toward zero.
+    if (typeof line !== 'number') return null;
+    lines.add(line);
+  }
+  return Array.from(lines).sort((a, b) => a - b);
+}
+
+function parseVitestShapeA(
+  report: Record<string, unknown>,
+  provider: string,
+  version: string,
+  revision: string,
+  mismatch: boolean,
+  analyzed: string | undefined,
+): Map<string, EvidenceRecord> {
+  const records = new Map<string, EvidenceRecord>();
+  for (const [file, entry] of Object.entries(report)) {
+    const rec = (entry ?? {}) as Record<string, unknown>;
+    const statementMap = rec.statementMap;
+    const hits = rec.s;
+    if (
+      statementMap === null ||
+      typeof statementMap !== 'object' ||
+      Array.isArray(statementMap) ||
+      hits === null ||
+      typeof hits !== 'object' ||
+      Array.isArray(hits)
+    ) {
+      const reason = mismatch
+        ? `${freshnessReason(revision, analyzed)}; missing or invalid statementMap/s coverage entry`
+        : 'missing or invalid statementMap/s coverage entry';
+      records.set(file, makeMalformedRecord(provider, version, revision, reason));
+      continue;
+    }
+    const lines = shapeACoveredLines(statementMap as Record<string, unknown>, hits as Record<string, unknown>);
+    if (lines === null) {
+      const reason = mismatch
+        ? `${freshnessReason(revision, analyzed)}; missing or invalid statementMap/s coverage entry`
+        : 'missing or invalid statementMap/s coverage entry';
+      records.set(file, makeMalformedRecord(provider, version, revision, reason));
+      continue;
+    }
+    // Valid entries reuse the Istanbul record semantics verbatim (F3 freshness
+    // handling included) — no replica of makeIstanbulRecord's policy.
+    records.set(file, makeIstanbulRecord(provider, version, revision, lines, mismatch, analyzed));
   }
   return records;
 }
@@ -292,6 +410,18 @@ export function parseCoverageReport(path: string, opts?: CoverageReportOptions):
 
   const obj = json as Record<string, unknown>;
 
+  return parseCoverageObject(obj, providerBase, version, revision, mismatch, analyzed, providerOverride);
+}
+
+function parseCoverageObject(
+  obj: Record<string, unknown>,
+  providerBase: string,
+  version: string,
+  revision: string,
+  mismatch: boolean,
+  analyzed: string | undefined,
+  providerOverride: string | undefined,
+): CoverageReportResult {
   if (obj.covered !== undefined && typeof obj.covered === 'object' && obj.covered !== null) {
     const provider = providerOverride ?? 'istanbul';
     const records = parseIstanbul(
@@ -319,14 +449,25 @@ export function parseCoverageReport(path: string, opts?: CoverageReportOptions):
     // attach reason to records on mismatch; a per-record fail-closed reason
     // (e.g. malformed coveredLines) is kept rather than clobbered
     if (mismatch) {
-      const reason =
-        revision === 'unknown'
-          ? 'report revision unknown; freshness cannot be established'
-          : `source revision mismatch: report ${revision} != analyzed ${analyzed ?? ''}`.trim();
+      const reason = freshnessReason(revision, analyzed);
       for (const rec of records.values()) {
         rec.reason = rec.reason !== undefined ? `${reason}; ${rec.reason}` : reason;
       }
     }
+    const result: CoverageReportResult = {
+      records,
+      provider,
+      provider_version: version,
+      source_revision: revision,
+    };
+    if (records.size === 0) result.reason = 'coverage report contained no file entries';
+    if (mismatch) result.mismatch = true;
+    return result;
+  }
+
+  if (isVitestShapeA(obj)) {
+    const provider = providerOverride ?? 'vitest';
+    const records = parseVitestShapeA(obj, provider, version, revision, mismatch, analyzed);
     const result: CoverageReportResult = {
       records,
       provider,
@@ -372,21 +513,6 @@ function unknownRecord(parsed: CoverageReportResult, reason: string): EvidenceRe
     reason,
     evidenceStrength: EvidenceStrength.UNSUPPORTED,
   });
-}
-
-function isLineCovered(lines: unknown, declLine: number): boolean {
-  if (!Array.isArray(lines)) return false;
-  if (lines.some((x) => x === null)) {
-    const idx = declLine - 1;
-    return idx >= 0 && idx < lines.length && lines[idx] === 1;
-  }
-  if (!lines.every((x) => typeof x === 'number')) return false;
-  const nums = lines as number[];
-  if (nums.length > 0 && Math.max(...nums) > 1) {
-    return nums.includes(declLine);
-  }
-  const idx = declLine - 1;
-  return idx >= 0 && idx < nums.length && nums[idx] === 1;
 }
 
 function countCoveredLines(lines: unknown): number {
@@ -464,43 +590,6 @@ function hasPartialSibling(parsed: CoverageReportResult, mappedTo: string): bool
   return false;
 }
 
-function perDeclarationRecord(
-  fileRecord: EvidenceRecord,
-  parsed: CoverageReportResult,
-  declLine: number,
-  file: string,
-): EvidenceRecord {
-  const provider = fileRecord.provider ?? parsed.provider;
-  const version = fileRecord.provider_version ?? parsed.provider_version;
-  const revision = fileRecord.source_revision ?? parsed.source_revision;
-  const availability = fileRecord.availability;
-  const status = fileRecord.coverage.status;
-  const reason = fileRecord.reason;
-
-  let value: unknown;
-  if (availability === Availability.KNOWN) {
-    value = isLineCovered(fileRecord.value, declLine) ? 1 : 0;
-  } else {
-    value = undefined;
-  }
-
-  return makeEvidenceRecord({
-    type: 'line_coverage',
-    value,
-    availability,
-    provenance: Provenance.EXTERNAL,
-    source: provider,
-    collector_version: version,
-    scope: EVIDENCE_SCOPE_TEST_BODY,
-    coverage: coverageBlock(status),
-    provider,
-    provider_version: version,
-    source_revision: revision,
-    location: { file, line: declLine },
-    reason,
-  });
-}
-
 export function applyCoverageReport(
   analysis: AnalysisOutput,
   reportPath: string,
@@ -561,7 +650,10 @@ export function applyCoverageReport(
       if (basenameMatches.length > 1) {
         fileRecord = unknownRecord(parsed, `ambiguous basename match: ${basenameMatches.slice().sort().join(', ')}`);
       } else {
-        fileRecord = unknownRecord(parsed, `no coverage data for ${analysis.subject.file}`);
+        fileRecord = unknownRecord(
+          parsed,
+          `no coverage data for ${analysis.subject.file} (no --coverage-map <from>=<to> entry maps this test file to a production file with coverage)`,
+        );
       }
     }
   }
@@ -601,18 +693,22 @@ export function applyCoverageReport(
   };
 
   if (analysis.tests !== undefined) {
-    next.tests = analysis.tests.map((testScope) => ({
-      ...testScope,
-      evidence: {
-        ...testScope.evidence,
-        line_coverage:
-          perDeclNumericSource !== undefined
-            ? scopedPerDeclarationRecord(perDeclNumericSource, parsed, analysis.subject.file, testScope.test.line)
-            : isMapped
-              ? advisoryPerDeclarationRecord(fileRecord, parsed, mappingReason)
-              : perDeclarationRecord(fileRecord, parsed, testScope.test.line, analysis.subject.file),
-      },
-    }));
+    next.tests = analysis.tests.map((testScope) => {
+      // B5 C-2 (Decisions #12): ordinary non-mapped coverage MUST NOT be copied
+      // into per-declaration evidence (CF-COV-001 sidecar perTest.line_coverage
+      // = MUST_BE_ABSENT). Only the mapped branches attribute per-declaration.
+      const lineCoverage =
+        perDeclNumericSource !== undefined
+          ? scopedPerDeclarationRecord(perDeclNumericSource, parsed, analysis.subject.file, testScope.test.line)
+          : isMapped
+            ? advisoryPerDeclarationRecord(fileRecord, parsed, mappingReason)
+            : undefined;
+      return {
+        ...testScope,
+        evidence:
+          lineCoverage === undefined ? testScope.evidence : { ...testScope.evidence, line_coverage: lineCoverage },
+      };
+    });
   }
 
   return next;

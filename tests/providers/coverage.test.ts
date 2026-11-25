@@ -83,8 +83,8 @@ describe('coverage provider', () => {
 });
 
 // WP4.1 task 56b coverage-gap tests below: exercise the private helpers
-// (parseC8, isLineCovered, findFileRecord, perDeclarationRecord) through the
-// two public entry points — tests MUST NOT modify src/.
+// (parseC8, findFileRecord) through the two public entry points — tests MUST
+// NOT modify src/. (B5 C-2 removed isLineCovered/perDeclarationRecord.)
 
 function analysisWith(file: string, declLines: number[] = []): AnalysisOutput {
   return {
@@ -235,57 +235,14 @@ describe('parseC8 via parseCoverageReport', () => {
   });
 });
 
-describe('isLineCovered via applyCoverageReport', () => {
-  const DECL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 99];
-
-  it('Istanbul null-entried hit-map: 1 at decl line, 0 elsewhere', () => {
-    const p = tmpFile('islc-istanbul.json', JSON.stringify({ covered: { 's.test.ts': [null, 1, 0, 1] } }));
-    const out = applyCoverageReport(analysisWith('s.test.ts', DECL), p);
-    const byLine = (l: number) => out.tests!.find((t) => t.test.line === l)!.evidence.line_coverage.value;
-    expect(byLine(2)).toBe(1); // lines[1] === 1
-    expect(byLine(3)).toBe(0); // lines[2] === 0
-    expect(byLine(4)).toBe(1); // lines[3] === 1
-    expect(byLine(1)).toBe(0); // lines[0] === null
-    expect(byLine(99)).toBe(0); // out of range
-    expect(byLine(10)).toBe(0); // out of range
-  });
-
-  it('dense 0/1 array without nulls uses index lookup, 0 for out-of-range', () => {
-    const p = tmpFile('islc-dense.json', JSON.stringify({ covered: { 's.test.ts': [1, 0, 1] } }));
-    const out = applyCoverageReport(analysisWith('s.test.ts', [1, 2, 3, 4, 0]), p);
-    const byLine = (l: number) => out.tests!.find((t) => t.test.line === l)!.evidence.line_coverage.value;
-    expect(byLine(1)).toBe(1);
-    expect(byLine(2)).toBe(0);
-    expect(byLine(3)).toBe(1);
-    expect(byLine(4)).toBe(0); // beyond end
-    expect(byLine(0)).toBe(0); // idx -1
-  });
-
-  it('sparse max>1 numeric array (c8 coveredLines) uses includes()', () => {
-    const p = tmpFile('islc-sparse.json', JSON.stringify({ files: { 's.test.ts': { coveredLines: [1, 3, 7] } } }));
-    const out = applyCoverageReport(analysisWith('s.test.ts', [2, 7, 99]), p);
-    const byLine = (l: number) => out.tests!.find((t) => t.test.line === l)!.evidence.line_coverage.value;
-    expect(byLine(7)).toBe(1); // coveredLines includes 7
-    expect(byLine(2)).toBe(0); // not listed
-    expect(byLine(99)).toBe(0); // not listed, out of range
-  });
-
-  it('array with non-numeric non-null entries yields not covered', () => {
-    const p = tmpFile('islc-mixed.json', JSON.stringify({ covered: { 's.test.ts': ['a', 'b'] } }));
-    const out = applyCoverageReport(analysisWith('s.test.ts', [1, 2]), p);
-    expect(out.evidence.line_coverage.availability).toBe(Availability.KNOWN);
-    // isLineCovered: no nulls, not all numbers → false → 0
-    expect(out.tests![0].evidence.line_coverage.value).toBe(0);
-  });
-});
-
 describe('findFileRecord via applyCoverageReport (fail-closed join)', () => {
   it('exact-key match', () => {
     const p = tmpFile('ffr-exact.json', JSON.stringify({ covered: { 's.test.ts': [1, 1] } }));
     const out = applyCoverageReport(analysisWith('s.test.ts', [1]), p);
     expect(out.evidence.line_coverage.value).toEqual([1, 1]);
     expect(out.evidence.line_coverage.availability).toBe(Availability.KNOWN);
-    expect(out.tests![0].evidence.line_coverage.value).toBe(1); // per-decl: decl line 1 is covered
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
   });
 
   it('exact match: absolute report key vs relative subject path matches after normalize', () => {
@@ -294,7 +251,8 @@ describe('findFileRecord via applyCoverageReport (fail-closed join)', () => {
     const out = applyCoverageReport(analysisWith('s.test.ts', [1]), p);
     expect(out.evidence.line_coverage.value).toEqual([1, 1]);
     expect(out.evidence.line_coverage.availability).toBe(Availability.KNOWN);
-    expect(out.tests![0].evidence.line_coverage.value).toBe(1); // per-decl: decl line 1 is covered
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
   });
 
   it('duplicate basenames from different directories: exact match only, basename-only misses', () => {
@@ -313,11 +271,8 @@ describe('findFileRecord via applyCoverageReport (fail-closed join)', () => {
     expect(byBasename.evidence.line_coverage.reason).toContain('ambiguous basename match:');
     expect(byBasename.evidence.line_coverage.reason).toContain('/one/s.test.ts');
     expect(byBasename.evidence.line_coverage.reason).toContain('/two/s.test.ts');
-    const decl = byBasename.tests![0].evidence.line_coverage;
-    expect(decl.availability).toBe(Availability.UNKNOWN);
-    expect(decl.value).toBeUndefined();
-    expect(decl.reason).toContain('ambiguous basename match:');
-    expect(decl.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(byBasename.tests![0].evidence.line_coverage).toBeUndefined();
   });
 
   it('no basename fallback: absolute report key vs relative subject -> UNKNOWN + reason', () => {
@@ -327,11 +282,8 @@ describe('findFileRecord via applyCoverageReport (fail-closed join)', () => {
     expect(out.evidence.line_coverage.availability).toBe(Availability.UNKNOWN);
     expect(out.evidence.line_coverage.reason).toContain('no coverage data for s.test.ts');
     expect(out.evidence.line_coverage.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
-    const decl = out.tests![0].evidence.line_coverage;
-    expect(decl.availability).toBe(Availability.UNKNOWN);
-    expect(decl.value).toBeUndefined();
-    expect(decl.reason).toContain('no coverage data');
-    expect(decl.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
   });
 
   it('sole unrelated report entry -> fail-closed UNKNOWN, no match', () => {
@@ -341,11 +293,8 @@ describe('findFileRecord via applyCoverageReport (fail-closed join)', () => {
     expect(out.evidence.line_coverage.availability).toBe(Availability.UNKNOWN);
     expect(out.evidence.line_coverage.reason).toContain('no coverage data for s.test.ts');
     expect(out.evidence.line_coverage.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
-    const decl = out.tests![0].evidence.line_coverage;
-    expect(decl.availability).toBe(Availability.UNKNOWN);
-    expect(decl.value).toBeUndefined();
-    expect(decl.reason).toContain('no coverage data');
-    expect(decl.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
   });
 
   it('no match with multiple records → UNKNOWN record with reason, per-decl UNKNOWN', () => {
@@ -353,10 +302,8 @@ describe('findFileRecord via applyCoverageReport (fail-closed join)', () => {
     const out = applyCoverageReport(analysisWith('s.test.ts', [1]), p);
     expect(out.evidence.line_coverage.availability).toBe(Availability.UNKNOWN);
     expect(out.evidence.line_coverage.reason).toContain('no coverage data for s.test.ts');
-    const decl = out.tests![0].evidence.line_coverage;
-    expect(decl.availability).toBe(Availability.UNKNOWN);
-    expect(decl.value).toBeUndefined();
-    expect(decl.reason).toContain('no coverage data');
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
   });
 
   it('ambiguous basename match: multiple report files map to same source basename', () => {
@@ -370,11 +317,8 @@ describe('findFileRecord via applyCoverageReport (fail-closed join)', () => {
     expect(out.evidence.line_coverage.reason).toContain('ambiguous basename match:');
     expect(out.evidence.line_coverage.reason).toContain('src/a/mod.ts');
     expect(out.evidence.line_coverage.reason).toContain('src/b/mod.ts');
-    const decl = out.tests![0].evidence.line_coverage;
-    expect(decl.availability).toBe(Availability.UNKNOWN);
-    expect(decl.value).toBeUndefined();
-    expect(decl.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
-    expect(decl.reason).toContain('ambiguous basename match:');
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
   });
 });
 
@@ -389,7 +333,7 @@ describe('failure-mode matrix (phase9 2.3)', () => {
   interface Row {
     readonly name: string;
     readonly subj: { availability: Availability; status: CollectionStatus; value: unknown; reason: string };
-    readonly decl: { availability: Availability; value: unknown; reason: string };
+    readonly decl?: { availability: Availability; value: unknown; reason: string };
   }
 
   function row(out: ReturnType<typeof applyCoverageReport>): Row {
@@ -403,7 +347,11 @@ describe('failure-mode matrix (phase9 2.3)', () => {
         value: subj.value,
         reason: subj.reason ?? '',
       },
-      decl: { availability: decl.availability, value: decl.value, reason: decl.reason ?? '' },
+      // B5 C-2 (Decisions #12): the ordinary non-mapped path carries no per-declaration record.
+      decl:
+        decl === undefined
+          ? undefined
+          : { availability: decl.availability, value: decl.value, reason: decl.reason ?? '' },
     };
   }
 
@@ -422,9 +370,13 @@ describe('failure-mode matrix (phase9 2.3)', () => {
     expect(r.subj.status).toBe(CollectionStatus.UNAVAILABLE);
     expectNotNumeric(r.subj.value);
     expect(r.subj.reason).toContain(keyword);
-    expect(r.decl.availability).toBe(Availability.UNKNOWN);
-    expectNotNumeric(r.decl.value);
-    expect(r.decl.reason).toBeTruthy();
+    // B5 C-2 (Decisions #12): the ordinary non-mapped path carries no per-declaration
+    // record; mapped rows still carry the advisory per-declaration record.
+    if (r.decl !== undefined) {
+      expect(r.decl.availability).toBe(Availability.UNKNOWN);
+      expectNotNumeric(r.decl.value);
+      expect(r.decl.reason).toBeTruthy();
+    }
     // Rule level: an undecidable record is INDETERMINATE, never FAIL.
     expect(r.subj.status).not.toBe(CollectionStatus.COMPLETE);
   }
@@ -436,7 +388,9 @@ describe('failure-mode matrix (phase9 2.3)', () => {
    */
   function expectMappedUndecidable(r: Row, subjectKeyword: string): void {
     expectUndecidable(r, subjectKeyword);
-    expect(r.decl.reason).toContain('per-declaration attribution not supported for mapped coverage');
+    // B5 C-2 (Decisions #12): only mapped rows carry the advisory per-declaration record.
+    expect(r.decl).toBeDefined();
+    expect(r.decl!.reason).toContain('per-declaration attribution not supported for mapped coverage');
   }
 
   it('valid zero coverage is MEASURED data (KNOWN/COMPLETE, value 0) — not a failure mode', () => {
@@ -531,6 +485,18 @@ describe('failure-mode matrix (phase9 2.3)', () => {
     );
     expectUndecidable(row(out), 'no coverage data for s.test.ts');
     expect(out.evidence.line_coverage.reason).not.toContain('ambiguous basename');
+    expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
+  });
+
+  it('unmapped subject error names the expected test->production mapping (--coverage-map hint)', () => {
+    const out = applyCoverageReport(
+      analysisWith('s.test.ts', [1]),
+      tmpFile('fm-unmapped-hint.json', JSON.stringify({ covered: { 'x.ts': [1] } })),
+    );
+    expect(out.evidence.line_coverage.reason).toContain('no coverage data for s.test.ts');
+    expect(out.evidence.line_coverage.reason).toContain('--coverage-map <from>=<to>');
+    expect(out.evidence.line_coverage.availability).toBe(Availability.UNKNOWN);
+    expect(out.evidence.line_coverage.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
     expect(evaluateRule(active(), out).finding?.result).toBe(RuleResult.INDETERMINATE);
   });
 
@@ -728,42 +694,6 @@ describe('failure-mode matrix (phase9 2.3)', () => {
   });
 });
 
-describe('perDeclarationRecord via applyCoverageReport', () => {
-  it('coverage KNOWN → 1/0 value with EXTERNAL provenance and provider fields', () => {
-    const p = tmpFile('pdr-known.json', JSON.stringify({ files: { 's.test.ts': { coveredLines: [1, 4] } } }));
-    const out = applyCoverageReport(analysisWith('s.test.ts', [1, 3]), p, {
-      provider_version: '2.5.0',
-      source_revision: 'rev-pdr',
-    });
-    const covered = out.tests!.find((t) => t.test.line === 1)!.evidence.line_coverage;
-    expect(covered.value).toBe(1);
-    expect(covered.provenance).toBe(Provenance.EXTERNAL);
-    expect(covered.provider).toBe('c8');
-    expect(covered.provider_version).toBe('2.5.0');
-    expect(covered.source_revision).toBe('rev-pdr');
-    expect(covered.collector_version).toBe('2.5.0');
-    expect(covered.scope).toBe('test-body');
-    expect(covered.coverage.status).toBe(CollectionStatus.COMPLETE);
-    const uncovered = out.tests!.find((t) => t.test.line === 3)!.evidence.line_coverage;
-    expect(uncovered.value).toBe(0);
-    expect(uncovered.availability).toBe(Availability.KNOWN);
-  });
-
-  it('coverage UNKNOWN → value undefined, status UNAVAILABLE, reason propagated', () => {
-    const p = tmpFile('pdr-unknown.json', JSON.stringify({ covered: { 's.test.ts': [1, 1] } }));
-    const out = applyCoverageReport(analysisWith('s.test.ts', [1]), p, {
-      source_revision: 'revA',
-      analyzedRevision: 'revB',
-    });
-    const decl = out.tests![0].evidence.line_coverage;
-    expect(decl.availability).toBe(Availability.UNKNOWN);
-    expect(decl.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
-    expect(decl.value).toBeUndefined();
-    expect(decl.reason).toContain('mismatch');
-    expect(decl.provenance).toBe(Provenance.EXTERNAL);
-  });
-});
-
 describe('revision freshness (parse + apply)', () => {
   it('unknown revision + analyzed supplied -> UNAVAILABLE, reason "report revision unknown; freshness cannot be established"', () => {
     const p = tmpFile('rev-unknown.json', JSON.stringify({ covered: { 'a.ts': [1, 1] } }));
@@ -827,11 +757,8 @@ describe('revision freshness (parse + apply)', () => {
     expect(subj.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
     expect(subj.value).toBeUndefined();
     expect(subj.reason).toBe('report revision unknown; freshness cannot be established');
-    const decl = out.tests![0].evidence.line_coverage;
-    expect(decl.availability).toBe(Availability.UNKNOWN);
-    expect(decl.value).toBeUndefined();
-    expect(decl.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
-    expect(decl.reason).toContain('report revision unknown');
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
   });
 
   it('apply: stale revision via analyzedRevision from git HEAD shape -> UNAVAILABLE + mismatch', () => {
@@ -1001,10 +928,10 @@ describe('coverage-map (SP2.2)', () => {
 });
 
 describe('evidence provenance/completeness (WP2.3 regression)', () => {
-  // (a) Provenance.EXTERNAL on the apply-side failure paths — unknownRecord (coverage.ts:281)
-  // and perDeclarationRecord (coverage.ts:331): even a missing-file join yields an EXTERNAL
-  // record, never a fabricated value and never an untyped record.
-  it('apply: no matching report entry → subject + per-declaration records are EXTERNAL with a reason', () => {
+  // (a) Provenance.EXTERNAL on the apply-side failure paths — unknownRecord: even a
+  // missing-file join yields an EXTERNAL record, never a fabricated value and never an
+  // untyped record. (B5 C-2: the ordinary path no longer adds a per-declaration record.)
+  it('apply: no matching report entry → subject record is EXTERNAL with a reason', () => {
     const p = tmpFile('prov-apply-miss.json', JSON.stringify({ covered: { 'other.ts': [1, 1] } }));
     const out = applyCoverageReport(analysisWith('s.test.ts', [1]), p);
     const subj = out.evidence.line_coverage;
@@ -1012,11 +939,8 @@ describe('evidence provenance/completeness (WP2.3 regression)', () => {
     expect(subj.availability).toBe(Availability.UNKNOWN);
     expect(subj.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
     expect(subj.reason).toContain('no coverage data for s.test.ts');
-    const decl = out.tests![0].evidence.line_coverage;
-    expect(decl.provenance).toBe(Provenance.EXTERNAL);
-    expect(decl.availability).toBe(Availability.UNKNOWN);
-    expect(decl.value).toBeUndefined();
-    expect(decl.reason).toContain('no coverage data');
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
   });
 
   // (a) c8 revision mismatch marks every record EXTERNAL (parseC8, coverage.ts:146).
@@ -1037,22 +961,16 @@ describe('evidence provenance/completeness (WP2.3 regression)', () => {
   // never masquerades the file-level aggregate as per-declaration status — attribution is
   // structural (evidence map location). The file-level record holds the raw array; per-declaration
   // records hold 0/1.
-  it('apply: file-level aggregate and per-declaration records share scope test-body; values stay distinct', () => {
+  it('apply: file-level aggregate stays EXTERNAL/test-body; ordinary path carries no per-declaration record', () => {
     const p = tmpFile('prov-scope.json', JSON.stringify({ files: { 's.test.ts': { coveredLines: [1, 3] } } }));
     const out = applyCoverageReport(analysisWith('s.test.ts', [1, 3]), p);
     const subj = out.evidence.line_coverage;
     expect(subj.value).toEqual([1, 3]);
     expect(subj.scope).toBe(EVIDENCE_SCOPE_TEST_BODY);
     expect(subj.provenance).toBe(Provenance.EXTERNAL);
-    const tests = out.tests!;
-    expect(tests).toHaveLength(2);
-    for (const t of tests) {
-      const decl = t.evidence.line_coverage;
-      expect(decl.scope).toBe(EVIDENCE_SCOPE_TEST_BODY);
-      expect(decl.provenance).toBe(Provenance.EXTERNAL);
-      expect(decl.value).toBe(1);
-    }
-    expect(tests[0]!.evidence.line_coverage.scope).toBe(subj.scope);
+    // B5 C-2 (Decisions #12): the ordinary non-mapped path carries no per-declaration
+    // record, so the file-level aggregate is the only line_coverage evidence.
+    for (const t of out.tests!) expect(t.evidence.line_coverage).toBeUndefined();
   });
 
   // (d) Three distinguishable reasons: missing file on disk / empty-but-supplied report /
@@ -1084,7 +1002,8 @@ describe('evidence provenance/completeness (WP2.3 regression)', () => {
     expect(out.evidence.line_coverage.coverage.status).toBe(CollectionStatus.PARTIAL);
     expect(out.evidence.line_coverage.availability).toBe(Availability.KNOWN);
     expect(out.evidence.line_coverage.value).toEqual([null, 1]);
-    expect(out.tests![0].evidence.line_coverage.value).toBe(0); // null entry → not covered
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no per-declaration record.
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
   });
 });
 
@@ -1390,8 +1309,9 @@ describe('per-test-run verdicts + veto-WARN (CT-COV-001 unit B)', () => {
 });
 
 // I0 (Q3 parity) — RED-first location contract BEFORE implementation (ADR-039).
-// Numeric per-declaration records (perDeclarationRecord, scopedPerDeclarationRecord)
-// MUST carry location { file, line } naming the TEST file + declaration line.
+// Numeric per-declaration records (scopedPerDeclarationRecord) MUST carry
+// location { file, line } naming the TEST file + declaration line. The ordinary
+// non-mapped path carries NO per-declaration record (B5 C-2, Decisions #12).
 // Advisory per-declaration records (advisoryPerDeclarationRecord) MUST stay
 // location-LESS: their reason disclaims per-declaration attribution, so a
 // location would be a false attribution claim (ADR-039:22,40; DECISIONS Q6).
@@ -1401,29 +1321,6 @@ describe('per-test-run verdicts + veto-WARN (CT-COV-001 unit B)', () => {
 // is undefined today); the advisory toBeUndefined pins PASS pre-impl (they pin
 // the asymmetry by design).
 describe('per-declaration location (Q3 parity)', () => {
-  it('perDeclarationRecord: numeric records carry location { file: test file, line: decl line }', () => {
-    const p = tmpFile('q3-pdr.json', JSON.stringify({ files: { 's.test.ts': { coveredLines: [1, 3] } } }));
-    const out = applyCoverageReport(analysisWith('s.test.ts', [1, 3]), p);
-    const decl1 = out.tests!.find((t) => t.test.line === 1)!.evidence.line_coverage;
-    expect(decl1.value).toBe(1);
-    expect(decl1.location).toBeDefined();
-    expect(decl1.location).toEqual({ file: 's.test.ts', line: 1 });
-    const decl3 = out.tests!.find((t) => t.test.line === 3)!.evidence.line_coverage;
-    expect(decl3.value).toBe(1);
-    expect(decl3.location).toBeDefined();
-    expect(decl3.location).toEqual({ file: 's.test.ts', line: 3 });
-  });
-
-  it('perDeclarationRecord: numeric 0 record still carries its location', () => {
-    const p = tmpFile('q3-pdr-zero.json', JSON.stringify({ files: { 's.test.ts': { coveredLines: [1] } } }));
-    const out = applyCoverageReport(analysisWith('s.test.ts', [1, 5]), p);
-    const decl5 = out.tests!.find((t) => t.test.line === 5)!.evidence.line_coverage;
-    expect(decl5.value).toBe(0);
-    expect(decl5.availability).toBe(Availability.KNOWN);
-    expect(decl5.location).toBeDefined();
-    expect(decl5.location).toEqual({ file: 's.test.ts', line: 5 });
-  });
-
   it('scopedPerDeclarationRecord: numeric records carry location { file: test file, line: decl line }', () => {
     const p = tmpFile('q3-scoped.json', JSON.stringify({ covered: { 'to.ts': [0, 1] } }));
     const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
@@ -1452,13 +1349,14 @@ describe('per-declaration location (Q3 parity)', () => {
     }
   });
 
-  it('asymmetry: numeric per-decl records have location; advisory records do not', () => {
+  it('asymmetry: ordinary path carries no per-decl record; mapped advisory records are location-less', () => {
     const numericReport = tmpFile(
       'q3-asym-num.json',
       JSON.stringify({ files: { 's.test.ts': { coveredLines: [1] } } }),
     );
     const numeric = applyCoverageReport(analysisWith('s.test.ts', [1]), numericReport);
-    expect(numeric.tests![0].evidence.line_coverage.location).toBeDefined();
+    // B5 C-2 (Decisions #12): ordinary non-mapped coverage is not attributed per declaration.
+    expect(numeric.tests![0].evidence.line_coverage).toBeUndefined();
 
     const advisoryReport = tmpFile('q3-asym-adv.json', JSON.stringify({ covered: { 'to.ts': [0, 1] } }));
     const advisory = applyCoverageReport(analysisWith('from.ts', [1]), advisoryReport, {
@@ -1477,5 +1375,165 @@ describe('task 5 — provider-set EvidenceStrength surfaces on evidence record i
       any
     >;
     expect(json.evidence.line_coverage.evidenceStrength).toBe('UNSUPPORTED');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WP-C task 17 (RED) — owner ruling ## Decisions #12 B5 C-2:
+// "Remove the perTest copy (Recommended)" — src/providers/coverage.ts:604-613.
+// Sidecar CF-COV-001 pins perTest.line_coverage = MUST_BE_ABSENT for the
+// ordinary (non-mapped) path. The mapped (scopedPerDeclarationRecord :432) and
+// advisory (advisoryPerDeclarationRecord :396) branches stay intact.
+// ---------------------------------------------------------------------------
+describe('C-2: perTest line_coverage MUST_BE_ABSENT on the ordinary non-mapped path (Decisions #12 B5 C-2)', () => {
+  it('ordinary istanbul report: file-level line_coverage stays, every per-test line_coverage is absent', () => {
+    const p = tmpFile('c2-ordinary-ist.json', JSON.stringify({ covered: { 's.test.ts': [null, 1, 0, 1] } }));
+    const out = applyCoverageReport(analysisWith('s.test.ts', [2, 3]), p);
+    // file-level record remains present with the raw array value
+    expect(out.evidence.line_coverage).toBeDefined();
+    expect(out.evidence.line_coverage.availability).toBe(Availability.KNOWN);
+    expect(out.evidence.line_coverage.value).toEqual([null, 1, 0, 1]);
+    // per-test copy removed (CF-COV-001 perTest.line_coverage MUST_BE_ABSENT)
+    expect(out.tests).toHaveLength(2);
+    for (const t of out.tests!) {
+      expect(t.evidence.line_coverage).toBeUndefined();
+    }
+  });
+
+  it('ordinary c8 report: same MUST_BE_ABSENT contract', () => {
+    const p = tmpFile('c2-ordinary-c8.json', JSON.stringify({ files: { 's.test.ts': { coveredLines: [1, 3] } } }));
+    const out = applyCoverageReport(analysisWith('s.test.ts', [1, 3]), p);
+    expect(out.evidence.line_coverage.availability).toBe(Availability.KNOWN);
+    for (const t of out.tests!) {
+      expect(t.evidence.line_coverage).toBeUndefined();
+    }
+  });
+
+  it('mapped + per_test_run: scoped numeric per-declaration branch stays intact (regression)', () => {
+    const p = tmpFile('c2-mapped-scoped.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    for (const t of out.tests!) {
+      const decl = t.evidence.line_coverage;
+      expect(decl).toBeDefined();
+      expect([0, 1]).toContain(decl.value);
+      expect(decl.reason).toBe('coverage evidence from a run scoped to from.ts');
+    }
+  });
+
+  it('mapped without per_test_run: advisory per-declaration branch stays intact (regression)', () => {
+    const p = tmpFile('c2-mapped-advisory.json', JSON.stringify({ covered: { 'to.ts': [0, 1] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, { coverageMap: { 'from.ts': 'to.ts' } });
+    for (const t of out.tests!) {
+      const decl = t.evidence.line_coverage;
+      expect(decl).toBeDefined();
+      expect(decl.value).toBeUndefined();
+      expect(decl.reason).toContain('per-declaration attribution not supported for mapped coverage');
+    }
+  });
+});
+
+describe('raw vitest shape-A (coverage-final.json flat Istanbul map, C2)', () => {
+  const FIXTURE = join(__dirname, '..', 'fixtures', 'vitest-shape-a-coverage-final.json');
+  const SHAPE_A_PATH = '/Users/victorpetropoulos/Cursor Projects/engram/scripts/lib/mcp.ts';
+  // derive() semantics: sorted unique statementMap start lines where s>0
+  // (validation/cov001-per-test-recipe.sh:124-145).
+  const EXPECTED_LINES = [4, 5, 6, 7, 11, 26, 27, 30, 31, 33, 60, 61, 62, 63, 64, 66, 67];
+
+  it('parses the tracked real fixture to a KNOWN record with derive()-equivalent coveredLines', () => {
+    const r = parseCoverageReport(FIXTURE);
+    expect(r.provider).toBe('vitest');
+    expect(r.records.size).toBe(1);
+    const rec = r.records.get(SHAPE_A_PATH)!;
+    expect(rec).toBeDefined();
+    expect(rec.type).toBe('line_coverage');
+    expect(rec.provenance).toBe(Provenance.EXTERNAL);
+    expect(rec.availability).toBe(Availability.KNOWN);
+    expect(rec.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect(rec.value).toEqual(EXPECTED_LINES);
+    expect((rec.value as number[]).length).toBe(17);
+    // lines are strictly sorted ascending with no duplicates
+    const arr = rec.value as number[];
+    expect(arr).toEqual(Array.from(new Set(arr)).sort((a, b) => a - b));
+  });
+
+  it('apply: unmapped subject record carries the same KNOWN array', () => {
+    const out = applyCoverageReport(analysisWith(SHAPE_A_PATH, [1]), FIXTURE);
+    expect(out.evidence.line_coverage.availability).toBe(Availability.KNOWN);
+    expect(out.evidence.line_coverage.value).toEqual(EXPECTED_LINES);
+  });
+
+  it('measured zero: all hit counts 0 -> KNOWN/COMPLETE with an empty line list', () => {
+    const p = tmpFile(
+      'shapeA-zero.json',
+      JSON.stringify({ '/x/a.ts': { statementMap: { '0': { start: { line: 1 } } }, s: { '0': 0 } } }),
+    );
+    const r = parseCoverageReport(p);
+    const rec = r.records.get('/x/a.ts')!;
+    expect(rec.availability).toBe(Availability.KNOWN);
+    expect(rec.coverage.status).toBe(CollectionStatus.COMPLETE);
+    expect(rec.value).toEqual([]);
+  });
+
+  it('malformed shape-A entry -> UNKNOWN (fail-closed F3), never a zero-coverage KNOWN', () => {
+    const p = tmpFile(
+      'shapeA-malformed.json',
+      JSON.stringify({
+        '/x/ok.ts': { statementMap: { '0': { start: { line: 1 } } }, s: { '0': 1 } },
+        '/x/bad-stmtmap.ts': { statementMap: 'nope', s: {} },
+        '/x/bad-hits.ts': { statementMap: {}, s: 'nope' },
+        '/x/bad-line.ts': { statementMap: { '0': { start: {} } }, s: { '0': 2 } },
+        '/x/bad-hitcount.ts': { statementMap: { '0': { start: { line: 1 } } }, s: { '0': 'x' } },
+        '/x/bad-nullentry.ts': null,
+      }),
+    );
+    const r = parseCoverageReport(p);
+    expect(r.provider).toBe('vitest');
+    expect(r.records.size).toBe(6);
+
+    const ok = r.records.get('/x/ok.ts')!;
+    expect(ok.availability).toBe(Availability.KNOWN);
+    expect(ok.value).toEqual([1]);
+
+    for (const file of [
+      '/x/bad-stmtmap.ts',
+      '/x/bad-hits.ts',
+      '/x/bad-line.ts',
+      '/x/bad-hitcount.ts',
+      '/x/bad-nullentry.ts',
+    ]) {
+      const rec = r.records.get(file)!;
+      expect(rec.availability).toBe(Availability.UNKNOWN);
+      expect(rec.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+      expect(rec.value).toEqual([]);
+      expect(typeof rec.value !== 'number').toBe(true);
+      expect(rec.reason).toContain('missing or invalid statementMap/s');
+    }
+  });
+
+  it('revision mismatch marks every shape-A record UNAVAILABLE with mismatch reason', () => {
+    const p = tmpFile(
+      'shapeA-mismatch.json',
+      JSON.stringify({ '/x/a.ts': { statementMap: { '0': { start: { line: 1 } } }, s: { '0': 1 } } }),
+    );
+    const r = parseCoverageReport(p, { source_revision: 'rev1', analyzedRevision: 'rev2' });
+    expect(r.mismatch).toBe(true);
+    const rec = r.records.get('/x/a.ts')!;
+    expect(rec.availability).toBe(Availability.UNKNOWN);
+    expect(rec.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
+    expect(rec.value).toBeUndefined();
+    expect(rec.reason).toContain('mismatch');
+  });
+
+  it('provider override replaces the vitest default', () => {
+    const p = tmpFile(
+      'shapeA-provider.json',
+      JSON.stringify({ '/x/a.ts': { statementMap: { '0': { start: { line: 1 } } }, s: { '0': 1 } } }),
+    );
+    const r = parseCoverageReport(p, { provider: 'custom-vitest' });
+    expect(r.provider).toBe('custom-vitest');
+    expect(r.records.get('/x/a.ts')!.provider).toBe('custom-vitest');
   });
 });

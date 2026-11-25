@@ -5,19 +5,19 @@
   "rule": "CT-INT-001",
   "analysis": {
     "status": "SUCCESS",
-    "completeness": "INCOMPLETE",
+    "completeness": "COMPLETE",
     "test_type": { "value": "UNIT", "source": "EXPLICIT" }
   },
   "evidence": {
     "assertion_count": {
-      "value": 0,
-      "availability": "UNKNOWN",
+      "value": 1,
+      "availability": "KNOWN",
       "provenance": "DIRECT",
       "source": "typescript-jest-adapter",
-      "coverage_status": "PARTIAL",
-      "reason_contains": ["it.each", "not a supported test declaration form"]
+      "coverage_status": "COMPLETE",
+      "reason_contains": []
     }
   },
-  "rule_result": "INDETERMINATE",
+  "rule_result": "PASS",
   "conflicts": []
 }

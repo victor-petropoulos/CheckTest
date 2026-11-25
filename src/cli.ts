@@ -33,16 +33,17 @@
  * never guessed from the file (plan A3, SPEC:450-458).
  */
 
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { readFileSync } from 'fs';
 import { execFileSync } from 'child_process';
-import { join } from 'path';
+import { join, dirname } from 'path';
 
 import { defaultRegistry, resolveAdapter } from './adapters/registry';
 import { typescriptAdapter } from './adapters/typescript/adapter';
 import { applyCoverageReport } from './providers/coverage';
 import { applyMutationReport } from './providers/mutation';
-import { AnalysisStatus, Completeness, TestType } from './core/analysis';
+import { AnalysisOutput, AnalysisStatus, Completeness, TestType } from './core/analysis';
+import { EVIDENCE_ASSERTION_COUNT } from './adapters/typescript/support';
 import { applyConfigToRule, CheckTestConfig, loadConfig, UsageError } from './core/config';
 import { evaluateRule, evaluateTests } from './core/evaluation';
 import { EvaluationStatus } from './core/result';
@@ -54,6 +55,8 @@ import { CT_INT_004 } from './rules/ct-int-004';
 import { CT_COV_001 } from './rules/ct-cov-001';
 import { CT_MUT_001 } from './rules/ct-mut-001';
 import { allRules, getRule, localDecisionRuleIds, registerRule, thresholdsInertRuleIds } from './rules/registry';
+import { runMutationSandbox, MUTATION_SANDBOX_USAGE } from './sandbox/cli';
+import { buildProvenanceManifest, writeProvenanceManifest, type DecidedBy } from './provenance';
 
 // Single source of truth: package.json. Resolved relative to this module so it
 // works under ts-jest (src/), compiled output (dist/src/), and global install.
@@ -84,9 +87,10 @@ const USAGE = [
   '  --type <TYPE>   declared test type: ' + Object.values(TestType).join(' | '),
   '                  (default UNKNOWN; never inferred from the file)',
   '  --adapter <id>  adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034)',
-  '  --rule <id>     rule to evaluate (default ' +
+  '  --rule <id>     rule to evaluate (repeatable; default ' +
     CT_INT_001.id +
     '); DRAFT rules are opt-in via --rule; DEPRECATED rules run by default',
+  '  --all-rules     evaluate every ACTIVE registered rule (sugar for repeating --rule); DRAFT rules stay opt-in',
   "  --format <fmt>  report format: 'json' | 'sarif' (default json)",
   '  --coverage-report <path>  external Istanbul/c8 coverage report to attach',
   '  --coverage-map <from>=<to>  map analyzed file path to report key (repeatable)',
@@ -94,6 +98,7 @@ const USAGE = [
   '  --source-revision <rev>   declared revision the coverage report was produced against',
   '  --mutation-report <path>  external Stryker mutation report to attach',
   '  --mutation-source-revision <rev>  declared revision the mutation report was produced against (valid git rev or unknown)',
+  '  --provenance <path>       write a provenance manifest JSON sidecar to <path> (single path, not repeatable)',
   '  --config <path>           explicit config file (checktest.config.json); no implicit discovery',
   '',
   'Writes the report (JSON by default, SARIF 2.1.0 with --format sarif) to',
@@ -119,6 +124,15 @@ const USAGE = [
   'Prints the rule meaning, applicability, required evidence, evaluation,',
   'severity, status, rationale, limitations and docsUrl from RuleMetadata.',
   'Exits 0 on success; 1 on a missing or unregistered --rule (usage error).',
+  '',
+  'Usage: checktest mutation-sandbox init [--dir <path>] [--json]',
+  '',
+  '  init           create a gitignored sandbox dir + prepped Stryker config',
+  '  --dir <path>   target repository root (default: current working directory)',
+  '  --json         emit machine-readable JSON (kind: mutation-sandbox)',
+  '',
+  'Prepares a safe working area for external Stryker mutation testing. CheckTest',
+  'never runs Stryker. Exits 0 on success, 1 on usage error.',
 ].join('\n');
 
 /** Report formats. JSON stays the default and byte-unchanged; SARIF is additive. */
@@ -129,7 +143,7 @@ const FORMATS: readonly string[] = [FORMAT_JSON, FORMAT_SARIF];
 export interface Options {
   test: string;
   type: TestType;
-  rule: string;
+  rules: string[];
   format: string;
   coverageReport?: string;
   coverageMap?: string[];
@@ -140,6 +154,8 @@ export interface Options {
   mutationReport?: string;
   /** Declared mutation report revision (--mutation-source-revision). */
   mutationSourceRevision?: string;
+  /** Path to write provenance manifest sidecar (--provenance). */
+  provenancePath?: string;
   /** Explicit adapter id (--adapter); beats manifest/extension layers (ADR-034). */
   adapter?: string;
   config?: CheckTestConfig;
@@ -164,21 +180,34 @@ function isValidGitRevision(value: string): boolean {
   return false;
 }
 
+function expandAllRules(options: Options): void {
+  for (const r of allRules()) {
+    if (r.status === 'active' && !options.rules.includes(r.id)) {
+      options.rules.push(r.id);
+    }
+  }
+  options.ruleExplicit = true;
+}
+
 function parseArgs(argv: readonly string[]): Options {
   const options: Options = {
     test: '',
     type: TestType.UNKNOWN,
-    rule: CT_INT_001.id,
+    rules: [],
     format: FORMAT_JSON,
     coverageMap: [],
   };
 
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
-    // `--per-test-run` is the one value-less flag: it is handled BEFORE the
-    // missing-value guard below, and `continue` advances past this token only.
+    // Value-less flags: handled BEFORE the missing-value guard below,
+    // and `continue` advances past this token only.
     if (flag === '--per-test-run') {
       options.perTestRun = true;
+      continue;
+    }
+    if (flag === '--all-rules') {
+      expandAllRules(options);
       continue;
     }
     // Every supported flag is `--name value`, so a missing value is detected
@@ -204,7 +233,9 @@ function parseArgs(argv: readonly string[]): Options {
             `unknown --rule '${value}'; expected one of registered rules (use --rule CT-INT-001 default)`,
           );
         }
-        options.rule = value;
+        if (!options.rules.includes(value)) {
+          options.rules.push(value);
+        }
         options.ruleExplicit = true;
         break;
       case '--config':
@@ -251,6 +282,12 @@ function parseArgs(argv: readonly string[]): Options {
         // registry keeps the single truth about what counts as matchable.
         options.adapter = value;
         break;
+      case '--provenance':
+        if (value === '') {
+          throw new UsageError('missing value for --provenance');
+        }
+        options.provenancePath = value;
+        break;
       default:
         throw new UsageError(`unknown argument '${flag}'`);
     }
@@ -259,6 +296,10 @@ function parseArgs(argv: readonly string[]): Options {
 
   if (options.test === '') {
     throw new UsageError('--test <path> is required');
+  }
+  if (options.rules.length === 0) {
+    options.rules = [CT_INT_001.id];
+    options.ruleExplicit = false;
   }
   return options;
 }
@@ -612,6 +653,12 @@ export function main(argv: readonly string[]): number {
     return runExplain(args.slice(1));
   }
 
+  // U8: leading 'mutation-sandbox' subcommand — prepares a safe working area
+  // for external Stryker. Logic lives in src/sandbox/*; this is dispatch only.
+  if (args.length > 0 && args[0] === 'mutation-sandbox') {
+    return runMutationSandbox(args.slice(1));
+  }
+
   if (args.length === 0) {
     process.stderr.write(`checktest: --test <path> is required\n\n${USAGE}\n`);
     return 1;
@@ -638,11 +685,10 @@ export function main(argv: readonly string[]): number {
     throw error;
   }
 
-  const baseRule = getRule(options.rule);
-  // Unreachable: parseArgs rejects unknown rule ids. Guards against a rule being
-  // unregistered between validation and lookup.
+  const ruleId = options.rules[0];
+  const baseRule = getRule(ruleId);
   if (baseRule === undefined) {
-    process.stderr.write(`checktest: unknown --rule '${options.rule}'\n\n${USAGE}\n`);
+    process.stderr.write(`checktest: unknown --rule '${ruleId}'\n\n${USAGE}\n`);
     return 1;
   }
   const configOverride = options.config?.rules?.[baseRule.id];
@@ -654,6 +700,9 @@ export function main(argv: readonly string[]): number {
   try {
     const result = runAnalysis(options);
     process.stdout.write(`${result.report}\n`);
+    // T6 (owner ruling O2, 2026-11-22): the warning is human-readable stderr
+    // only — the report envelope and its FAILED classification are unchanged.
+    if (result.warning !== undefined) process.stderr.write(`${result.warning}\n`);
     return result.exitCode;
   } catch (error) {
     if (error instanceof UnsupportedDispatchError) {
@@ -714,19 +763,124 @@ export function main(argv: readonly string[]): number {
 }
 
 /**
- * Pure collect→evaluate→serialize pipeline. No I/O, no process references.
+ * T6 (owner ruling O2, 2026-11-22) — a `.tsx` file that fails to parse keeps its
+ * report-level FAILED entry unchanged (no report-schema version / envelope change) and
+ * additionally yields a one-line human-readable warning for the CLI's stderr
+ * channel. Scoped to `.tsx` so the long-standing "FAILED is reported in JSON,
+ * never stderr" contract for `.ts` (case-11) is untouched. Returns undefined for
+ * every non-TSX / non-parse outcome, so no other report path changes.
  */
-export function runAnalysis(options: Options): { report: string; exitCode: number } {
-  const baseRule = getRule(options.rule);
-  if (baseRule === undefined) {
-    throw new UsageError(`unknown --rule '${options.rule}'`);
+function tsxParseWarning(filePath: string, analysis: AnalysisOutput): string | undefined {
+  if (!filePath.endsWith('.tsx')) return undefined;
+  if (analysis.analysis.status !== AnalysisStatus.FAILED) return undefined;
+  const reason = analysis.evidence[EVIDENCE_ASSERTION_COUNT]?.reason;
+  if (typeof reason !== 'string' || !reason.startsWith('parse diagnostics')) return undefined;
+  return `checktest: TSX parse failure: ${filePath}: ${reason}`;
+}
+
+/** Per-rule evaluation unit extracted from runAnalysis (U7 follow-up, crap reduction). */
+export interface RuleRun {
+  rule: NonNullable<ReturnType<typeof getRule>>;
+  evaluation: ReturnType<typeof evaluateRule>;
+  scopes: ReturnType<typeof evaluateTests>;
+}
+
+export function runOneRule(
+  rid: string,
+  analysis: AnalysisOutput,
+  explicitRuleIds: ReadonlySet<string>,
+  config: Options['config'],
+): RuleRun {
+  const baseRule = getRule(rid)!;
+  const overrideForSelected = config?.rules?.[baseRule.id];
+  const r = overrideForSelected === undefined ? baseRule : applyConfigToRule(baseRule, overrideForSelected);
+  const ev = evaluateRule(r, analysis, explicitRuleIds);
+  const sc = evaluateTests(r, analysis, explicitRuleIds);
+  return { rule: r, evaluation: ev, scopes: sc };
+}
+
+export function buildRuleReports(
+  runs: RuleRun[],
+  analysis: AnalysisOutput,
+): { rule: string; ruleResults: unknown; summary: unknown }[] {
+  return runs.map((r) => {
+    const single = JSON.parse(toJson(analysis, r.evaluation, r.scopes)) as { ruleResults: unknown; summary: unknown };
+    return { rule: r.rule.id, ruleResults: single.ruleResults, summary: single.summary };
+  });
+}
+
+/**
+ * Pure collect→evaluate→serialize pipeline. No I/O, no process references; the
+ * optional `warning` string is data for `main()` to write to stderr.
+ */
+
+function writeProvenanceIfRequested(
+  options: Options,
+  resolution: { adapterId: string; decidedBy: string },
+  exitCode: number,
+  manifestFramework?: string,
+): void {
+  if (options.provenancePath === undefined) return;
+  const manifest = buildProvenanceManifest({
+    testPath: options.test,
+    rules: options.rules,
+    adapter: resolution.adapterId,
+    decidedBy: resolution.decidedBy as DecidedBy,
+    exitCode,
+    reportFilePath: null,
+    command: process.argv.slice(2).join(' '),
+    ...(options.coverageReport !== undefined ? { coverageReportPath: options.coverageReport } : {}),
+    ...(options.mutationReport !== undefined ? { mutationReportPath: options.mutationReport } : {}),
+    ...(options.sourceRevision !== undefined ? { coverageSourceRevision: options.sourceRevision } : {}),
+    ...(options.mutationSourceRevision !== undefined ? { mutationSourceRevision: options.mutationSourceRevision } : {}),
+    ...(manifestFramework !== undefined ? { manifestFramework } : {}),
+  });
+  mkdirSync(dirname(options.provenancePath), { recursive: true });
+  writeProvenanceManifest(options.provenancePath, manifest);
+}
+
+function resolveManifestFramework(
+  testPath: string,
+  detectedFramework: string | undefined,
+  decidedBy: string,
+): string | undefined {
+  if (decidedBy !== 'manifest') return undefined;
+  const testDir = dirname(testPath);
+  const candidates = [
+    join(testDir, 'package.json'),
+    join(testDir, '..', 'package.json'),
+    join(testDir, '..', '..', 'package.json'),
+  ];
+  for (const candidate of candidates) {
+    try {
+      const pkg = JSON.parse(readFileSync(candidate, 'utf8')) as {
+        dependencies?: Record<string, string>;
+        devDependencies?: Record<string, string>;
+      };
+      const order = ['jest', 'vitest', 'mocha'] as const;
+      const present = order.filter((name) => {
+        return (pkg.devDependencies && name in pkg.devDependencies) || (pkg.dependencies && name in pkg.dependencies);
+      });
+      if (present.length > 0) {
+        if (detectedFramework && (present as readonly string[]).includes(detectedFramework)) {
+          return detectedFramework;
+        }
+        return order.find((n) => (present as readonly string[]).includes(n)) as string;
+      }
+    } catch {
+      // try next candidate
+    }
   }
-  // SP4.1: apply config overrides to the selected rule only. Config may change
-  // thresholds + severity + enabled (enabled is gated in main() above), never
-  // evidence semantics — see src/core/config.ts applyConfigToRule (structural
-  // copy; POLICY_FIELDS remain untouched).
-  const overrideForSelected = options.config?.rules?.[baseRule.id];
-  const rule = overrideForSelected === undefined ? baseRule : applyConfigToRule(baseRule, overrideForSelected);
+  return undefined;
+}
+
+export function runAnalysis(options: Options): { report: string; exitCode: number; warning?: string } {
+  // Validate all named rules up front.
+  for (const rid of options.rules) {
+    if (getRule(rid) === undefined) {
+      throw new UsageError(`unknown --rule '${rid}'`);
+    }
+  }
   // ADR-034 dispatch: registry resolves the adapter (flag > manifest >
   // extension), with real-filesystem manifest checks. adapterId/decidedBy are
   // injected into the report envelope below (ADR-035).
@@ -753,12 +907,19 @@ export function runAnalysis(options: Options): { report: string; exitCode: numbe
     ...(options.coverageMap !== undefined ? { coverageMap: options.coverageMap } : {}),
     ...(options.perTestRun !== undefined ? { perTestRun: options.perTestRun } : {}),
   });
+  // Computed before the providers below rewrite the envelope, so the warning
+  // reads the collector's own parse-diagnostics reason verbatim.
+  const warning = tsxParseWarning(options.test, analysis);
   // ADR-035: the dispatch decision rides on the envelope, so a consumer can
   // reconstruct WHY this adapter ran, not just WHICH one. Both fields are
   // additive and optional; the providers below spread the envelope, so they
   // survive the coverage/mutation rewrites.
   analysis.adapter = resolution.adapterId;
   analysis.decidedBy = resolution.decidedBy;
+  // Manifest-declared framework provenance: when dispatch decidedBy=manifest,
+  // surface framework declared in nearest package.json.
+  const mf = resolveManifestFramework(options.test, analysis.subject.framework, resolution.decidedBy);
+  if (mf !== undefined) analysis.subject.manifestFramework = mf;
   // Git HEAD auto-detect for report freshness (WP1.3): when a report is
   // supplied, obtain the analyzed revision from git HEAD (falling back to
   // 'unknown' outside a repo) and pass it to the providers as analyzed_revision.
@@ -813,21 +974,27 @@ export function runAnalysis(options: Options): { report: string; exitCode: numbe
   // is evaluated only when its id is in this set; the default run names none,
   // so a draft rule stays excluded unless --rule opts in.
   const explicitRuleIds: ReadonlySet<string> =
-    options.ruleExplicit === true ? new Set([options.rule]) : new Set<string>();
-  // The engine reports whether a verdict was reached at all; an aborted
-  // evaluation (FAILED analysis) yields status FAILED with no finding, so the
-  // report carries an empty ruleResults array rather than a fabricated verdict.
-  const evaluation = evaluateRule(rule, analysis, explicitRuleIds);
-  // The SAME rule over every scope: one entry per located declaration, or a
-  // single subject-level entry when the collector produced none. These are the
-  // per-test records the report serializes.
-  const scopes = evaluateTests(rule, analysis, explicitRuleIds);
+    options.ruleExplicit === true ? new Set(options.rules) : new Set<string>();
+  // Per-rule evaluation loop (U7). Only named rules are evaluated; never allRules().
+  const runs: RuleRun[] = [];
+  for (const rid of options.rules) {
+    runs.push(runOneRule(rid, analysis, explicitRuleIds, options.config));
+  }
+  const first = runs[0];
+  const rule = first.rule;
+  const evaluation = first.evaluation;
+  const scopes = first.scopes;
   // Format selection is a pure serialization choice on the SAME evaluation:
   // SARIF is additive, JSON remains the default and byte-unchanged.
-  const report =
-    options.format === FORMAT_SARIF
-      ? toSarif(analysis, evaluation, rule, scopes)
-      : toJson(analysis, evaluation, scopes);
+  let report: string;
+  if (options.format === FORMAT_SARIF) {
+    report = toSarif(analysis, evaluation, rule, scopes);
+  } else if (runs.length > 1) {
+    const ruleReports = buildRuleReports(runs, analysis);
+    report = toJson(analysis, evaluation, scopes, ruleReports as never);
+  } else {
+    report = toJson(analysis, evaluation, scopes);
+  }
   // Map on the SET of scope evaluations, NEVER on `analysis.status`. Under the
   // FAILED-first order (evaluation.ts step 0) an aborted scope yields NO
   // verdict at all — no applicability N/A, no INDETERMINATE — so exit 2 means
@@ -853,8 +1020,23 @@ export function runAnalysis(options: Options): { report: string; exitCode: numbe
   // empty rather than carrying a fabricated verdict.
   //
   // Contract mirror: the tests plus this comment (UD-8).
-  const exitCode = scopes.some((scope) => scope.status === EvaluationStatus.EVALUATED) ? 0 : 2;
-  return { report, exitCode };
+  // C4: a file-level-only rule (CT-MUT-001) carries its decided verdict on the
+  // subject evaluation even when evaluateTests returns no per-test scopes, so
+  // the exit code follows the subject verdict in that case.
+  const anyDecided = runs.some((r) => {
+    const isFileLevelOnly = r.rule.file_level_only === true;
+    return isFileLevelOnly
+      ? r.evaluation.status === EvaluationStatus.EVALUATED
+      : r.scopes.some((scope) => scope.status === EvaluationStatus.EVALUATED);
+  });
+  const exitCode = anyDecided ? 0 : 2;
+  writeProvenanceIfRequested(
+    options,
+    resolution as { adapterId: string; decidedBy: string },
+    exitCode,
+    analysis.subject.manifestFramework,
+  );
+  return { report, exitCode, ...(warning !== undefined ? { warning } : {}) };
 }
 
 // `process.exitCode` rather than `process.exit()`: stdout is asynchronous when

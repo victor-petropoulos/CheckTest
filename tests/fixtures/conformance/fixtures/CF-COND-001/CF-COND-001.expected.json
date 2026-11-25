@@ -1,13 +1,28 @@
 {
   "fixtureId": "CF-COND-001",
   "schemaVersionExpectation": "0.5",
-  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it", "assertionLine": 5 }] }, "python": { "count": 1, "sites": [{ "line": 1, "assertionLine": 4 }], "declarationToken": "NOT_VERIFIED" } },
-  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "INCOMPLETE" },
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it", "assertionLine": 5 }] }, "python": { "count": 1, "sites": [{ "line": 1 }], "declarationToken": "NOT_VERIFIED" } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "COMPLETE" },
   "expectedEvidence": { "perTest": { "assertion_count": { "value": 1, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "evidenceStrength": "SYNTAX_OBSERVED", "coverage": { "status": "PARTIAL", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" }, "unestablished_assertions": { "count": 1, "reasons": ["conditional assertion"] } } }, "fileLevel": {} },
+  "expectedEvidenceByLanguage": {
+    "ts": { "perTest": { "assertion_count": { "value": 0, "availability": "UNKNOWN", "coverage": { "status": "PARTIAL" }, "evidenceStrength": "SYNTAX_OBSERVED", "unestablished_assertions": { "count": 1, "reasons": ["assertion is inside a nested block (if/loop/try/switch); straight-line execution cannot be established statically"] } } } },
+    "python": { "perTest": { "assertion_count": { "value": 1, "availability": "KNOWN", "coverage": { "status": "COMPLETE" }, "evidenceStrength": "SYNTAX_OBSERVED" } } }
+  },
   "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
-  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "FAIL", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }],
+  "expectedFindings": {
+    "ts": [
+      { "rule_id": "CT-INT-001", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "FAIL", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "INDETERMINATE", "test_id_present": true }
+    ],
+    "python": [
+      { "rule_id": "CT-INT-001", "result": "PASS", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }
+    ]
+  },
   "expectedExplanation": "Static shape does not establish conditional execution; CT-INT-003 reports the unestablished signal with collector reasons.",
   "expectedDiagnostics": { "reasons": ["conditional assertion"] },
   "attribution": { "level": "individual-test" },
-  "knownLimitations": ["No dataflow/branch analysis. If WP6 observes no decidable signal, CT-INT-003 must be INDETERMINATE and this sidecar amended with evidence."]
+  "knownLimitations": ["No dataflow/branch analysis. If WP6 observes no decidable signal, CT-INT-003 must be INDETERMINATE and this sidecar amended with evidence.", "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-TS-3/GAP-PY-4 expectation-side ('Amend expectations'): completeness COMPLETE (both languages); per-language evidence/findings recorded (ts nested-block unestablished signal vs python KNOWN/COMPLETE). Shared expectedDiagnostics ['conditional assertion'] kept (18a ruling (2)); per-language actual reasons recorded in the cluster table."]
 }

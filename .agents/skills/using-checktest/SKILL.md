@@ -14,7 +14,7 @@ Authored at ~/.config/opencode/skills/using-checktest/SKILL.md.
 
 # Using CheckTest
 
-Baseline for every command and output shown here: verified live at commit `f77c38f` on 2026-11-20. Consult `checktest --help`, `checktest doctor --json`, and `checktest explain --rule <id>` for anything that may have changed since. Detailed command inventory and worked scenarios: [command reference](references/command-reference.md) and [examples](references/examples.md).
+Baseline for every command and output shown here: verified live at commit `0dde2a1` on 2026-11-24. Consult `checktest --help`, `checktest doctor --json`, and `checktest explain --rule <id>` for anything that may have changed since. Detailed command inventory and worked scenarios: [command reference](references/command-reference.md) and [examples](references/examples.md).
 
 ## What it is
 
@@ -75,6 +75,9 @@ After such a change, rerun the affected conformance and regression coverage and 
 4. Use `checktest doctor --json` when adapter selection or supported capabilities are unclear. `doctor --test <path>` probes dispatch for a single file. Not a habit.
 5. Use `checktest explain --rule <id>` when a rule's meaning, applicability, or evidence requirements are unclear.
 6. Analyze each applicable file with `checktest check --test <path>`. Scope is exactly one file per `check` — there is no repeatable `--test`, no per-test selection flag, and no repository-wide mode at this baseline. Choose the narrowest scope that satisfies the task; multi-file changes get one check per file (loop pattern in the [command reference](references/command-reference.md)).
+   - `--rule <id>` is repeatable: evaluate several rules against one file in one run (deduped, first-occurrence order).
+   - `--all-rules` evaluates every ACTIVE registered rule in one run (DRAFT rules stay excluded unless also named via `--rule`).
+   - `--provenance <path>` writes a provenance manifest sidecar (input sha256, adapter, decidedBy, rules, external evidence, exit code) for re-derivation. Manifest is metadata, not report output.
 7. Supply `--type` only when the test type is known from reliable context (`UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`). Do not infer it from a filename; the default is `UNKNOWN`.
 8. When a rule needs external evidence, attach it with `--coverage-report`, `--coverage-map`, `--per-test-run`, `--source-revision`, `--mutation-report`, or `--mutation-source-revision`, and confirm the declared revision matches the current state. Never reuse stale evidence as current proof. Mutation evidence is file-level only; never claim per-test attribution for it.
 9. Execute, capture the report (JSON is the default; `--format sarif` emits SARIF 2.1.0; `check` has no `--json` flag), and record the exit code and stderr.
@@ -132,3 +135,11 @@ Rerun when a relevant test, assertion, structure, helper, fixture, setup/teardow
 When CheckTest findings are relevant, report: whether CheckTest was run and why or why not; the evaluation scope; the adapter and framework; the evidence sources and their revisions; counts by verdict; unsupported capabilities and incomplete analysis; key diagnostics; the findings that need attention; dispositions; whether remediation or a rerun happened; and where the authoritative report lives. Reuse the report's own fields; do not invent a second reporting schema. A template is in the [command reference](references/command-reference.md).
 
 CheckTest is advisory evidence. The final engineering decision remains yours.
+
+When a run is worth preserving for later audit, pass `--provenance <path>` to write a
+sidecar manifest recording the input file (sha256 + size), adapter, decidedBy,
+rules, external evidence paths + hashes, CheckTest version, and exit code. To
+reproduce a run: keep the input file and any external evidence reports, re-run the
+command recorded in the manifest's `command` field. Outputs are byte-identical
+when inputs, flags, and CheckTest version match. Outputs are terminal — CheckTest
+does not accept its own reports as inputs.

@@ -53,6 +53,8 @@ export interface AnalysisSubject {
   file: string;
   language: string;
   framework?: string;
+  /** Manifest-declared framework from package.json (distinct from collector-detected `framework`). */
+  manifestFramework?: string;
   type?: TestType;
 }
 

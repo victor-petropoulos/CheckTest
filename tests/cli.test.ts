@@ -20,6 +20,7 @@
  */
 
 import { execFileSync } from 'child_process';
+import { createHash } from 'crypto';
 import { join } from 'path';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
@@ -248,6 +249,35 @@ describe('CLI exit codes', () => {
     expect(json.testResults).toEqual([]);
     // stderr is the usage/crash channel only.
     expect(stderr).toBe('');
+  });
+
+  it('T6: TSX parse failure -> exit 2, FAILED report entry unchanged, stderr warning names file + first TS diagnostic', () => {
+    // Owner ruling O2 (2026-11-22): a .tsx file that fails to parse keeps its
+    // report-level FAILED entry (no schema/envelope change) AND surfaces a
+    // file-level human-readable warning on stderr. Scoped to .tsx so case-11's
+    // long-standing "FAILED is reported in JSON, never stderr" contract holds.
+    const TMP = join(process.env.TMPDIR || tmpdir(), 'checktest-cli-tsx-parse');
+    mkdirSync(TMP, { recursive: true });
+    const p = join(TMP, 'broken.test.tsx');
+    writeFileSync(
+      p,
+      "import { expect, it } from '@jest/globals';\nit('broken', () => {\n  const el = <div>;\n});\n",
+      'utf8',
+    );
+    try {
+      const code = main(['--test', p, '--type', 'UNIT']);
+      expect(code).toBe(2);
+      const json = report();
+      expect(json.analysisStatus).toBe('FAILED');
+      expect(json.evaluationStatus).toBe('FAILED');
+      expect(json.ruleResults).toEqual([]);
+      expect(json.testResults).toEqual([]);
+      expect(stderr).toContain('TSX parse failure');
+      expect(stderr).toContain(p);
+      expect(stderr).toMatch(/TS\d+/);
+    } finally {
+      rmSync(TMP, { recursive: true, force: true });
+    }
   });
 
   it('FAILED abort FIRST: FAILED analysis + UNKNOWN declared type -> exit 2, no verdict (D2 regression)', () => {
@@ -681,7 +711,7 @@ describe('file-level CT-MUT-001 surfacing (plan 6.9b)', () => {
     const json = report();
     const perTest = json.ruleResults.filter((e: any) => e.test_id !== undefined);
     const fileLevel = json.ruleResults.filter((e: any) => e.test_id === undefined);
-    expect(perTest).toHaveLength(1);
+    expect(perTest).toHaveLength(0);
     expect(fileLevel).toHaveLength(1);
     expect(fileLevel[0].rule_id).toBe('CT-MUT-001');
     expect(fileLevel[0].result).toBe('PASS');
@@ -724,7 +754,7 @@ describe('file-level CT-MUT-001 surfacing (plan 6.9b)', () => {
     const results = sarif.runs[0].results;
     const perTest = results.filter((r: any) => r.properties?.testId !== undefined);
     const fileLevel = results.filter((r: any) => r.properties?.testId === undefined);
-    expect(perTest).toHaveLength(1);
+    expect(perTest).toHaveLength(0);
     expect(fileLevel).toHaveLength(1);
     expect(fileLevel[0].ruleId).toBe('CT-MUT-001');
     expect(fileLevel[0].properties).not.toHaveProperty('testId');
@@ -780,8 +810,7 @@ describe('file-level CT-MUT-001 surfacing (plan 6.9b)', () => {
     expect(code).toBe(0);
     expect(stderr).toBe('');
     const json = report();
-    expect(json.ruleResults).toHaveLength(1);
-    expect(json.ruleResults.every((e: any) => e.test_id !== undefined)).toBe(true);
+    expect(json.ruleResults).toHaveLength(0);
   });
 
   it('summary.total counts the file-level entry (contract pin, plan 6.9)', () => {
@@ -1184,7 +1213,7 @@ describe('CLI --rule lifecycle (D6/D7)', () => {
     const { report: json, exitCode } = runAnalysis({
       test: fixture('case-01-standard-assertion'),
       type: TestType.UNIT,
-      rule: DRAFT_RULE.id,
+      rules: [DRAFT_RULE.id],
       format: 'json',
     });
     expect(exitCode).toBe(2);
@@ -1585,5 +1614,99 @@ describe('CLI discoverability & contract (Phase 2c)', () => {
   it('exit-code contract: no-tests -> 2 (no verdict)', () => {
     const code = main(['--test', fixture('case-18-no-tests'), '--type', 'UNIT']);
     expect(code).toBe(2);
+  });
+});
+
+/**
+ * WP11 task 24 (owner ruling ## Decisions #14): documentation-only closure of
+ * the §4.7 "human count summary" open item. `check` never emits a separate
+ * human summary; stdout is report-only and the machine-readable `summary`
+ * object is the only summary. This pins the FULL default stdout bytes so any
+ * future addition (a human summary line on stdout, a new envelope key, a
+ * stderr->stdout spill) fails here.
+ *
+ * src/ is UNTOUCHED by task 24 — the pin passes identically before and after the
+ * docs-only change. The subject path is repo-root-relative (jest's default cwd)
+ * and NOT the absolute `fixture()` helper: the report echoes `test.file`
+ * verbatim, so an absolute path would bake the checkout location into the digest.
+ */
+describe('default check stdout byte-stability (WP11 task 24)', () => {
+  // pinned 2026-11-21 WP11 task 24; default check stdout byte-stability contract docs/reporting-contract.md §4.7
+  // Rebased 2026-11-24 (open item #1, batch 1): the envelope's
+  // supported_assertion_forms list gained 12 new matchers (toBeLessThan, toBeCloseTo,
+  // toBeInstanceOf, toStrictEqual, toBeTypeOf, toHaveBeenLastCalledWith,
+  // toBeCalled, toBeCalledWith, toHaveBeenNthCalledWith, toBeLessThanOrEqual,
+  // plus negated forms), so the default report bytes changed.
+  // Rebased 2026-11-22 (S unit, C2 council): the envelope's
+  // coverage.supported_assertion_forms list gained `supertest-expect-status` /
+  // `supertest-expect-body` (capabilities.ts 28→30), so the default report bytes
+  // changed. T6's cli.ts change writes its TSX warning to stderr only — stdout
+  // (and this digest) is unaffected by it.
+  const PINNED_STDOUT_SHA256 = 'af23bd366f1708fccfc4aedde3eff1ca29adcb6782cb9ccca1edf4f5099a1e71';
+  const SUBJECT = 'tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts';
+
+  it('default `check` stdout sha256 equals the pinned digest (byte-stability contract)', () => {
+    const code = main(['check', '--test', SUBJECT, '--type', 'UNIT']);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
+    expect(createHash('sha256').update(stdout).digest('hex')).toBe(PINNED_STDOUT_SHA256);
+  });
+});
+
+describe('CLI manifestFramework provenance', () => {
+  const TMP = join(process.env.TMPDIR || tmpdir(), 'checktest-cli-mf');
+
+  beforeEach(() => {
+    rmSync(TMP, { recursive: true, force: true });
+    mkdirSync(TMP, { recursive: true });
+  });
+
+  it('report envelope carries manifestFramework when package.json declares jest', () => {
+    const testFile = join(TMP, 'sample.test.ts');
+    writeFileSync(
+      testFile,
+      readFileSync(join(__dirname, 'fixtures', 'ct-int-001', 'case-01-standard-assertion', 'sample.test.ts'), 'utf8'),
+    );
+    writeFileSync(join(TMP, 'package.json'), JSON.stringify({ devDependencies: { jest: '^29', vitest: '^1' } }));
+    const code = main(['--test', testFile, '--type', 'UNIT']);
+    expect(code).toBe(0);
+    const report = JSON.parse(stdout);
+    expect(report.test.manifestFramework).toBe('jest');
+  });
+
+  it('report envelope omits manifestFramework when no package.json', () => {
+    const testFile = join(TMP, 'sample.test.ts');
+    writeFileSync(
+      testFile,
+      readFileSync(join(__dirname, 'fixtures', 'ct-int-001', 'case-01-standard-assertion', 'sample.test.ts'), 'utf8'),
+    );
+    const code = main(['--test', testFile, '--type', 'UNIT']);
+    expect(code).toBe(0);
+    const report = JSON.parse(stdout);
+    expect(report.test.manifestFramework).toBeUndefined();
+  });
+});
+
+describe('CLI --all-rules sugar (open item #5)', () => {
+  afterEach(() => {
+    stdoutSpy.mockRestore();
+    stderrSpy.mockRestore();
+  });
+
+  it('--all-rules expands to all ACTIVE registered rules', () => {
+    const code = main(['--test', fixture('case-01-standard-assertion'), '--type', 'UNIT', '--all-rules']);
+    expect(code).toBe(0);
+    const report = JSON.parse(stdout) as { rules?: { rule: string }[] };
+    // Multi-rule output: rules array present with >1 entry (all ACTIVE rules)
+    expect(report.rules).toBeDefined();
+    expect(Array.isArray(report.rules)).toBe(true);
+    expect((report.rules as { rule: string }[]).length).toBeGreaterThan(1);
+  });
+
+  it('--all-rules with single active rule still works (edge: only one ACTIVE)', () => {
+    // Even if only one rule, --all-rules sets ruleExplicit=true
+    const code = main(['--test', fixture('case-01-standard-assertion'), '--type', 'UNIT', '--all-rules']);
+    expect(code).toBe(0);
+    expect(stderr).toBe('');
   });
 });

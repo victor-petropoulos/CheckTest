@@ -38,14 +38,16 @@ export const typescriptAdapter: Adapter = {
   /** Matches `AnalysisSubject.language` as emitted by the collector (collector.ts:183). */
   language: 'typescript',
   /**
-   * Exactly the extensions the collector has explicit handling for (ADR-034's
-   * lowest-priority dispatch layer): the JSX-decision-B heuristic at
-   * collector.ts:133 matches `/\.(jsx?|tsx?)$/` on the file path, and the .js
-   * coverage is exercised by tests/adapters/collector-jsx.test.ts. The
-   * collector itself applies no extension gate — it parses any path it is
-   * given — so this list is the CLAIM, not a filter.
+   * The extensions this ecosystem's tests carry (ADR-034's lowest-priority
+   * dispatch layer): the JSX-decision-B heuristic at collector.ts:133 matches
+   * `/\.(jsx?|tsx?)$/` on the file path, the .js coverage is exercised by
+   * tests/adapters/collector-jsx.test.ts, and `.cjs` (T11 owner ruling
+   * 2026-11-22) covers CommonJS smoke tests such as axios's
+   * `tests/smoke/cjs/` suite (`header-buckets.smoke.test.cjs`). The collector
+   * itself applies no extension gate — it parses any path it is given — so
+   * this list is the CLAIM, not a filter.
    */
-  extensions: ['.ts', '.tsx', '.js', '.jsx'],
+  extensions: ['.ts', '.tsx', '.js', '.jsx', '.cjs'],
   /**
    * Conservative manifest signature: `package.json` is the manifest a
    * TypeScript/JavaScript project carries (ADR-034's middle dispatch layer);

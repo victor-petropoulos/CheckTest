@@ -3,6 +3,8 @@ import ts from 'typescript';
 import {
   ANALYSIS_SCOPE,
   ANALYZER_ID,
+  ASSERTION_FORM_BY_MATCHER,
+  ASSERTION_NEGATED_FORM_BY_MATCHER,
   COLLECTOR_VERSION,
   SUPPORTED_ASSERTION_FORMS,
   SUPPORTED_FRAMEWORKS,
@@ -37,7 +39,7 @@ function firstExpression(source: string): ts.Expression {
 }
 
 describe('support — published syntax surface (A9)', () => {
-  it('publishes exactly the 11 supported assertion form IDs', () => {
+  it('publishes exactly the 44 supported assertion form IDs', () => {
     expect([...SUPPORTED_ASSERTION_FORMS].sort()).toEqual(
       [
         'expect-to-be',
@@ -51,8 +53,55 @@ describe('support — published syntax surface (A9)', () => {
         'expect-matcher-utils',
         'expect-to-match-object',
         'expect-to-have-been-called-times',
+        'expect-to-be-undefined',
+        'expect-to-have-property',
+        'expect-to-be-defined',
+        'expect-to-have-length',
+        'expect-to-be-greater-than',
+        'expect-to-be-null',
+        'expect-to-match',
+        'expect-to-have-been-called',
+        'expect-to-have-been-called-with',
+        'expect-to-match-inline-snapshot',
+        'expect-to-be-greater-than-or-equal',
+        'expect-to-be-less-than',
+        'expect-to-be-less-than-or-equal',
+        'expect-to-be-close-to',
+        'expect-to-be-instance-of',
+        'expect-to-strict-equal',
+        'expect-to-be-type-of',
+        'expect-to-have-been-last-called-with',
+        'expect-to-have-been-nth-called-with',
+        'expect-not-to-be',
+        'expect-not-to-contain',
+        'expect-not-to-have-property',
+        'expect-not-to-be-null',
+        'expect-not-to-throw',
+        'expect-not-to-have-been-called',
+        'expect-not-to-be-less-than',
+        'expect-not-to-be-less-than-or-equal',
+        'expect-not-to-be-close-to',
+        'expect-not-to-be-instance-of',
+        'expect-not-to-strict-equal',
+        'expect-not-to-be-type-of',
+        'supertest-expect-status',
+        'supertest-expect-body',
       ].sort(),
     );
+  });
+
+  // Reviewer M7 parity guard — the matcher maps are the classifier's vocabulary;
+  // every form they emit must be a published supported form (no drift between
+  // the maps and SUPPORTED_ASSERTION_FORMS). Drift check: removing a form ID
+  // from SUPPORTED_ASSERTION_FORMS while a matcher still maps to it fails here.
+  it('matcher-map values are all published supported assertion forms', () => {
+    const supported = new Set(SUPPORTED_ASSERTION_FORMS);
+    for (const form of Object.values(ASSERTION_FORM_BY_MATCHER)) {
+      expect(supported.has(form)).toBe(true);
+    }
+    for (const form of Object.values(ASSERTION_NEGATED_FORM_BY_MATCHER)) {
+      expect(supported.has(form)).toBe(true);
+    }
   });
 
   it('publishes the framework allowlist as jest, vitest and mocha', () => {
@@ -198,15 +247,35 @@ describe('classifyForm', () => {
     ['expect.objectContaining({ a: 1 });', 'expect-matcher-utils'],
     ['expect.arrayContaining([1]);', 'expect-matcher-utils'],
     ['expect.stringContaining("x");', 'expect-matcher-utils'],
+    // Dogfood-gap-closure (council FROZEN FORM SET, 2026-11-22) — plain matchers.
+    ['expect(x).toBeUndefined();', 'expect-to-be-undefined'],
+    ['expect(x).toHaveProperty("a");', 'expect-to-have-property'],
+    ['expect(x).toBeDefined();', 'expect-to-be-defined'],
+    ['expect(x).toHaveLength(2);', 'expect-to-have-length'],
+    ['expect(x).toBeGreaterThan(1);', 'expect-to-be-greater-than'],
+    ['expect(x).toBeNull();', 'expect-to-be-null'],
+    ['expect(x).toMatch(/a/);', 'expect-to-match'],
+    ['expect(fn).toHaveBeenCalled();', 'expect-to-have-been-called'],
+    ['expect(fn).toHaveBeenCalledWith(1);', 'expect-to-have-been-called-with'],
+    ['expect(x).toMatchInlineSnapshot();', 'expect-to-match-inline-snapshot'],
+    ['expect(x).toBeGreaterThanOrEqual(1);', 'expect-to-be-greater-than-or-equal'],
+    // — negated forms (sync, literal `.not` on a direct expect call).
+    ['expect(x).not.toBe(y);', 'expect-not-to-be'],
+    ['expect(x).not.toContain(y);', 'expect-not-to-contain'],
+    ['expect(x).not.toHaveProperty("a");', 'expect-not-to-have-property'],
+    ['expect(x).not.toBeNull();', 'expect-not-to-be-null'],
+    ['expect(fn).not.toThrow();', 'expect-not-to-throw'],
+    ['expect(fn).not.toHaveBeenCalled();', 'expect-not-to-have-been-called'],
   ])('classifies %s as %s', (source, expected) => {
     expect(classifyForm(firstExpression(source))).toBe(expected);
   });
 
   it.each([
-    'await expect(p).resolves.toBe(x);',
-    'expect(x).not.toBe(y);',
-    'expect(x).toBeGreaterThan(y);',
     'expect(x)[m]();',
+    // dogfood-gap-closure near-misses (OQ1): computed `.not` and async negation
+    // must stay UNKNOWN — they are not the sync literal-`.not` shape.
+    'expect(x).not[m]();',
+    'await expect(p).rejects.not.toBe(x);',
     'assert.equal(x, y);',
     'foo(x);',
   ])('returns null for unsupported chain %s', (source) => {
@@ -280,6 +349,25 @@ describe('classifyTestDeclaration — chained callee roots', () => {
   it('still returns null for a non-test root, however deeply chained', () => {
     expect(classifyTestDeclaration(callee('suite.each(t).only("a", fn);'))).toBeNull();
     expect(classifyTestDeclaration(callee('describe("a", fn);'))).toBeNull();
+  });
+
+  // Dogfood-gap-closure T13 (RED) — supertest LOCAL-VAR false positive.
+  // A root identifier `test` that is SHADOWED by an in-file
+  // VariableDeclaration whose initializer is NOT it/test (express corpus:
+  // `var test = request(app).post('/')`, express.json.js:135-141) is a LOCAL
+  // variable, not the global test root, so a chain on it is not a test
+  // declaration. Written against the T14 signature (+ shadows parameter,
+  // default empty); compile-RED until T14 adds the parameter.
+  it('returns null for a chain rooted at a shadowed test name', () => {
+    const shadows = new Set(['test']);
+    expect(classifyTestDeclaration(callee("test.set('Content-Type');"), new Map(), shadows)).toBeNull();
+    expect(classifyTestDeclaration(callee("test.write('{}');"), new Map(), shadows)).toBeNull();
+    expect(classifyTestDeclaration(callee('test.expect(413);'), new Map(), shadows)).toBeNull();
+    // An empty shadow set keeps the pre-guard behavior pin (no over-suppression).
+    expect(classifyTestDeclaration(callee("test.set('Content-Type');"), new Map(), new Set())).toEqual({
+      root: 'test',
+      modifier: 'set',
+    });
   });
 });
 
@@ -408,6 +496,34 @@ describe('supertest chain forms (SP3)', () => {
   });
   it('request(app).get().expect(200, expect(text)) → supertest-expect-body', () => {
     expect(form("request(app).get('/').expect(200, expect('text'));")).toBe('supertest-expect-body');
+  });
+  // C2/S binding resolution (2026-11-22) — a local variable whose initializer
+  // chain carries the HTTP verb is recognized; a non-verb initializer is not.
+  it('local var bound to a verb chain: const t = req(app).post("/"); t.expect(413) → supertest-expect-status', () => {
+    expect(form("const t = req(app).post('/');\nt.expect(413);")).toBe('supertest-expect-status');
+  });
+  it('local var whose initializer has NO verb: const h = makeThing(); h.expect(413) → null', () => {
+    expect(form('const h = makeThing();\nh.expect(413);')).toBeNull();
+  });
+  // C2/S order guard (Engram rev-1795392393776-3 / W2 F1) — binding resolution
+  // binds only declarations TEXTUALLY BEFORE the use site. A forward reference
+  // (use-before-declare) is not the recognized shape: const TDZ / var hoist are
+  // outside it, so the chain stays unrecognized.
+  it('forward-ref const (use BEFORE decl, TDZ) → null', () => {
+    expect(form("res.expect(413);\nconst res = req(app).post('/');")).toBeNull();
+  });
+  it('forward-ref var (use BEFORE decl, hoist-legal) → null', () => {
+    expect(form("res.expect(413);\nvar res = req(app).post('/');")).toBeNull();
+  });
+  it('forward-ref inside arrow with only a LATER outer decl → null', () => {
+    expect(form("(run) => { res.expect(413); };\nconst res = req(app).post('/');")).toBeNull();
+  });
+  // Controls — legitimate backward reference still recognized; no binding stays null.
+  it('control C backward ref: const res = ...; res.expect(413) → supertest-expect-status', () => {
+    expect(form("const res = req(app).post('/');\nres.expect(413);")).toBe('supertest-expect-status');
+  });
+  it('control D no binding anywhere: res.expect(413) → null', () => {
+    expect(form('res.expect(413);')).toBeNull();
   });
   // C5 — tail-chained .then: argCount taken from first classified node; documents
   // collector stop-descend (one finding) semantics. Current behavior pinned.

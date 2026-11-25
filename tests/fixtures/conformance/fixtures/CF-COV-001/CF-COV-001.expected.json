@@ -17,5 +17,5 @@
     "test_id_present": false,
     "note": "GAP 6: file-level metric MUST NOT be written into testResults[].evidence and MUST NOT gain a test_id. --per-test-run is a separate supported relationship and is out of scope for this fixture."
   },
-  "knownLimitations": ["Missing/stale/partial/mismatched report yields INDETERMINATE, never FAIL. Provider hints are declared-but-unconsumed by the adapter."]
+  "knownLimitations": ["Missing/stale/partial/mismatched report yields INDETERMINATE, never FAIL. Provider hints are declared-but-unconsumed by the adapter.", "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-TS-10/GAP-EXT-2/GAP-EXT-3: perTest.line_coverage MUST_BE_ABSENT retained (C-2 src/providers/coverage.ts:551-566 now complies). The harness no-report run has no fileLevel.line_coverage (CT-COV-001 INDETERMINATE) and the provider-wired istanbul record is [null,1]/PARTIAL/1.0.0 vs the sidecar's synthesized scalar 1/COMPLETE/0.1.0; both are scenario/wire-shape observations recorded by tests/conformance/external-evidence.conformance.test.ts GROUP B, not sidecar defects. No shared-block change (18a ruling (2))."]
 }

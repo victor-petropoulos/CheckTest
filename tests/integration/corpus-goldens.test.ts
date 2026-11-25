@@ -75,6 +75,9 @@ const NAMES = (manifest ?? []).map((entry) => entry.name);
 /** Pinned baseline — values extracted verbatim from validation/*-report.json
  *  (jq: [.name, .analysisStatus, .summary.total, .summary.pass, .summary.fail, .summary.indeterminate]).
  *  Repo key = manifest name; counts come from report.summary.
+ *  checktest-self: report.json is dogfood-self.sh's LAST capture (the
+ *  src/cli.ts coverage run, UNSUPPORTED) — see
+ *  docs/dogfood-self-findings.md:94. Re-pin after each dogfood-self.sh run.
  */
 const PINNED: Record<string, Aggregate> = {
   axios: { name: 'axios', analysisStatus: 'SUCCESS', total: 17, pass: 0, fail: 4, indeterminate: 13 },
@@ -120,11 +123,11 @@ const PINNED: Record<string, Aggregate> = {
   },
   'checktest-self': {
     name: 'checktest-self',
-    analysisStatus: 'SUCCESS',
-    total: 26,
-    pass: 20,
+    analysisStatus: 'UNSUPPORTED',
+    total: 1,
+    pass: 0,
     fail: 0,
-    indeterminate: 6,
+    indeterminate: 1,
   },
 };
 

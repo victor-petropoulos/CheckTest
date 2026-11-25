@@ -47,6 +47,12 @@ describe('typescript adapter — Adapter contract conformance (task 12)', () => 
     expect(adapter.providerHints.length).toBeGreaterThan(0);
   });
 
+  it('claims the .cjs extension (T11 owner ruling 2026-11-22 — axios CJS smoke tests)', () => {
+    // The collector has no extension gate, so this list is the CLAIM that lets
+    // the dispatcher route .cjs files to this adapter instead of UNSUPPORTED.
+    expect(typescriptAdapter.extensions).toContain('.cjs');
+  });
+
   it('collectAnalysis deep-equals the collector output for a known fixture (both option shapes)', () => {
     // No options — the adapter default maps to the collector's UNKNOWN default.
     expect(typescriptAdapter.collectAnalysis(FIXTURE)).toEqual(collectAnalysis(FIXTURE));

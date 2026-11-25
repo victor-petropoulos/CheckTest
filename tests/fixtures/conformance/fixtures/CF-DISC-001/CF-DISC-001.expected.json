@@ -82,7 +82,7 @@
       },
       {
         "rule_id": "CT-INT-003",
-        "result": "PASS",
+        "result": "INDETERMINATE",
         "test_id_present": true
       },
       {
@@ -101,6 +101,7 @@
     "note": "Each test has its own evidence map; no sibling sharing."
   },
   "knownLimitations": [
-    "Python declaration token NOT_VERIFIED at WP5; pin from collector in WP6."
+    "Python declaration token NOT_VERIFIED at WP5; pin from collector in WP6.",
+    "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-PY-6 expectation-side ('Amend expectations'): python CT-INT-003 pins INDETERMINATE (rule requires unestablished_assertion evidence the python collector does not emit). ts branch unchanged (PASS)."
   ]
 }

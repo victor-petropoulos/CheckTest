@@ -62,6 +62,27 @@ describe('registry integration (Phase 8 task B4)', () => {
     });
   });
 
+  it('.cjs file, no flag, no manifest (tmpdir) -> extension / typescript-jest-adapter (T11)', () => {
+    // T11 owner ruling 2026-11-22: .cjs is claimed by the TypeScript adapter so
+    // CommonJS smoke tests (axios tests/smoke/cjs/**/*.smoke.test.cjs) are
+    // analyzed instead of returning UNSUPPORTED / 'no adapter matched'.
+    const dir = join(tmpdir(), `checktest-b4-cjs-${Date.now()}`);
+    mkdirSync(dir, { recursive: true });
+    const file = join(dir, 'sample.test.cjs');
+    writeFileSync(file, "const assert = require('assert');\ntest('x', () => { assert.equal(1, 1); });\n");
+    try {
+      const fsState = { manifestExists: (name: string) => existsSync(join(dir, name)) };
+      const result = resolveAdapter(file, {}, fsState);
+      expect(result).toEqual({
+        adapterId: 'typescript-jest-adapter',
+        decidedBy: 'extension',
+        reason: null,
+      });
+    } finally {
+      rmRf(dir);
+    }
+  });
+
   it('.py file, no flag, no manifest (tmpdir) -> extension / python-pytest-adapter', () => {
     // python adapter registered (C4): a .py file in a directory with no
     // python manifest now resolves via the extension layer (lowest priority)

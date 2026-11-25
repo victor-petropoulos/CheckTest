@@ -222,6 +222,14 @@ export interface RuleMetadata {
    * contract (contract-hygiene task 4).
    */
   thresholds_inert?: boolean;
+  /**
+   * Declares this rule as file-level-only: its verdict is carried on the
+   * subject evaluation, not on per-test scopes. The engine skips per-test
+   * scope emission (evaluation.ts) and the reporter surfaces the subject
+   * verdict via evaluationScopes() (common.ts). Consumers should not expect
+   * per-declaration findings for this rule. Currently only CT-MUT-001.
+   */
+  file_level_only?: boolean;
 }
 
 /** Single source of truth for the accepted local-decision hook spellings. */

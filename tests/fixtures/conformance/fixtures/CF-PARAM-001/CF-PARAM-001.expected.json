@@ -4,10 +4,26 @@
   "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it.each" }] }, "python": { "count": 1, "sites": [{ "line": 4 }], "declarationToken": "NOT_VERIFIED" } },
   "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "INCOMPLETE" },
   "expectedEvidence": { "perTest": { "assertion_count": { "value": null, "availability": "UNKNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "PARTIAL", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" }, "unclassified_constructs": { "count": 1, "reasons": ["parameterized construct"] } } }, "fileLevel": {} },
+  "expectedEnvelopeByLanguage": { "ts": { "completeness": "INCOMPLETE" }, "python": { "completeness": "COMPLETE" } },
+  "expectedEvidenceByLanguage": {
+    "ts": { "perTest": { "assertion_count": { "availability": "UNKNOWN", "coverage": { "status": "PARTIAL" }, "evidenceStrength": "SYNTAX_OBSERVED", "unestablished_assertions": { "count": 1, "reasons": ["'it.each' is not a supported test declaration form; how often its body runs cannot be established statically"] } } } },
+    "python": { "perTest": { "assertion_count": { "value": 1, "availability": "KNOWN", "coverage": { "status": "COMPLETE" }, "evidenceStrength": "EXECUTION_ESTABLISHED" } } }
+  },
   "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
-  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "INDETERMINATE", "test_id_present": true }],
+  "expectedFindings": {
+    "ts": [
+      { "rule_id": "CT-INT-001", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "FAIL", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "INDETERMINATE", "test_id_present": true }
+    ],
+    "python": [
+      { "rule_id": "CT-INT-001", "result": "PASS", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }
+    ]
+  },
   "expectedExplanation": "Generated cases are not expanded into invented declarations; uncertainty preserved.",
   "expectedDiagnostics": { "reasons": ["parameterized construct"] },
   "attribution": { "level": "individual-test" },
-  "knownLimitations": ["pytest decorator expansion NOT_VERIFIED; not semantically equivalent to it.each. No cross-language evidence equality expected. TS it.each cases documented INDETERMINATE at docs/rules/catalog.md:221-222."]
+  "knownLimitations": ["pytest decorator expansion NOT_VERIFIED; not semantically equivalent to it.each. No cross-language evidence equality expected. TS it.each cases documented INDETERMINATE at docs/rules/catalog.md:221-222.", "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-TS-6/GAP-PY-2 expectation-side ('Amend expectations'): per-language envelope/evidence/findings recorded (ts it.each unestablished signal vs python KNOWN/COMPLETE, no decorator expansion). Shared expectedDiagnostics kept (18a ruling (2))."]
 }

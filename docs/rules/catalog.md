@@ -137,8 +137,8 @@ Generated from `RuleMetadata` by `scripts/gen-rule-catalog.ts` — do not edit t
 - **Rationale:** a recognized assertion inside a callback, nested block, or after an unconditional halt is not proven to execute by static shape, so its verification is unestablished (`src/rules/ct-int-003.ts:87-88`).
 - **Limitations:** does **not** claim the assertion never runs; no dataflow, branch-condition, loop-trip, or exception-path analysis — static shape only (`src/rules/ct-int-003.ts:18-21,89-90`). `severity: warning` (`:48`).
 - **Lifecycle status:** `RuleStatus.ACTIVE` (`src/rules/ct-int-003.ts:49`).
-- **External-evidence need:** none. The signal is collector-produced static shape on the `assertion_count` record (`src/rules/ct-int-003.ts:4-9,36-39`).
-- **Documentation reference:** `src/rules/ct-int-003.ts:91-92`.
+- **External-evidence need:** none. The signal is collector-produced static shape on the `assertion_count` record (`src/rules/ct-int-003.ts:4-9,36-39`). Subject scope (file-level) also decides: the collector emits a file-level `unestablished_assertion` aggregate signal in `AnalysisOutput.evidence` (`src/adapters/typescript/collector.ts` `supported()`), counted only over statically scanned declarations — the five §11 gap forms are excluded so UNKNOWN is never laundered into KNOWN→FAIL (ADR-035 amendment 2026-11-18, `docs/adr/ADR-035-closed-evidence-vocabulary-minimal-envelope-change.md`).
+- **Documentation reference:** `src/rules/ct-int-003.ts:91-92`. See `docs/rules/ct-int-003-proposal.md` §3 for the evidence-map shape; the subject-scope aggregate is documented at §3 note (file-level `unestablished_assertion`).
 
 ## CT-INT-004 — unclassified-constructs
 
@@ -218,7 +218,7 @@ Evidence of non-registration, verified live: `grep -n registerRule src/cli.ts` r
 | `case-28-global-vi`                  | yes (`:70`)       | yes                         | CT-INT-001 / PASS                   |
 | `case-29-bare-global-jest`           | yes (`:71`)       | yes                         | CT-INT-001 / PASS                   |
 | `case-30-bare-global-without-expect` | yes (`:72`)       | yes                         | CT-INT-001 / PASS                   |
-| `case-31-vitest-it-each-array`       | yes (`:73`)       | yes                         | CT-INT-001 / INDETERMINATE          |
+| `case-31-vitest-it-each-array`       | yes (`:73`)       | yes                         | CT-INT-001 / PASS                   |
 | `case-32-vitest-it-each-template`    | yes (`:74`)       | yes                         | CT-INT-001 / INDETERMINATE          |
 | `case-33-vitest-it-todo`             | yes (`:75`)       | yes                         | CT-INT-001 / FAIL                   |
 | `case-34-vitest-it-skip`             | yes (`:76`)       | yes                         | CT-INT-001 / INDETERMINATE          |
@@ -246,7 +246,7 @@ Each contains only a `report.json` (observed via `ls -la`); none is listed in `C
 ### Uncertain / unsupported cases visible in the CASES table
 
 - **No verdict (FAILED scan):** `case-11-collector-failure` and `case-17-failed-multi-test` are asserted to yield `rule_result === null` — the engine aborts at step 0 instead of inventing a verdict (`tests/integration/fixtures.test.ts:324-329`).
-- **Unsupported / unestablished assertion forms (expected INDETERMINATE):** `case-03-unsupported-api`, `case-04-custom-helper`, `case-07-after-return`, `case-08-callback`, `case-09-partial-collection`, `case-10-unsupported-framework`, `case-12-unknown-classification`, `case-13-conflict`, `case-15-mixed-framework`, `case-19-it-only`, `case-20-unresolved-body`, `case-21-dynamic-declaration`, `case-22-conditional-declaration`, `case-23-compound-callee`, `case-25-vitest-aliased`, `case-26-vitest-no-runtime-import`, `case-31-vitest-it-each-array`, `case-32-vitest-it-each-template`, `case-34-vitest-it-skip`, `case-35-vitest-it-skipif`, `case-37-vitest-not-to-throw`, `case-38-vitest-matchers`, `case-39-bare-mocha`.
+- **Unsupported / unestablished assertion forms (expected INDETERMINATE):** `case-03-unsupported-api`, `case-04-custom-helper`, `case-07-after-return`, `case-08-callback`, `case-09-partial-collection`, `case-10-unsupported-framework`, `case-12-unknown-classification`, `case-13-conflict`, `case-15-mixed-framework`, `case-19-it-only`, `case-20-unresolved-body`, `case-21-dynamic-declaration`, `case-22-conditional-declaration`, `case-23-compound-callee`, `case-25-vitest-aliased`, `case-26-vitest-no-runtime-import`, `case-32-vitest-it-each-template`, `case-34-vitest-it-skip`, `case-35-vitest-it-skipif`, `case-37-vitest-not-to-throw`, `case-38-vitest-matchers`, `case-39-bare-mocha`.
 - **N/A path:** `case-14-not-applicable` uses the unregistered CT-DEMO-001 stub, registered only in the test (`tests/integration/fixtures.test.ts:179`); it is not evidence of a shipped sixth rule.
 - **Coverage of all four verdict classes** (PASS, FAIL, INDETERMINATE, N/A) is asserted at `tests/integration/fixtures.test.ts:318-329`.
 

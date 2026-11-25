@@ -53,6 +53,55 @@ export const ASSERTION_FORM_BY_MATCHER: Readonly<Record<string, string>> = {
   toContain: 'expect-to-contain',
   toMatchObject: 'expect-to-match-object',
   toHaveBeenCalledTimes: 'expect-to-have-been-called-times',
+  // Dogfood-gap-closure (council FROZEN FORM SET, 2026-11-22) — plain matchers.
+  toBeUndefined: 'expect-to-be-undefined',
+  toHaveProperty: 'expect-to-have-property',
+  toBeDefined: 'expect-to-be-defined',
+  toHaveLength: 'expect-to-have-length',
+  toBeGreaterThan: 'expect-to-be-greater-than',
+  toBeNull: 'expect-to-be-null',
+  toMatch: 'expect-to-match',
+  toHaveBeenCalled: 'expect-to-have-been-called',
+  toHaveBeenCalledWith: 'expect-to-have-been-called-with',
+  toMatchInlineSnapshot: 'expect-to-match-inline-snapshot',
+  toBeGreaterThanOrEqual: 'expect-to-be-greater-than-or-equal',
+  // Open item #1 — TS matcher recognition gap (192 rows, 55% of corpus INDETERMINATE).
+  // Standard Jest/Vitest matchers not previously recognized.
+  toBeLessThan: 'expect-to-be-less-than',
+  toBeLessThanOrEqual: 'expect-to-be-less-than-or-equal',
+  toBeCloseTo: 'expect-to-be-close-to',
+  toBeInstanceOf: 'expect-to-be-instance-of',
+  toStrictEqual: 'expect-to-strict-equal',
+  toBeTypeOf: 'expect-to-be-type-of',
+  toHaveBeenLastCalledWith: 'expect-to-have-been-last-called-with',
+  toBeCalled: 'expect-to-have-been-called',
+  toBeCalledWith: 'expect-to-have-been-called-with',
+  toHaveBeenNthCalledWith: 'expect-to-have-been-nth-called-with',
+  // toMatchObject already present (expect-to-match-object).
+};
+
+/**
+ * Matcher name -> negated form ID, for the SYNC `expect(x).not.<matcher>()`
+ * chain only (dogfood-gap-closure, council FROZEN FORM SET 2026-11-22). Async
+ * `expect(p).rejects.not.<matcher>()` / `resolves.not.` are deferred to
+ * milestone-2 and never reach this map (their `.not` receiver is not a direct
+ * expect call — see `classifyForm`).
+ */
+export const ASSERTION_NEGATED_FORM_BY_MATCHER: Readonly<Record<string, string>> = {
+  toBe: 'expect-not-to-be',
+  toContain: 'expect-not-to-contain',
+  toHaveProperty: 'expect-not-to-have-property',
+  toBeNull: 'expect-not-to-be-null',
+  toThrow: 'expect-not-to-throw',
+  toHaveBeenCalled: 'expect-not-to-have-been-called',
+  toBeCalled: 'expect-not-to-have-been-called',
+  // Open item #1 — negated forms for newly recognized matchers.
+  toBeLessThan: 'expect-not-to-be-less-than',
+  toBeLessThanOrEqual: 'expect-not-to-be-less-than-or-equal',
+  toBeCloseTo: 'expect-not-to-be-close-to',
+  toBeInstanceOf: 'expect-not-to-be-instance-of',
+  toStrictEqual: 'expect-not-to-strict-equal',
+  toBeTypeOf: 'expect-not-to-be-type-of',
 };
 
 /**
@@ -346,21 +395,83 @@ const MATCHER_UTILS_HELPERS: ReadonlySet<string> = new Set([
  */
 export const SUPERTEST_HTTP_METHODS: readonly string[] = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'];
 
-/** True when the call's property chain contains an HTTP-method segment below a non-expect root. */
-function isSupertestChain(node: ts.CallExpression): { chain: boolean; argCount: number } | null {
+/** Walk a member/call chain leftwards: property names outermost-first + the root node. */
+function walkChain(expression: ts.Expression): { root: ts.Node; parts: string[] } {
   const parts: string[] = [];
-  let cur: ts.Node = node.expression;
+  let cur: ts.Node = expression;
   while (ts.isPropertyAccessExpression(cur) || ts.isCallExpression(cur)) {
-    if (ts.isPropertyAccessExpression(cur)) {
-      parts.push(cur.name.text);
-      cur = cur.expression;
-    } else {
-      cur = cur.expression;
+    if (ts.isPropertyAccessExpression(cur)) parts.push(cur.name.text);
+    cur = cur.expression;
+  }
+  return { root: cur, parts };
+}
+
+/** Statement list of a scope-bearing node (block / source file / module / case), else null. */
+function statementList(node: ts.Node): readonly ts.Statement[] | null {
+  if (
+    ts.isBlock(node) ||
+    ts.isSourceFile(node) ||
+    ts.isModuleBlock(node) ||
+    ts.isCaseClause(node) ||
+    ts.isDefaultClause(node)
+  ) {
+    return node.statements;
+  }
+  return null;
+}
+
+/** Initializer of the first `name` VariableDeclaration directly in a statement, else null. */
+function declarationInitializer(statement: ts.Statement, name: string): ts.Expression | null {
+  if (!ts.isVariableStatement(statement)) return null;
+  for (const declaration of statement.declarationList.declarations) {
+    if (ts.isIdentifier(declaration.name) && declaration.name.text === name) {
+      return declaration.initializer ?? null;
     }
   }
-  if (ts.isIdentifier(cur) && cur.text === 'expect') return null; // jest-style root
-  const names = parts.filter((p) => SUPERTEST_HTTP_METHODS.includes(p));
-  if (!parts.includes('expect') || names.length === 0) return null;
+  return null;
+}
+
+/**
+ * C2/S binding resolution — resolve an identifier to the initializer of its
+ * enclosing `VariableDeclaration`, nearest statement-list scope first. Local by
+ * construction: only the closest Block/SourceFile/ModuleBlock/CaseClause scope
+ * is scanned, so a same-named binding in an unrelated scope is never picked up.
+ * Order guard: only declarations TEXTUALLY BEFORE the use site bind (a
+ * use-before-declare forward reference is not the recognized shape — const TDZ /
+ * var hoist are outside it). Returns null when no live declaration binds the name.
+ */
+function findEnclosingInitializer(nameNode: ts.Identifier): ts.Expression | null {
+  const name = nameNode.text;
+  const usePos = nameNode.getStart();
+  let scope: ts.Node | undefined = nameNode.parent;
+  while (scope !== undefined) {
+    const statements = statementList(scope);
+    if (statements !== null) {
+      for (const statement of statements) {
+        if (statement.pos > usePos) break; // a later statement cannot bind the use
+        if (statement.end > usePos) break; // this statement contains the use site
+        const initializer = declarationInitializer(statement, name);
+        if (initializer !== null) return initializer;
+      }
+    }
+    scope = scope.parent;
+  }
+  return null;
+}
+
+/** True when the call's property chain contains an HTTP-method segment below a non-expect root. */
+function isSupertestChain(node: ts.CallExpression): { chain: boolean; argCount: number } | null {
+  const { root, parts } = walkChain(node.expression);
+  if (ts.isIdentifier(root) && root.text === 'expect') return null; // jest-style root
+  if (!parts.includes('expect')) return null;
+  let verb = parts.some((p) => SUPERTEST_HTTP_METHODS.includes(p));
+  if (!verb && ts.isIdentifier(root)) {
+    // C2/S — a local variable whose INITIALIZER chain carries the HTTP verb
+    // (express corpus `const test = request(app).post('/'); test.expect(413)`).
+    const initializer = findEnclosingInitializer(root);
+    verb = initializer !== null && walkChain(initializer).parts.some((p) => SUPERTEST_HTTP_METHODS.includes(p));
+  }
+  if (!verb) return null;
   return { chain: true, argCount: node.arguments.length };
 }
 
@@ -396,9 +507,26 @@ export function classifyForm(node: ts.Node): string | null {
     return matcher === 'toThrow' ? 'expect-rejects-to-throw' : null;
   }
 
+  // async: expect(p).resolves.<matcher>() — resolves chains carry the full
+  // matcher set (unlike rejects, which only supports toThrow in A9).
+  if (
+    ts.isPropertyAccessExpression(receiver) &&
+    receiver.name.text === 'resolves' &&
+    isExpectCall(receiver.expression)
+  ) {
+    return ASSERTION_FORM_BY_MATCHER[matcher] ?? null;
+  }
+
   // sync: expect(x).toBe(y)
   if (isExpectCall(receiver)) {
     return ASSERTION_FORM_BY_MATCHER[matcher] ?? null;
+  }
+
+  // sync negation: expect(x).not.<matcher>() — a literal `.not` whose receiver
+  // is a direct expect(...) call. Computed `.not` (element access) and the async
+  // rejects/resolves chains (receiver is not an expect call) stay null.
+  if (ts.isPropertyAccessExpression(receiver) && receiver.name.text === 'not' && isExpectCall(receiver.expression)) {
+    return ASSERTION_NEGATED_FORM_BY_MATCHER[matcher] ?? null;
   }
 
   return null;
@@ -555,6 +683,53 @@ export function collectTestAliases(sourceFile: ts.SourceFile): ReadonlyMap<strin
 }
 
 /**
+ * F — in-file local bindings that SHADOW a test root name.
+ *
+ * Detected statically: a VariableDeclaration (`var`/`let`/`const`) whose
+ * initializer is present but is NOT an Identifier rooted at a declared test
+ * name (`it`/`test`). E.g. `var test = request(app).post('/')` shadows the
+ * global `test`; `const it = somethingElse` shadows `it`. A declaration with
+ * no initializer (`let t;`) does NOT shadow here (no binding evidence at the
+ * declaration site; reassignment is deliberately out of scope).
+ *
+ * These names are the shadow set: when a call's root identifier is in it, the
+ * root is treated as a LOCAL variable, not a test declaration root, so
+ * classifyIdentifierCallee / classifyPropertyChainCallee return null.
+ *
+ * Deliberately NOT a scope analysis: whole-file binding names are collected,
+ * not per-scope. Rationale: the corpus false positives are top-level `var test`
+ * bindings inside `it(...)` bodies (express/test/express.json.js); a
+ * whole-file shadow set kills them and cannot suppress a genuine global-root
+ * declaration, because a genuine root is never locally re-bound in the same
+ * file in the corpus patterns we guard. Per-scope refinement is documented as
+ * the honest remainder.
+ *
+ * Complements collectTestAliases: aliases collect bindings whose initializer
+ * IS `it`/`test`; shadows collect bindings whose initializer is NOT. A name in
+ * both cannot happen (the same initializer cannot be both). The guard checks
+ * shadows first, so a contradictory re-binding is treated as shadowed -> null.
+ *
+ * Returns a Set of binding names; empty when the file declares none.
+ */
+export function collectTestShadows(sourceFile: ts.SourceFile): ReadonlySet<string> {
+  const shadows = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
+      const initializer = node.initializer;
+      if (
+        initializer !== undefined &&
+        !(ts.isIdentifier(initializer) && TEST_DECLARATION_NAMES.includes(initializer.text))
+      ) {
+        shadows.add(node.name.text);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return shadows;
+}
+
+/**
  * F — classify a call's callee as a test declaration, or null when it is not.
  *
  * Every shape a Jest declaration takes is handled:
@@ -595,20 +770,33 @@ function conditionalRoot(left: string | null, right: string | null): TestDeclara
 function classifyConditionalCallee(
   core: ts.ConditionalExpression,
   aliases: ReadonlyMap<string, string>,
+  shadows: ReadonlySet<string>,
 ): TestDeclaration | null {
-  return conditionalRoot(branchRoot(core.whenTrue, aliases), branchRoot(core.whenFalse, aliases));
+  return conditionalRoot(branchRoot(core.whenTrue, aliases, shadows), branchRoot(core.whenFalse, aliases, shadows));
 }
 
 /** F — `&&`/`||` callee: resolve both operand roots (short-circuit gap, same 'conditional' modifier). */
-function classifyBinaryCallee(core: ts.BinaryExpression, aliases: ReadonlyMap<string, string>): TestDeclaration | null {
+function classifyBinaryCallee(
+  core: ts.BinaryExpression,
+  aliases: ReadonlyMap<string, string>,
+  shadows: ReadonlySet<string>,
+): TestDeclaration | null {
   // WP3.4 remediation — a `&&`/`||` callee short-circuits to one operand; when
   // an operand carries test-root evidence the site is REPORTED with the
   // conditional gap (which operand runs is not statically established).
-  return conditionalRoot(branchRoot(core.left, aliases), branchRoot(core.right, aliases));
+  return conditionalRoot(branchRoot(core.left, aliases, shadows), branchRoot(core.right, aliases, shadows));
 }
 
 /** F — plain identifier callee: direct name or verified in-file alias. */
-function classifyIdentifierCallee(core: ts.Identifier, aliases: ReadonlyMap<string, string>): TestDeclaration | null {
+function classifyIdentifierCallee(
+  core: ts.Identifier,
+  aliases: ReadonlyMap<string, string>,
+  shadows: ReadonlySet<string>,
+): TestDeclaration | null {
+  // T14 — a local binding shadows the test root: `var test = request(app)`
+  // makes `test(...)` a local variable call, not a declaration. Shadow wins
+  // over the name match (and over the alias map).
+  if (shadows.has(core.text)) return null;
   if (TEST_DECLARATION_NAMES.includes(core.text)) return { root: core.text, modifier: null };
   // WP3.4 defect 2 — a verified in-file alias (`const t = it`) is a test
   // declaration detected through the alias and reported with the
@@ -618,7 +806,7 @@ function classifyIdentifierCallee(core: ts.Identifier, aliases: ReadonlyMap<stri
 }
 
 /** F — walk a PropertyAccess chain leftwards; modifier is the dot-joined tail. */
-function classifyPropertyChainCallee(core: ts.Node): TestDeclaration | null {
+function classifyPropertyChainCallee(core: ts.Node, shadows: ReadonlySet<string>): TestDeclaration | null {
   // Walk the PropertyAccess chain leftwards to its root Identifier: in
   // `test.concurrent.only` the `.expression` is another PropertyAccess, so a
   // single-level check would see no identifier and return null — silently
@@ -630,6 +818,9 @@ function classifyPropertyChainCallee(core: ts.Node): TestDeclaration | null {
     node = node.expression;
   }
   if (ts.isIdentifier(node) && TEST_DECLARATION_NAMES.includes(node.text)) {
+    // T14 — `test.set` where `test` is a local var (supertest chain) is not a
+    // declaration. Shadow wins over the name match.
+    if (shadows.has(node.text)) return null;
     return { root: node.text, modifier: properties.join('.') };
   }
   return null;
@@ -647,12 +838,13 @@ function isShortCircuit(core: ts.Node): core is ts.BinaryExpression {
 export function classifyTestDeclaration(
   callee: ts.Node,
   aliases: ReadonlyMap<string, string> = new Map(),
+  shadows: ReadonlySet<string> = new Set(),
 ): TestDeclaration | null {
   const core = calleeCore(callee);
-  if (ts.isConditionalExpression(core)) return classifyConditionalCallee(core, aliases);
-  if (isShortCircuit(core)) return classifyBinaryCallee(core, aliases);
-  if (ts.isIdentifier(core)) return classifyIdentifierCallee(core, aliases);
-  return classifyPropertyChainCallee(core);
+  if (ts.isConditionalExpression(core)) return classifyConditionalCallee(core, aliases, shadows);
+  if (isShortCircuit(core)) return classifyBinaryCallee(core, aliases, shadows);
+  if (ts.isIdentifier(core)) return classifyIdentifierCallee(core, aliases, shadows);
+  return classifyPropertyChainCallee(core, shadows);
 }
 
 /**
@@ -661,18 +853,21 @@ export function classifyTestDeclaration(
  * one, e.g. `it.skip`); parens are stripped first. Null when the branch has
  * no static root evidence.
  */
-function branchRoot(node: ts.Node, aliases: ReadonlyMap<string, string>): string | null {
+function branchRoot(node: ts.Node, aliases: ReadonlyMap<string, string>, shadows: ReadonlySet<string>): string | null {
   if (ts.isParenthesizedExpression(node)) {
-    return branchRoot(node.expression, aliases);
+    return branchRoot(node.expression, aliases, shadows);
   }
   if (ts.isIdentifier(node)) {
+    // T14 — a shadowed root resolves to no declaration root (mirrors
+    // classifyIdentifierCallee: shadow wins over the name match).
+    if (shadows.has(node.text)) return null;
     if (TEST_DECLARATION_NAMES.includes(node.text)) {
       return node.text;
     }
     return aliases.get(node.text) ?? null;
   }
   if (ts.isPropertyAccessExpression(node)) {
-    return branchRoot(node.expression, aliases);
+    return branchRoot(node.expression, aliases, shadows);
   }
   return null;
 }
@@ -727,6 +922,13 @@ export interface DeclarationSite {
   body: ts.Node | null;
   gap: DeclarationGap;
   syntax: string;
+  /**
+   * T9 — how many times this declaration's body runs: the row count of a
+   * statically countable `it.each`/`test.each` literal table, else 1. A
+   * countable table multiplies the established assertion count (xN aggregation,
+   * 7-researcher-notes (c)); every other site keeps 1, so no other count moves.
+   */
+  rowCount: number;
 }
 
 /**
@@ -764,6 +966,50 @@ export function declarationGapReason(site: DeclarationSite): string {
   }
 }
 
+/**
+ * T9 (7-researcher-notes (a)) — a STATICALLY COUNTABLE `each` table: an
+ * ArrayExpression whose elements are, recursively, primitive literals
+ * (string/number/boolean/null) or nested arrays of them. Returns the row count,
+ * or null when the table is anything else — an identifier, call, spread,
+ * template literal or computed member is not enumerable without executing the
+ * file, so it must keep the unsupported-form gap (docs/limitations.md §6).
+ *
+ * Parentheses and negative numeric literals are deliberately NOT peeled: the
+ * recognition stays narrow and syntactic, so an unusual table reads as UNKNOWN
+ * rather than being counted off a form this model never verified.
+ */
+export function literalTableRows(table: ts.Expression | undefined): number | null {
+  if (table === undefined || !ts.isArrayLiteralExpression(table)) {
+    return null;
+  }
+  return table.elements.every(isLiteralTableCell) ? table.elements.length : null;
+}
+
+function isLiteralTableCell(element: ts.Expression): boolean {
+  if (ts.isArrayLiteralExpression(element)) {
+    return element.elements.every(isLiteralTableCell);
+  }
+  return (
+    ts.isStringLiteral(element) ||
+    ts.isNumericLiteral(element) ||
+    element.kind === ts.SyntaxKind.TrueKeyword ||
+    element.kind === ts.SyntaxKind.FalseKeyword ||
+    element.kind === ts.SyntaxKind.NullKeyword
+  );
+}
+
+/**
+ * T9 — the table argument of an `it.each`/`test.each` declaration. The
+ * declaration node is the OUTER chained call (`it.each(table)(name, fn)`), so
+ * the table sits one level down in `node.expression.arguments[0]`. The tagged
+ * template form (``it.each`row`(name, fn)``) has no CallExpression there: its
+ * rows come from interpolations, so it is never countable.
+ */
+function eachTableArgument(node: ts.CallExpression): ts.Expression | undefined {
+  const callee = node.expression;
+  return ts.isCallExpression(callee) ? callee.arguments[0] : undefined;
+}
+
 export function declarationSite(
   sourceFile: ts.SourceFile,
   node: ts.CallExpression,
@@ -773,13 +1019,19 @@ export function declarationSite(
     (argument): argument is ts.ArrowFunction | ts.FunctionExpression =>
       ts.isArrowFunction(argument) || ts.isFunctionExpression(argument),
   );
+  // T9 — a countable literal `each` table closes the gap: the one shared
+  // callback runs once per row, so the count is rows x assertions. An empty
+  // table is NOT countable (jest rejects it; it runs nothing, so no row count is
+  // established) and every non-literal table keeps 'unsupported-form'.
+  const rows = declaration.modifier === 'each' ? literalTableRows(eachTableArgument(node)) : null;
+  const countableRows = rows !== null && rows > 0 ? rows : null;
   // ponytail: the gap is fully determined by (has inline callback) x (has modifier).
   const gap: DeclarationGap =
     callback === undefined && node.arguments.length > 1
       ? 'unresolved-body'
       : callback === undefined
         ? 'declaration-only'
-        : declaration.modifier === null
+        : declaration.modifier === null || countableRows !== null
           ? 'none'
           : declaration.modifier === 'conditional'
             ? 'conditional'
@@ -796,6 +1048,7 @@ export function declarationSite(
     body: callback?.body ?? null,
     gap,
     syntax: shortText(sourceFile, node),
+    rowCount: countableRows ?? 1,
   };
 }
 

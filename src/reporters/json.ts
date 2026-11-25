@@ -271,10 +271,17 @@ function summarize(scopes: readonly TestEvaluation[]): Json {
  *   declaration order (`evaluateTests`); falls back to the single subject-level
  *   scope ONLY when `analysis.tests` is absent (a legacy envelope)
  */
+export interface RuleReport {
+  rule: string;
+  ruleResults: Json[];
+  summary: Json;
+}
+
 export function toJson(
   analysis: AnalysisOutput,
   evaluation: EvaluationResult,
   evaluations: readonly TestEvaluation[] = [],
+  rules?: RuleReport[],
 ): string {
   // ponytail: one shape of scope list — the per-test set when the envelope
   // SUPPLIED one, otherwise the single subject-level entry a legacy caller means.
@@ -313,6 +320,9 @@ export function toJson(
       file: analysis.subject.file,
       language: analysis.subject.language,
       framework: analysis.subject.framework,
+      ...(analysis.subject.manifestFramework !== undefined
+        ? { manifestFramework: analysis.subject.manifestFramework }
+        : {}),
       type: analysis.subject.type,
     },
     analysisStatus: analysis.analysis.status,
@@ -360,6 +370,7 @@ export function toJson(
     ...(evaluation.deprecatedSince !== undefined ? { deprecatedSince: evaluation.deprecatedSince } : {}),
     testResults,
     summary: summarize(scopes),
+    ...(rules !== undefined && rules.length > 1 ? { rules } : {}),
   };
   return JSON.stringify(report, null, 2);
 }

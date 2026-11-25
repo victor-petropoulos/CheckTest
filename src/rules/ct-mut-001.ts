@@ -45,6 +45,7 @@ export const CT_MUT_001: RuleMetadata = {
   evaluation: { metric: 'mutation_score', pass_at_least: 1, fail_at_most: 0 },
   severity: 'warning',
   status: RuleStatus.ACTIVE,
+  file_level_only: true,
   local_decision: (context) => {
     const record = (context as { record?: any }).record ?? context;
     const ms = record.value;

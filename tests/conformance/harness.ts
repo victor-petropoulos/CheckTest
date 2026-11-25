@@ -51,7 +51,15 @@ export interface Sidecar {
   fixtureId: string;
   expectedDiscovery?: Record<string, DiscoveryExpectation>;
   expectedEnvelope?: { analysisStatus?: string; evaluationStatus?: string; completeness?: string };
+  expectedEnvelopeByLanguage?: Record<
+    Language,
+    { analysisStatus?: string; evaluationStatus?: string; completeness?: string }
+  >;
   expectedEvidence?: { perTest?: Record<string, unknown>; fileLevel?: Record<string, unknown> };
+  expectedEvidenceByLanguage?: Record<
+    Language,
+    { perTest?: Record<string, unknown>; fileLevel?: Record<string, unknown> }
+  >;
   expectedApplicability?: string[];
   expectedFindings?: FindingExpectation[] | Record<string, FindingExpectation[]>;
   expectedDiagnostics?: { reasons?: string[] };
@@ -254,6 +262,35 @@ function eq(expected: unknown, actual: unknown): boolean {
   return expected === actual;
 }
 
+/** Plain-object guard for mergeExpected: excludes null and arrays. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Plan task 2 — deep-merge a per-language sidecar branch over its shared block:
+ * the branch wins per key, plain objects merge recursively, arrays/scalars/null
+ * replace wholesale, and keys present only in `shared` are kept. Returns `shared`
+ * unchanged when the branch is absent; never mutates either input.
+ */
+export function mergeExpected<T extends Record<string, unknown>>(
+  branch: T | undefined,
+  shared: T | undefined,
+): T | undefined {
+  if (branch === undefined) return shared;
+  if (shared === undefined) return branch;
+  const merged: Record<string, unknown> = { ...shared };
+  for (const [key, branchValue] of Object.entries(branch)) {
+    const sharedValue = (shared as Record<string, unknown>)[key];
+    if (isPlainObject(branchValue) && isPlainObject(sharedValue)) {
+      merged[key] = mergeExpected(branchValue, sharedValue);
+    } else {
+      merged[key] = branchValue;
+    }
+  }
+  return merged as T;
+}
+
 function resolvePlaceholder(expected: unknown, adapter: Adapter | null): unknown {
   if (expected === 'ADAPTER_SOURCE') return adapter?.id ?? expected;
   if (expected === 'ADAPTER_FRAMEWORKS') return adapter?.capabilities.frameworks ?? expected;
@@ -341,10 +378,11 @@ function compareDiscovery(ctx: Ctx, sidecar: Sidecar, language: Language, analys
 function compareEnvelope(
   ctx: Ctx,
   sidecar: Sidecar,
+  language: Language,
   analysis: AnalysisOutput,
   evaluations: Map<string, RuleEvaluation>,
 ): void {
-  const env = sidecar.expectedEnvelope;
+  const env = mergeExpected(sidecar.expectedEnvelopeByLanguage?.[language], sidecar.expectedEnvelope);
   if (!env) return;
   if (env.analysisStatus !== undefined && env.analysisStatus !== analysis.analysis.status) {
     mismatch(
@@ -370,8 +408,8 @@ function compareEnvelope(
   }
 }
 
-function compareEvidence(ctx: Ctx, sidecar: Sidecar, analysis: AnalysisOutput): void {
-  const ee = sidecar.expectedEvidence;
+function compareEvidence(ctx: Ctx, sidecar: Sidecar, language: Language, analysis: AnalysisOutput): void {
+  const ee = mergeExpected(sidecar.expectedEvidenceByLanguage?.[language], sidecar.expectedEvidence);
   if (!ee) return;
   if (ee.perTest) {
     const tests = analysis.tests ?? [];
@@ -576,8 +614,8 @@ export function runFixture(fixtureId: string, language: Language, options?: Adap
     mismatches: [],
   };
   compareDiscovery(ctx, fixture.sidecar, language, analysis);
-  compareEnvelope(ctx, fixture.sidecar, analysis, evaluations);
-  compareEvidence(ctx, fixture.sidecar, analysis);
+  compareEnvelope(ctx, fixture.sidecar, language, analysis, evaluations);
+  compareEvidence(ctx, fixture.sidecar, language, analysis);
   compareFindings(ctx, fixture.sidecar, language, analysis, evaluations);
   compareReasons(ctx, fixture.sidecar, analysis);
   return {
@@ -594,6 +632,16 @@ export function runFixture(fixtureId: string, language: Language, options?: Adap
 
 /** Plan acceptance alias for runFixture. */
 export const evaluateFixture = runFixture;
+
+/** §D diagnostic-shape validation, extracted from selfCheck so it is unit-testable (tests-only export). */
+export function assertDiagnosticShape(bad: Diagnostic): void {
+  for (const key of ['adapter', 'fixture', 'expected', 'actual', 'evidence', 'diagnostics'] as const) {
+    if (!(key in bad)) throw new Error(`self-check: diagnostic missing field ${key}`);
+  }
+  if (typeof bad.diagnostics.reason !== 'string' || bad.diagnostics.reason.length === 0) {
+    throw new Error('self-check: diagnostic reason empty');
+  }
+}
 
 /**
  * Unit-level self-check (plan task 1 acceptance): a deliberately wrong
@@ -618,13 +666,8 @@ export function selfCheck(): void {
     completeness: analysis.analysis.completeness,
     mismatches: [],
   };
-  compareEvidence(ctx, mutated, analysis);
+  compareEvidence(ctx, mutated, 'ts', analysis);
   const bad = ctx.mismatches.find((m) => m.expected === 999);
   if (!bad) throw new Error('self-check: deliberately wrong expectation produced no mismatch');
-  for (const key of ['adapter', 'fixture', 'expected', 'actual', 'evidence', 'diagnostics'] as const) {
-    if (!(key in bad)) throw new Error(`self-check: diagnostic missing field ${key}`);
-  }
-  if (typeof bad.diagnostics.reason !== 'string' || bad.diagnostics.reason.length === 0) {
-    throw new Error('self-check: diagnostic reason empty');
-  }
+  assertDiagnosticShape(bad);
 }

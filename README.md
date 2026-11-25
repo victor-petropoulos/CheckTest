@@ -20,19 +20,20 @@ npm run build
 ## Usage
 
 ```
-checktest [check] --test <path> [--type <TYPE>] [--adapter <id>] [--rule <id>] [--format <fmt>] [--coverage-report <path>] [--coverage-map <from>=<to>] [--per-test-run] [--source-revision <rev>] [--mutation-report <path>] [--mutation-source-revision <rev>] [--config <path>]
+checktest [check] --test <path> [--type <TYPE>] [--adapter <id>] [--rule <id>] [--all-rules] [--format <fmt>] [--coverage-report <path>] [--coverage-map <from>=<to>] [--per-test-run] [--source-revision <rev>] [--mutation-report <path>] [--mutation-source-revision <rev>] [--config <path>]
 ```
 
 Full `--help` output (verified live):
 
 ```
-Usage: checktest [check] --test <path> [--type <TYPE>] [--rule <id>] [--format <fmt>] [--config <path>]
+Usage: checktest [check] --test <path> [--type <TYPE>] [--rule <id>] [--all-rules] [--format <fmt>] [--config <path>]
 
   --test <path>   test file to analyze (required)
   --type <TYPE>   declared test type: UNIT | COMPONENT | INTEGRATION | CONTRACT | E2E | UNKNOWN
                   (default UNKNOWN; never inferred from the file)
   --adapter <id>  adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034)
-  --rule <id>     rule to evaluate (default CT-INT-001); DRAFT rules are opt-in via --rule; DEPRECATED rules run by default
+  --rule <id>     rule to evaluate (repeatable; default CT-INT-001); DRAFT rules are opt-in via --rule; DEPRECATED rules run by default
+  --all-rules     evaluate every ACTIVE registered rule (sugar for repeating --rule); DRAFT rules stay opt-in
   --format <fmt>  report format: 'json' | 'sarif' (default json)
   --coverage-report <path>  external Istanbul/c8 coverage report to attach
   --coverage-map <from>=<to>  map analyzed file path to report key (repeatable)
@@ -47,24 +48,35 @@ stdout. Exits 0 when the rule was evaluated (any
 rule result, including FAIL, and any UNSUPPORTED analysis), 2 when the engine
 reached no verdict (including a file that declares no tests), and 1 on a usage
 error or a failed run.
+
+Usage: checktest mutation-sandbox init [--dir <path>] [--json]
+
+  init           create a gitignored sandbox dir + prepped Stryker config
+  --dir <path>   target repository root (default: current working directory)
+  --json         emit machine-readable JSON (kind: mutation-sandbox)
+
+Prepares a safe working area for external Stryker mutation testing. CheckTest
+never runs Stryker. Exits 0 on success, 1 on usage error.
 ```
 
 ### Flags
 
-| Flag                               | Description                                                                                              |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `--test <path>`                    | Path to the test file to analyze (required)                                                              |
-| `--type <TYPE>`                    | Declared test type: `UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`, `UNKNOWN` (default `UNKNOWN`) |
-| `--adapter <id>`                   | Adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034)                    |
-| `--rule <id>`                      | Rule ID to evaluate (default `CT-INT-001`)                                                               |
-| `--format <fmt>`                   | Report format: `json` or `sarif` (default `json`)                                                        |
-| `--coverage-report <path>`         | External Istanbul/c8 coverage report JSON to attach                                                      |
-| `--coverage-map <from>=<to>`       | Map analyzed file path to report key (repeatable; expects `<from>=<to>`)                                 |
-| `--per-test-run`                   | Mark the coverage report as a single-test-file run (CT-COV-001)                                          |
-| `--source-revision <rev>`          | Declared revision the coverage report was produced against (CLI beats config `sourceRevision`)           |
-| `--mutation-report <path>`         | External Stryker mutation report JSON to attach                                                          |
-| `--mutation-source-revision <rev>` | Declared revision the mutation report was produced against (valid git rev or `unknown`)                  |
-| `--config <path>`                  | Explicit config file (`checktest.config.json`); no implicit discovery                                    |
+| Flag                               | Description                                                                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `--test <path>`                    | Path to the test file to analyze (required)                                                                                       |
+| `--type <TYPE>`                    | Declared test type: `UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`, `UNKNOWN` (default `UNKNOWN`)                          |
+| `--adapter <id>`                   | Adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034)                                             |
+| `--rule <id>`                      | Rule ID to evaluate; repeat the flag to evaluate several rules in one run (deduped, first-occurrence order; default `CT-INT-001`) |
+| `--all-rules`                      | Evaluate every ACTIVE registered rule in one run (DRAFT rules stay excluded unless also named via `--rule`; sugar for repeating `--rule`) |
+| `--format <fmt>`                   | Report format: `json` or `sarif` (default `json`)                                                                                 |
+| `--coverage-report <path>`         | External Istanbul/c8 coverage report JSON to attach                                                                               |
+| `--coverage-map <from>=<to>`       | Map analyzed file path to report key (repeatable; expects `<from>=<to>`)                                                          |
+| `--per-test-run`                   | Mark the coverage report as a single-test-file run (CT-COV-001)                                                                   |
+| `--source-revision <rev>`          | Declared revision the coverage report was produced against (CLI beats config `sourceRevision`)                                    |
+| `--mutation-report <path>`         | External Stryker mutation report JSON to attach                                                                                   |
+| `--mutation-source-revision <rev>` | Declared revision the mutation report was produced against (valid git rev or `unknown`)                                           |
+| `--config <path>`                  | Explicit config file (`checktest.config.json`); no implicit discovery                                                             |
+| `--provenance <path>`              | Write a provenance manifest JSON sidecar to `<path>` (single path, not repeatable)                                         |
 
 ### Config File
 
@@ -101,17 +113,58 @@ checktest check --test <file> --mutation-report <path> --mutation-source-revisio
 - Freshness: report usable when declared revision matches analyzed git HEAD; mismatch or missing flag → INDETERMINATE (CT-MUT-001), never FAIL from stale/missing report.
 - CT-MUT-001: PASS ≥ 0.5 / FAIL < 0.5 on mutation_score, only when freshness established. The verdict is file-level (mutation evidence is never per-declaration): it appears as a `ruleResults` entry with no `test_id`, alongside any per-test findings, and its `rationale` states that no per-declaration attribution is claimed.
 
+### Mutation sandbox
+
+`checktest mutation-sandbox init [--dir <repo-root>]` prepares a safe working area for external Stryker mutation testing: it creates a gitignored `.checktest-sandbox/` directory and writes a Stryker config bound to it (`tempDirName` inside the sandbox, `inPlace: false`). Run Stryker there, then attach the produced report with `--mutation-report`.
+
+```sh
+checktest mutation-sandbox init
+npx stryker run --configFile .checktest-sandbox/stryker.config.json
+checktest check --test <file> --mutation-report .checktest-sandbox/mutation.json --mutation-source-revision <rev>
+```
+
+CheckTest never runs Stryker; the helper only prepares the sandbox and prints the required `.gitignore` line. For a foreign repository the foreign `.gitignore` is never modified silently — add the printed `.checktest-sandbox/` line yourself. No enforcement is claimed. See [docs/limitations.md](./docs/limitations.md) §37.
+
 ### Coverage
 
-Supported: Istanbul JSON, c8 JSON, per-test-run derived shape. Raw vitest coverage-final.json is NOT supported. See [docs/limitations.md](./docs/limitations.md) §25 for accepted shapes, freshness, and file-identity matching, and [supported syntax](./docs/supported-syntax.md#coverage-formats) for adapter-specific matching rules.
+Supported: Istanbul JSON, c8 JSON, per-test-run derived shape, and raw vitest `coverage-final.json` (flat Istanbul map, shape A) — parsed natively; malformed shape-A entries fail closed to `UNKNOWN`, never a zero-coverage `KNOWN`. See [docs/limitations.md](./docs/limitations.md) §25 for accepted shapes, freshness, and file-identity matching, and [supported syntax](./docs/supported-syntax.md#coverage-formats) for adapter-specific matching rules.
+
+### Multi-rule reports
+
+Repeating `--rule` evaluates several rules against one test file in a single run:
+
+```sh
+checktest --test file.test.ts --rule CT-INT-001 --rule CT-COV-001
+```
+
+Scope: one `--test` file only (single-file scope; multi-file is deferred). JSON output only.
+
+Report shape — the envelope keeps all single-rule keys, plus:
+
+```json
+{
+  ...
+  "ruleResults": [ ...first named rule's findings only... ],
+  "summary": { ...first named rule's summary only... },
+  "rules": [
+    { "rule": "CT-INT-001", "ruleResults": [...], "summary": {...} },
+    { "rule": "CT-COV-001", "ruleResults": [...], "summary": {...} }
+  ]
+}
+```
+
+- `rules` is present **only** when more than one rule was named; a single `--rule` (or the default) keeps the legacy byte-identical envelope with no `rules` key.
+- The top-level `ruleResults` and `summary` mirror the **first named rule** only — they are **not** an aggregate across rules. Each `rules[]` entry carries one rule's own `ruleResults`/`summary`.
+- With `--format sarif`, a multi-rule run reports the **first named rule only** (SARIF carries one rule descriptor per run); the `rules` array is JSON-only.
+- **D6 opt-in:** DRAFT rules stay excluded by default; naming a rule id via `--rule` is the opt-in. `--all-rules` evaluates every ACTIVE registered rule (DRAFT rules stay excluded unless also named via `--rule`). There is no `--ruleset`.
 
 ### Exit Codes
 
-| Code | Meaning                                                                                                 |
-| ---- | ------------------------------------------------------------------------------------------------------- |
+| Code | Meaning                                                                                                                                      |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `0`  | At least one test scope reached a rule verdict (`PASS`, `FAIL`, `INDETERMINATE`, or `N/A`). `FAIL` also exits 0; exit code is not a verdict. |
-| `1`  | Usage error or runtime crash                                                                            |
-| `2`  | No verdict — engine reached no conclusion (e.g. file declares no tests, or no adapter matched the file) |
+| `1`  | Usage error or runtime crash                                                                                                                 |
+| `2`  | No verdict — engine reached no conclusion (e.g. file declares no tests, or no adapter matched the file)                                      |
 
 `doctor` uses `0` = diagnostic success, `1` = usage error (unknown flag / id), `2` = unresolvable dispatch (`doctor --test <path>` with no matching adapter). `explain` uses `0` = rule printed and `1` = missing/unregistered `--rule`; it has no exit-2 case.
 
@@ -229,6 +282,21 @@ Docs URL: https://github.com/victor-petropoulos/CheckTest/blob/main/docs/support
 - **Deprecated** — still evaluated and reported until removal; reports carry `deprecatedSince`.
 
 No Draft or Deprecated rules are registered today; all five registered rules are Active. `src/rules/ct-demo-001.ts` is an unregistered N/A-path stub used only in tests; it is not a shipped rule (see [rule catalog](./docs/rules/catalog.md)).
+
+### Running all five rules on one file
+
+`--rule` is repeatable: `checktest --test path/to/file.test.ts --rule CT-INT-001 --rule CT-COV-001` evaluates both named rules in one run, deduplicated, in first-occurrence order. There is also an `--all-rules` flag that evaluates every ACTIVE registered rule (DRAFT rules stay excluded unless also named via `--rule`). There is no `--ruleset`. To run the full five-rule battery against one test file, repeat `--rule` once per id, or loop over the ids:
+
+```sh
+for rule in CT-INT-001 CT-INT-003 CT-INT-004 CT-COV-001 CT-MUT-001; do
+  echo "== $rule =="
+  checktest --test path/to/file.test.ts --rule "$rule" \
+    --coverage-report coverage.json \
+    --coverage-map "path/to/file.test.ts=path/to/src/file.ts"
+done
+```
+
+Separate invocations each emit their own single-rule report with its own summary; verdicts are not aggregated across rules. One invocation with several `--rule` flags emits one report whose top-level `ruleResults`/`summary` mirror the **first named rule** only (not an aggregate) and gains an additive `rules` array — one `{ rule, ruleResults, summary }` entry per named rule — present only when more than one rule was named. See [Multi-rule reports](#multi-rule-reports).
 
 ## Supported Frameworks
 
@@ -718,13 +786,13 @@ checktest check --test tests/fixtures/int003-probes/probe-mixed.test.ts --type U
 
 ## Documentation
 
-| Doc | Content |
-| --- | --- |
-| [docs/supported-syntax.md](./docs/supported-syntax.md) | Assertion forms, declaration types, straight-line body rule |
-| [docs/limitations.md](./docs/limitations.md) | Known gaps and intentional boundaries |
-| [docs/architecture.md](./docs/architecture.md) | Evaluation lifecycle, adapter/evidence/rule/reporting model |
-| [docs/evaluation-model.md](./docs/evaluation-model.md) | Verdict, evidence and analysis-condition semantics |
-| [docs/product-contract.md](./docs/product-contract.md) | Authoritative report/determinism/exit-code contract |
+| Doc                                                        | Content                                                                                         |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| [docs/supported-syntax.md](./docs/supported-syntax.md)     | Assertion forms, declaration types, straight-line body rule                                     |
+| [docs/limitations.md](./docs/limitations.md)               | Known gaps and intentional boundaries                                                           |
+| [docs/architecture.md](./docs/architecture.md)             | Evaluation lifecycle, adapter/evidence/rule/reporting model                                     |
+| [docs/evaluation-model.md](./docs/evaluation-model.md)     | Verdict, evidence and analysis-condition semantics                                              |
+| [docs/product-contract.md](./docs/product-contract.md)     | Authoritative report/determinism/exit-code contract                                             |
 | [docs/reporting-contract.md](./docs/reporting-contract.md) | Wire contract: envelope, evidence, findings, testResults, summary, SARIF mapping, compatibility |
-| [docs/exit-codes.md](./docs/exit-codes.md) | Exit-code matrix per command, with source anchors |
-| [docs/rules/catalog.md](./docs/rules/catalog.md) | Per-rule data, applicability, evidence and limitations |
+| [docs/exit-codes.md](./docs/exit-codes.md)                 | Exit-code matrix per command, with source anchors                                               |
+| [docs/rules/catalog.md](./docs/rules/catalog.md)           | Per-rule data, applicability, evidence and limitations                                          |

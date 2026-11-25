@@ -1,4 +1,4 @@
-import { evaluateRule } from '../../src/core/evaluation';
+import { evaluateRule, evaluateTests } from '../../src/core/evaluation';
 import { getRule, registerRule } from '../../src/rules/registry';
 import { CT_MUT_001, MUTATION_THRESHOLD } from '../../src/rules/ct-mut-001';
 import {
@@ -194,5 +194,17 @@ describe('no report != zero mutants (engine guard preserved)', () => {
     delete (a.evidence as any).mutation_score;
     const { finding } = evaluateRule(CT_MUT_001, a);
     expect(finding?.result).not.toBe(RuleResult.FAIL);
+  });
+});
+
+describe('C4 phantom per-test rows', () => {
+  it('evaluateTests yields 0 per-test entries for file-level-only rule', () => {
+    const a = analysis({ value: mutationScore(0.3) });
+    (a as any).tests = [
+      { test: { id: 't1', name: 't1', line: 1, declaration: 'it' }, analysis: a.analysis, evidence: {} },
+      { test: { id: 't2', name: 't2', line: 2, declaration: 'it' }, analysis: a.analysis, evidence: {} },
+    ];
+    const scopes = evaluateTests(CT_MUT_001, a);
+    expect(scopes.length).toBe(0);
   });
 });

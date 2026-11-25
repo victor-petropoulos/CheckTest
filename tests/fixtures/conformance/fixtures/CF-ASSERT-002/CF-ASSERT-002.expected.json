@@ -8,9 +8,9 @@
   "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "COMPLETE" },
   "expectedEvidence": { "perTest": { "assertion_count": { "value": 0, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } }, "fileLevel": {} },
   "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
-  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "FAIL", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "PASS", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }],
+  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "FAIL", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }],
   "expectedExplanation": "Zero assertions from a COMPLETE scan; FAIL is the rule verdict, not an analysis failure.",
   "expectedDiagnostics": { "reasons": [] },
   "attribution": { "level": "individual-test" },
-  "knownLimitations": ["No claim about runtime behavior."]
+  "knownLimitations": ["No claim about runtime behavior.", "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-TS-2 expectation-side ('Amend expectations'): CT-INT-003 pins INDETERMINATE (rule requires unestablished_assertion evidence; both adapters emit only assertion_count)."]
 }

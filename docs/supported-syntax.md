@@ -25,36 +25,63 @@ A file with **no** runtime framework evidence and **no** bare-global declaration
 
 ---
 
-## Assertion Forms (11 forms, A9)
+<!-- The rule metadata `docsUrl` (src/rules/ct-int-001.ts) hardcodes the
+     historical `#assertion-forms-11-forms-a9` fragment; this explicit anchor
+     keeps that external link resolving after the heading rename below. -->
 
-The following 11 assertion form IDs are recognized. Each maps to a Jest matcher on an `expect(...)` chain. **These 11 strings are the verbatim elements of `SUPPORTED_ASSERTION_FORMS` in `src/adapters/typescript/support.ts:25-37`.**
+<a id="assertion-forms-11-forms-a9"></a>
 
-| Form ID                            | Matcher                                                                    | Syntax Example                                                      |
-| ---------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `expect-to-be`                     | `toBe`                                                                     | `expect(1 + 1).toBe(2)`                                             |
-| `expect-to-equal`                  | `toEqual`                                                                  | `expect({ a: 1 }).toEqual({ a: 1 })`                                |
-| `expect-to-be-truthy`              | `toBeTruthy`                                                               | `expect(value).toBeTruthy()`                                        |
-| `expect-to-be-falsy`               | `toBeFalsy`                                                                | `expect(value).toBeFalsy()`                                         |
-| `expect-to-throw`                  | `toThrow`                                                                  | `expect(() => { throw new Error('x'); }).toThrow('x')`              |
-| `expect-rejects-to-throw`          | `rejects.toThrow`                                                          | `await expect(Promise.reject(new Error('x'))).rejects.toThrow('x')` |
-| `expect-to-match-snapshot`         | `toMatchSnapshot`                                                          | `expect(rendered).toMatchSnapshot()`                                |
-| `expect-to-contain`                | `toContain`                                                                | `expect(array).toContain(item)`                                     |
-| `expect-matcher-utils`             | `expect.any` / `objectContaining` / `arrayContaining` / `stringContaining` | `expect(x).toEqual(expect.objectContaining({ a: 1 }))`              |
-| `expect-to-match-object`           | `toMatchObject`                                                            | `expect(obj).toMatchObject({ a: 1 })`                               |
-| `expect-to-have-been-called-times` | `toHaveBeenCalledTimes`                                                    | `expect(mock).toHaveBeenCalledTimes(1)`                             |
+## Assertion Forms (44 forms, A9)
 
-**Source:** `src/adapters/typescript/support.ts:25-37` (`SUPPORTED_ASSERTION_FORMS` — the 11 Jest forms), `src/adapters/typescript/support.ts:49-59` (`ASSERTION_FORM_BY_MATCHER`), `src/adapters/typescript/support.ts:350` (`SUPERTEST_HTTP_METHODS`), `src/adapters/typescript/support.ts:353-368` (`isSupertestChain`), `src/adapters/typescript/support.ts:376-378` (classifyForm supertest branch), `src/adapters/typescript/support.ts:370-408` (`classifyForm`). Two additional forms (`supertest-expect-status`, `supertest-expect-body`) are recognized on non-expect-rooted chains — see [Supertest HTTP Assertion Chains](#supertest-http-assertion-chains-sp3-2026-11-09).
+The following 44 assertion form IDs are recognized. The first 42 map to a Jest/Vitest matcher on an `expect(...)` chain — the original 30 (11 + 17 added by the dogfood-gap-closure matcher expansion, council FROZEN FORM SET, 2026-11-22: 11 plain + 6 negated) plus 12 added by the open-item #1 matcher recognition (batch 1, 2026-11-24). The final 2 are supertest/superagent HTTP fluent forms, recognized on a non-`expect`-rooted chain (see [Supertest HTTP Assertion Chains](#supertest-http-assertion-chains-sp3-2026-11-09)). **These 44 strings are the verbatim elements of `SUPPORTED_ASSERTION_FORMS` in `src/adapters/typescript/capabilities.ts`.**
+
+| Form ID                              | Matcher                                                                    | Syntax Example                                                      |
+| ------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `expect-to-be`                       | `toBe`                                                                     | `expect(1 + 1).toBe(2)`                                             |
+| `expect-to-equal`                    | `toEqual`                                                                  | `expect({ a: 1 }).toEqual({ a: 1 })`                                |
+| `expect-to-be-truthy`                | `toBeTruthy`                                                               | `expect(value).toBeTruthy()`                                        |
+| `expect-to-be-falsy`                 | `toBeFalsy`                                                                | `expect(value).toBeFalsy()`                                         |
+| `expect-to-throw`                    | `toThrow`                                                                  | `expect(() => { throw new Error('x'); }).toThrow('x')`              |
+| `expect-rejects-to-throw`            | `rejects.toThrow`                                                          | `await expect(Promise.reject(new Error('x'))).rejects.toThrow('x')` |
+| `expect-to-match-snapshot`           | `toMatchSnapshot`                                                          | `expect(rendered).toMatchSnapshot()`                                |
+| `expect-to-contain`                  | `toContain`                                                                | `expect(array).toContain(item)`                                     |
+| `expect-matcher-utils`               | `expect.any` / `objectContaining` / `arrayContaining` / `stringContaining` | `expect(x).toEqual(expect.objectContaining({ a: 1 }))`              |
+| `expect-to-match-object`             | `toMatchObject`                                                            | `expect(obj).toMatchObject({ a: 1 })`                               |
+| `expect-to-have-been-called-times`   | `toHaveBeenCalledTimes`                                                    | `expect(mock).toHaveBeenCalledTimes(1)`                             |
+| `expect-to-be-undefined`             | `toBeUndefined`                                                            | `expect(x).toBeUndefined()`                                         |
+| `expect-to-have-property`            | `toHaveProperty`                                                           | `expect(obj).toHaveProperty('a')`                                   |
+| `expect-to-be-defined`               | `toBeDefined`                                                              | `expect(x).toBeDefined()`                                           |
+| `expect-to-have-length`              | `toHaveLength`                                                             | `expect(arr).toHaveLength(2)`                                       |
+| `expect-to-be-greater-than`          | `toBeGreaterThan`                                                          | `expect(2).toBeGreaterThan(1)`                                      |
+| `expect-to-be-null`                  | `toBeNull`                                                                 | `expect(x).toBeNull()`                                              |
+| `expect-to-match`                    | `toMatch`                                                                  | `expect('abc').toMatch(/a/)`                                        |
+| `expect-to-have-been-called`         | `toHaveBeenCalled`                                                         | `expect(fn).toHaveBeenCalled()`                                     |
+| `expect-to-have-been-called-with`    | `toHaveBeenCalledWith`                                                     | `expect(fn).toHaveBeenCalledWith(1)`                                |
+| `expect-to-match-inline-snapshot`    | `toMatchInlineSnapshot`                                                    | `expect('x').toMatchInlineSnapshot()`                               |
+| `expect-to-be-greater-than-or-equal` | `toBeGreaterThanOrEqual`                                                   | `expect(2).toBeGreaterThanOrEqual(2)`                               |
+| `expect-not-to-be`                   | `not.toBe`                                                                 | `expect(1).not.toBe(2)`                                             |
+| `expect-not-to-contain`              | `not.toContain`                                                            | `expect([1]).not.toContain(2)`                                      |
+| `expect-not-to-have-property`        | `not.toHaveProperty`                                                       | `expect(obj).not.toHaveProperty('b')`                               |
+| `expect-not-to-be-null`              | `not.toBeNull`                                                             | `expect(x).not.toBeNull()`                                          |
+| `expect-not-to-throw`                | `not.toThrow`                                                              | `expect(fn).not.toThrow()`                                          |
+| `expect-not-to-have-been-called`     | `not.toHaveBeenCalled`                                                     | `expect(fn).not.toHaveBeenCalled()`                                 |
+| `supertest-expect-status`            | `.expect(status)` on an HTTP chain                                         | `request(app).get('/').expect(201)`                                 |
+| `supertest-expect-body`              | `.expect(status, body, …)` on an HTTP chain                                | `request(app).get('/').expect(201, 'Created')`                      |
+
+**Source:** `src/adapters/typescript/capabilities.ts:25-56` (`SUPPORTED_ASSERTION_FORMS` — the 30 form IDs), `src/adapters/typescript/support.ts:46-68` (`ASSERTION_FORM_BY_MATCHER`), `src/adapters/typescript/support.ts:77-84` (`ASSERTION_NEGATED_FORM_BY_MATCHER` — the 6 sync `not.<matcher>` forms), `src/adapters/typescript/support.ts:375` (`SUPERTEST_HTTP_METHODS`), `src/adapters/typescript/support.ts:442-461` (`isSupertestChain`), `src/adapters/typescript/support.ts:463-466` (classifyForm supertest branch), `src/adapters/typescript/support.ts:457-494` (`classifyForm`). The 2 supertest forms (`supertest-expect-status`, `supertest-expect-body`) are recognized on non-expect-rooted chains — see [Supertest HTTP Assertion Chains](#supertest-http-assertion-chains-sp3-2026-11-09).
 
 ### Recognized Shapes
 
-1. **Synchronous**: `expect(<arg>).<matcher>(...)` where `<matcher>` is one of the 6 sync matchers above.
-2. **Async rejects**: `await expect(<promise>).rejects.toThrow(<matcher>?)` — the only async form in the allowlist.
+1. **Synchronous**: `expect(<arg>).<matcher>(...)` where `<matcher>` is one of the positive sync matchers above.
+2. **Synchronous negation**: `expect(<arg>).not.<matcher>(...)` — a literal `.not` whose receiver is a direct `expect(...)` call, for the 6 negated matchers above. A computed `.not` (`expect(x).not[m]()`) and async negation (`expect(p).rejects.not.<matcher>()` / `resolves.not.`) are NOT classified (see below).
+3. **Async rejects**: `await expect(<promise>).rejects.toThrow(<matcher>?)` — the only async form in the allowlist.
 
 ### Not Recognized (recorded as unsupported forms)
 
-- `expect(x).toBeDefined()`, `expect(x).not.toBe(...)` — matcher not in the 11 forms.
-- `expect(x)[computedMatcher]()` — matcher name is not statically resolvable.
-- `expect(x).rejects.toBe(...)` — `rejects.toBe` is not in the allowlist.
+- `expect(x).toBeCloseTo(...)`, `expect(x).toBeCalledWith(...)`, and other matchers not among the 28 form IDs — matcher not in the allowlist.
+- `expect(x)[computedMatcher]()` and `expect(x).not[computedMatcher]()` — matcher name (or the `.not` property) is not statically resolvable.
+- `expect(x).rejects.not.toBe(...)`, `expect(p).resolves.not.<matcher>()` — async negation is deferred to milestone-2; the `.not` receiver is not a direct `expect(...)` call.
+- `expect.soft(...)`, `expect.extend(...)` custom matchers, node:assert (`assert.*`), and custom assertion helpers — outside the declared `test-body` scope.
 - Chai-style `assert.equal(x, y)`, `should`, `expect(...).to.be.*` — namespace `assert`/`chai`/`should` is in `UNSUPPORTED_ASSERTION_NAMESPACES`.
 - Supertest HTTP assertion chains `request(app).<method>(...).expect(...)` are classified separately (see [Supertest HTTP Assertion Chains](#supertest-http-assertion-chains-sp3-2026-11-09)); a chain whose terminal call is neither a recognized supertest form nor a Jest matcher lands in the unsupported reporting path at `collector.ts:675` (expect-rooted) / `:682` (namespace check) — for chains rooted at `expect` or an `UNSUPPORTED_ASSERTION_NAMESPACES` member. Other fluent chains (non-expect, non-namespace terminals) remain null-recorded per the pre-existing heuristic gap (`support.ts:63-65`), not silently dropped from the recognized paths.
 
@@ -71,9 +98,9 @@ An assertion is **unestablished** (not counted, availability becomes `UNKNOWN`) 
 | After an unconditional `return` or `throw` in the same block                                                                    | `assertion appears after an unconditional return/throw; execution cannot be established statically`                 |
 | Inside a nested block or control-flow construct (`if`/`else`, loop, `try`/`catch`/`finally`, `switch`, `do`, labeled statement) | `assertion is inside a nested block (if/loop/try/switch); straight-line execution cannot be established statically` |
 | Inside a nested callback (arrow function, function expression, or function declaration nested in the test body)                 | `assertion is inside a callback; callback execution cannot be established statically`                               |
-| Inside a test declaration whose form is not fully supported (`each`, `skip`, `only`, …)                                         | `'it.each' is not a supported test declaration form; how often its body runs cannot be established statically`      |
+| Inside a test declaration whose form is not fully supported (`each` over a non-literal table, `skip`, `only`, ...)              | `'it.each' is not a supported test declaration form; how often its body runs cannot be established statically`      |
 
-**Recognition completeness** (whether the collector _recognized_ the construct) is separate from **executability**. A recognized but unestablished assertion leaves `analysis.completeness = COMPLETE` but `evidence.assertion_count.availability = UNKNOWN`. An **unrecognized declaration form** is a recognition gap and additionally leaves `completeness = INCOMPLETE`.
+**Recognition completeness** (whether the collector _recognized_ the construct) is separate from **executability**. A recognized but unestablished assertion leaves `analysis.completeness = COMPLETE` but `evidence.assertion_count.availability = UNKNOWN`. An **unrecognized declaration form** is a recognition gap and additionally leaves `completeness = INCOMPLETE`. The nested-block census size (misc 108, nested-only 67) and the never-FAIL invariant are documented in [Limitations §35](./limitations.md#35-nested-block-assertions-stay-indeterminate-executability-honest-remainder-t8-council-frozen-2026-11-22).
 
 **Source:** `src/adapters/typescript/collector.ts:68-73` (the three reason constants), `src/adapters/typescript/collector.ts:492-540` (`scanTestBody`), `src/adapters/typescript/collector.ts:542-555` (`isControlFlow`), `src/adapters/typescript/collector.ts:570-600` (`describeAssertion`).
 
@@ -147,25 +174,37 @@ Every `it` / `test` call site in the file is located and reported. A declaration
 
 **Fully supported — the only form that can establish assertions:**
 
-| Form                                 | Example                                                      |
-| ------------------------------------ | ------------------------------------------------------------ |
-| Bare declaration with an inline body | `it('name', () => { … })`, `test('name', function () { … })` |
+| Form                                                 | Example                                                                                             |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Bare declaration with an inline body                 | `it('name', () => { … })`, `test('name', function () { … })`                                        |
+| `each` over a **statically countable literal table** | `it.each([[1, 2], [3, 4]])('adds', (a, b) => { ... })`, `test.each([1, 2])('n %i', (n) => { ... })` |
 
 **Detected, but not fully supported (declared unsupported):**
 
-| Form                     | Example                                                                    | Why not supported                                                                                                   |
-| ------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `each` (call form)       | `test.each([[1, 2]])('adds', (a, b) => { … })`                             | the body runs once per table row; row count is not statically enumerable                                            |
-| `each` (tagged template) | ``test.each`row ${n}`('adds', (n) => { … })``                              | same                                                                                                                |
-| `skip`                   | `it.skip('name', () => { … })`                                             | the body does not execute at all                                                                                    |
-| `only`                   | `it.only('name', () => { … })`                                             | changes the executed test set; milestone-1 reports conservatively rather than modelling the filter                  |
-| `todo`                   | `it.todo('name')`                                                          | declaration only — no executable body, contributes no assertions                                                    |
-| `failing`                | `it.failing('name', () => { … })`                                          | the body is expected to throw; its assertions do not run                                                            |
-| `concurrent`             | `it.concurrent('name', () => { … })`                                       | concurrent execution order is not modelled                                                                          |
-| Chained modifiers        | `test.concurrent.only('name', () => { … })`, `it.skip.each(t)('name', fn)` | the whole chain is recognized and reported as one declaration, modifier recorded as `concurrent.only` / `skip.each` |
-| `skipIf` / `runIf`       | `it.skipIf(cond)('name', () => { … })`                                     | the condition is a runtime value                                                                                    |
-| Any other modifier       | `it.whatever('name', () => { … })`                                         | unrecognized modifier on a recognized root — reported, never dropped                                                |
-| Non-inline body          | `it('name', helperFn)`                                                     | the body is an identifier the collector cannot resolve or scan                                                      |
+| Form                            | Example                                                                         | Why not supported                                                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `each` over a non-literal table | `test.each(rows)('adds', (a, b) => { ... })`, `it.each(makeRows())('n %i', fn)` | the table is an identifier, call, spread, template or computed member — the row count is not statically enumerable  |
+| `each` (tagged template)        | ``test.each`row ${n}`('adds', (n) => { ... })``                                 | rows come from template interpolations, so the count is not statically enumerable either                            |
+| `skip`                          | `it.skip('name', () => { … })`                                                  | the body does not execute at all                                                                                    |
+| `only`                          | `it.only('name', () => { … })`                                                  | changes the executed test set; milestone-1 reports conservatively rather than modelling the filter                  |
+| `todo`                          | `it.todo('name')`                                                               | declaration only — no executable body, contributes no assertions                                                    |
+| `failing`                       | `it.failing('name', () => { … })`                                               | the body is expected to throw; its assertions do not run                                                            |
+| `concurrent`                    | `it.concurrent('name', () => { … })`                                            | concurrent execution order is not modelled                                                                          |
+| Chained modifiers               | `test.concurrent.only('name', () => { … })`, `it.skip.each(t)('name', fn)`      | the whole chain is recognized and reported as one declaration, modifier recorded as `concurrent.only` / `skip.each` |
+| `skipIf` / `runIf`              | `it.skipIf(cond)('name', () => { … })`                                          | the condition is a runtime value                                                                                    |
+| Any other modifier              | `it.whatever('name', () => { … })`                                              | unrecognized modifier on a recognized root — reported, never dropped                                                |
+| Non-inline body                 | `it('name', helperFn)`                                                          | the body is an identifier the collector cannot resolve or scan                                                      |
+
+### `it.each` / `test.each` over a literal table — counted as xN
+
+An `each` table is **statically countable** when the table argument is an `ArrayExpression` whose elements are, recursively, primitive literals (string / number / boolean / null) or nested arrays of them — no spread, identifiers, calls, template literals or computed members (`literalTableRows`, `src/adapters/typescript/support.ts:821-839`). For such a declaration the gap closes: the ONE shared callback runs once per row, so the declaration's established count is multiplied by the row count (`rows x straight-line assertion count`) and the record reports `availability: KNOWN` with `coverage.status: COMPLETE`. One `TestScopeResult` per declaration site is kept — the value is an aggregate `xN`, not one record per row, so the test id shape (`<file>#<declaration>@<line>:<index>`) is unchanged.
+
+Two limits keep the model honest:
+
+- An **empty** literal table is not counted (jest rejects it and it runs nothing), and parentheses or negative numeric literals are not peeled: such a table keeps the `unsupported-form` gap rather than being counted off a form the model did not verify.
+- A non-straight-line callback (nested block, callback, statement after `return`) still loses `established` per assertion exactly as a bare `it` does, so a partial body reports a partial count with `availability: UNKNOWN` — never a fabricated `rows x 0`.
+
+Everything else — `it.runIf`, `it.skipIf`, `it.only`, `it.concurrent`, `it.failing`, chained modifiers, the tagged-template form, and any table that is not a literal array — is **unchanged**: recognized, reported, `unsupported-form` gap → `availability: UNKNOWN` → the rule's `unknown_evidence_policy` (INDETERMINATE by default).
 
 **Detection is by root, not by an enumerated modifier list.** Any call whose callee peels down to the identifier `it` or `test` — through `.modifier`, `f(...)` chaining or a tagged template — is a declaration. That is why an _unrecognized_ modifier (`it.whatever`) is still reported instead of vanishing.
 
@@ -181,9 +220,9 @@ Calls rooted at anything else (`describe`, `beforeEach`, a local helper) are **n
 | Declaration-only form (`it.todo`) — body provably absent, so nothing was lost | `COMPLETE`        | `COMPLETE`              | `KNOWN`        |
 | Modifier form **with** a body, or a non-inline body                           | `PARTIAL`         | `INCOMPLETE`            | `UNKNOWN`      |
 
-The rows are single-cause shorthands: a declaration-only form is not a capability gap (`collector.ts:133-135` `isCapabilityGap`), so a file whose ONLY gaps are declaration-only aggregates as `COMPLETE`/`KNOWN` above — but one declaration-only form mixed with any capability gap makes the aggregate `PARTIAL`/`UNKNOWN` (the fold-in is at `collector.ts:320-328`).
+The rows are single-cause shorthands: a declaration-only form is not a capability gap (`support.ts:779` `isCapabilityGap`), so a file whose ONLY gaps are declaration-only aggregates as `COMPLETE`/`KNOWN` above — but one declaration-only form mixed with any capability gap makes the aggregate `PARTIAL`/`UNKNOWN` (the fold-in is at `collector.ts:323-329`).
 
-**Source:** `src/adapters/typescript/support.ts:278-339` (`TEST_DECLARATION_NAMES`, `classifyTestDeclaration`), `src/adapters/typescript/collector.ts:517-530` (`findTestDeclarations`), `src/adapters/typescript/collector.ts:537-566` (`declarationSite` — the four gap states), `src/adapters/typescript/collector.ts:133-135` (`isCapabilityGap`), `src/adapters/typescript/collector.ts:455-465` (`declarationGapReason`), `src/adapters/typescript/collector.ts:309-368` (`supported` — status/completeness fold-in).
+**Source:** `src/adapters/typescript/support.ts:530` (`TEST_DECLARATION_NAMES`), `:682-691` (`classifyTestDeclaration`), `:821-839` (`literalTableRows`), `:841-851` (`eachTableArgument`), `:853-893` (`declarationSite` — gap + `rowCount`), `:779` (`isCapabilityGap`), `:793-807` (`declarationGapReason`), `src/adapters/typescript/collector.ts:556-569` (`findTestDeclarations`), `:301-389` (`supported` — status/completeness fold-in).
 
 ---
 
@@ -193,9 +232,9 @@ Milestone-1 analyzes **only the body of `it` / `test` calls** in the single file
 
 - Cross-file helper resolution: **out of scope**. A call like `expectValidUser(id)` is recorded as an unsupported form with reason `custom assertion helper is out of the declared test-body scope` — never silently dropped. The same holds for a test body passed as an identifier (`it('x', helper)`).
 - Runtime execution: **out of scope**. The test file is never executed (`runtime_execution` capability is `UNAVAILABLE`).
-- Table-driven tests (`test.each`), `.skip` / `.only` bodies: **detected and reported** as declarations, but their bodies are not analyzed — see [Test Declarations](#test-declarations-f).
+- Table-driven tests (`test.each` / `it.each`): a **literal** table with an inline body is counted `rows x assertions`; a non-literal table and the tagged-template form are **detected and reported** as declarations without analyzing their bodies. `.skip` / `.only` bodies are never analyzed — see [Test Declarations](#test-declarations-f).
 
-**Source:** `src/adapters/typescript/support.ts:16` (`ANALYSIS_SCOPE = 'test-body'`), `src/adapters/typescript/collector.ts:227` (`custom_helper_resolution: UNAVAILABLE`), `src/adapters/typescript/support.ts:67` (`CUSTOM_HELPER_NAME_PATTERNS`), `src/adapters/typescript/collector.ts:537-566` (`declarationSite` — the non-inline body gap).
+**Source:** `src/adapters/typescript/support.ts:16` (`ANALYSIS_SCOPE = 'test-body'`), `src/adapters/typescript/collector.ts:227` (`custom_helper_resolution: UNAVAILABLE`), `src/adapters/typescript/support.ts:67` (`CUSTOM_HELPER_NAME_PATTERNS`), `src/adapters/typescript/support.ts:853-893` (`declarationSite` — the non-inline body gap).
 
 ## Python
 
@@ -295,22 +334,22 @@ Derived fallback (P1.3, only when steps 1–4 found nothing):
 
 ## Vitest-Specific Forms (SP1, 2026-11-06)
 
-Milestone-1 treats Vitest and Jest symmetrically for the **supported** forms (bare `it`/`test` declarations, the 11 assertion matchers, the `vi.*` global signal). The eight fixtures added in SP1 (cases 31–38) document the **unsupported** Vitest forms that the collector recognizes but does not analyze — they produce INDETERMINATE or FAIL per the same rules that apply to the equivalent Jest forms.
+Milestone-1 treats Vitest and Jest symmetrically for the **supported** forms (bare `it`/`test` declarations, the 28 assertion matchers, the `vi.*` global signal). The eight fixtures added in SP1 (cases 31–38) document Vitest declaration and matcher shapes; `it.skip`/`it.skipIf`, `it.each` over a non-literal table (and its tagged-template form) and the `toBeCloseTo` matcher remain **unsupported** and produce INDETERMINATE or FAIL per the rules that apply to the equivalent Jest forms; a literal array table is counted `rows x assertions`, exactly like its Jest counterpart.
 
-| Form                                                                                      | Fixture | Status                     | Completeness | Availability | `rule_result` | `reason_contains`                                                |
-| ----------------------------------------------------------------------------------------- | ------- | -------------------------- | ------------ | ------------ | ------------- | ---------------------------------------------------------------- |
-| `it.each([[...]])(name, fn)` — array-table form                                           | case-31 | UNSUPPORTED-form gap       | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["it.each", "not a supported test declaration form"]`           |
-| `it.each\`template\`` — tagged-template form                                              | case-32 | UNSUPPORTED-form gap       | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["it.each", "not a supported test declaration form"]`           |
-| `it.todo('name')` — declaration-only, no body                                             | case-33 | DECLARATION-ONLY gap       | COMPLETE     | KNOWN        | FAIL          | `["it.todo", "declares no executable test body"]`                |
-| `it.skip('name', fn)` — modifier with body                                                | case-34 | UNSUPPORTED-form gap       | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["it.skip", "not a supported test declaration form"]`           |
-| `it.skipIf(cond)('name', fn)` — conditional modifier                                      | case-35 | UNSUPPORTED-form gap       | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["it.skipIf", "not a supported test declaration form"]`         |
-| Exported test fn (`export function testFoo() { … }`) — no `it`/`test` call site           | case-36 | No declaration recognized  | COMPLETE     | KNOWN        | FAIL          | `[]` (0 assertions, no declaration gap)                          |
-| `.not.toThrow()` — negated matcher                                                        | case-37 | Unsupported assertion form | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["expect matcher is not one of the supported assertion forms"]` |
-| Vitest-only matchers (`toHaveLength`, `toBeCloseTo`, `toBeGreaterThan`, `toBeCalledWith`) | case-38 | Unsupported assertion form | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["expect matcher is not one of the supported assertion forms"]` |
+| Form                                                                             | Fixture | Status                                        | Completeness | Availability | `rule_result` | `reason_contains`                                                |
+| -------------------------------------------------------------------------------- | ------- | --------------------------------------------- | ------------ | ------------ | ------------- | ---------------------------------------------------------------- |
+| `it.each([[...]])(name, fn)` — literal array table (counted `rows x assertions`) | case-31 | No gap (countable)                            | COMPLETE     | KNOWN        | PASS          | `[]`                                                             |
+| `it.each\`template\`` — tagged-template form                                     | case-32 | UNSUPPORTED-form gap                          | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["it.each", "not a supported test declaration form"]`           |
+| `it.todo('name')` — declaration-only, no body                                    | case-33 | DECLARATION-ONLY gap                          | COMPLETE     | KNOWN        | FAIL          | `["it.todo", "declares no executable test body"]`                |
+| `it.skip('name', fn)` — modifier with body                                       | case-34 | UNSUPPORTED-form gap                          | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["it.skip", "not a supported test declaration form"]`           |
+| `it.skipIf(cond)('name', fn)` — conditional modifier                             | case-35 | UNSUPPORTED-form gap                          | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["it.skipIf", "not a supported test declaration form"]`         |
+| Exported test fn (`export function testFoo() { … }`) — no `it`/`test` call site  | case-36 | No declaration recognized                     | COMPLETE     | KNOWN        | FAIL          | `[]` (0 assertions, no declaration gap)                          |
+| `.not.toThrow()` — negated matcher                                               | case-37 | Supported (`expect-not-to-throw`, 2026-11-22) | COMPLETE     | KNOWN        | PASS          | `[]`                                                             |
+| `toBeCloseTo` unsupported; `toHaveLength`/`toBeGreaterThan` now supported        | case-38 | Partial — `toBeCloseTo` unsupported form      | INCOMPLETE   | UNKNOWN      | INDETERMINATE | `["expect matcher is not one of the supported assertion forms"]` |
 
-**Why these are INDETERMINATE, not FAIL:** The five unsupported-form gaps (`it.each`, `it.skip`, `it.skipIf`, `.not.toThrow`, vitest-only matchers) carry `availability: UNKNOWN`, so `unknown_evidence_policy` (default INDETERMINATE) applies — see [Five Declaration Gaps](#five-declaration-gaps-each-gets-its-own-record). The two FAIL outcomes (`it.todo`, exported-test-fn) have `availability: KNOWN` with `value: 0`; CT-INT-001 requires at least one assertion, so 0 asserts FAIL.
+**Why these are INDETERMINATE, not FAIL:** The unsupported-form gaps that remain (`it.each` over a non-literal or tagged-template table, `it.skip`, `it.skipIf`, and the `toBeCloseTo` matcher in case-38) carry `availability: UNKNOWN`, so `unknown_evidence_policy` (default INDETERMINATE) applies — see [Five Declaration Gaps](#five-declaration-gaps-each-gets-its-own-record). `.not.toThrow()` (case-37) moved to a supported form on 2026-11-22 and is now PASS; `toHaveLength`/`toBeGreaterThan` (case-38) likewise; case-31's literal `it.each([[1, 2]])` moved to the countable literal-table model on 2026-11-22 and is now PASS with `value: 1`. The two FAIL outcomes (`it.todo`, exported-test-fn) have `availability: KNOWN` with `value: 0`; CT-INT-001 requires at least one assertion, so 0 asserts FAIL.
 
-**Supported Vitest forms (unchanged from Jest):** bare `it('name', fn)` / `test('name', fn)` with inline body; all 11 assertion matchers on `expect(...)` chains; `vi.<name>(...)` global member calls as a Vitest runtime signal. These behave identically to their Jest counterparts.
+**Supported Vitest forms (unchanged from Jest):** bare `it('name', fn)` / `test('name', fn)` with inline body; all 28 assertion matchers on `expect(...)` chains (including the 6 sync `not.<matcher>` negations); `vi.<name>(...)` global member calls as a Vitest runtime signal. These behave identically to their Jest counterparts.
 
 **Source:** `tests/fixtures/ct-int-001/case-31-vitest-it-each-array`, `case-32-vitest-it-each-template`, `case-33-vitest-it-todo`, `case-34-vitest-it-skip`, `case-35-vitest-it-skipif`, `case-36-vitest-exported-test-fn`, `case-37-vitest-not-to-throw`, `case-38-vitest-matchers`.
 
@@ -325,13 +364,15 @@ Milestone-1 recognizes two supertest/superagent fluent assertion forms on a chai
 | `supertest-expect-status` | `.expect(status)` (1 argument)            | `request(app).get('/').expect(201)`            |
 | `supertest-expect-body`   | `.expect(status, body, …)` (2+ arguments) | `request(app).get('/').expect(201, 'Created')` |
 
-**Recognized chain shape:** `request(app).<method>(path)[.<chain>].expect(...)` where `<method>` ∈ `{get, post, put, patch, delete, head, options}` (`SUPERTEST_HTTP_METHODS`, `support.ts:350`). The root must not be the bare `expect` identifier — a jest-style `expect(...)` chain is classified by the 11 forms above. The terminal `.expect(...)` may carry a trailing callback (e.g. `done`); that argument counts toward the 2+ rule, so `.expect(201, done)` classifies as `supertest-expect-body`.
+**Recognized chain shape:** `request(app).<method>(path)[.<chain>].expect(...)` where `<method>` ∈ `{get, post, put, patch, delete, head, options}` (`SUPERTEST_HTTP_METHODS`, `support.ts:375`). The root must not be the bare `expect` identifier — a jest-style `expect(...)` chain is classified by the 11 forms above. The terminal `.expect(...)` may carry a trailing callback (e.g. `done`); that argument counts toward the 2+ rule, so `.expect(201, done)` classifies as `supertest-expect-body`.
+
+**Local-variable binding resolution (C2/S, 2026-11-22):** when the chain root is an identifier that is not `expect` and the chain itself carries no HTTP verb, `isSupertestChain` resolves that identifier to its enclosing `VariableDeclaration` initializer (nearest statement-list scope) and re-walks the initializer's chain for a verb. So `const test = request(app).post('/'); test.expect(413)` is recognized (verb-in-initializer), while a local variable whose initializer has no verb (`const h = makeThing(); h.expect(413)`) stays unrecognized. Resolution binds only declarations positioned **before** the use site — a use-before-declare forward reference (`res.expect(413); const res = req(app).post('/')`, const TDZ or var hoist) stays unrecognized. Fixtures: `tests/fixtures/ct-int-001/case-56-supertest-local-var` and `case-58-supertest-local-var-chain` (recognized), `case-59-supertest-nearmiss-no-verb-initializer` (near-miss, stays unrecognized).
 
 **Corpus-verified scope:** express corpus, `checktest-corpus/express/test/res.sendStatus.js:17,29,41` (clone of expressjs/express; supertest `.expect(…)` chains). Fixture: `tests/fixtures/ct-int-001/case-40-supertest-chains` (post-SP3: 2 assertions, `COMPLETE`/`KNOWN`/`PASS`).
 
 **Still unsupported (unchanged):** Chai `expect(x).to.equal(y)`, should.js `.should.equal(...)`, node `assert.*` remain in `UNSUPPORTED_ASSERTION_NAMESPACES` (`support.ts:67` unchanged). Chains rooted at `expect` or a namespace member land in the unsupported reporting path (`collector.ts:675` expect-rooted unsupported matcher; `:682` namespace check) → `PARTIAL` → `UNKNOWN` → `INDETERMINATE`, not silently dropped or read as zero. Other fluent chains (non-expect, non-namespace terminals) stay null-recorded per the pre-existing heuristic gap (`support.ts:63-65`).
 
-**Source:** `src/adapters/typescript/support.ts:346-350` (`SUPERTEST_HTTP_METHODS`), `support.ts:352-368` (`isSupertestChain`), `support.ts:376-378` (classifyForm supertest branch), `src/adapters/typescript/collector.ts:671-680` (unsupported expect-chain reporting path), `src/adapters/typescript/collector.ts:682-690` (namespace check), `tests/adapters/support.test.ts` (supertest chain forms describe), `tests/fixtures/ct-int-001/case-40-supertest-chains`.
+**Source:** `src/adapters/typescript/support.ts:375` (`SUPERTEST_HTTP_METHODS`), `support.ts:437-450` (`isSupertestChain`, incl. binding resolution), `support.ts:459-460` (classifyForm supertest branch), `src/adapters/typescript/collector.ts:671-680` (unsupported expect-chain reporting path), `src/adapters/typescript/collector.ts:682-690` (namespace check), `tests/adapters/support.test.ts` (supertest chain forms describe), `tests/fixtures/ct-int-001/case-40-supertest-chains`, `tests/fixtures/ct-int-001/case-56-supertest-local-var`, `tests/fixtures/ct-int-001/case-58-supertest-local-var-chain`, `tests/fixtures/ct-int-001/case-59-supertest-nearmiss-no-verb-initializer`.
 
 ---
 
@@ -339,7 +380,7 @@ Milestone-1 recognizes two supertest/superagent fluent assertion forms on a chai
 
 ### What Counts as One Test
 
-One test = **one `it` / `test` call site** in the source file. The collector locates every declaration (`src/adapters/typescript/collector.ts:517-530` `findTestDeclarations`) and assigns a deterministic identity:
+One test = **one `it` / `test` call site** in the source file. The collector locates every declaration (`src/adapters/typescript/collector.ts:556-569` `findTestDeclarations`) and assigns a deterministic identity:
 
 ```
 <file>#<declaration>@<line>
@@ -355,21 +396,21 @@ Declarations are reported in **source order** (AST walk order at `collector.ts:5
 
 Every declaration receives a `TestScopeResult` (`src/core/analysis.ts:97-103`) with its own evidence and `declaration_gap` field. Five gap forms are **never silently dropped**:
 
-`declaration_gap` holds the human-readable reason string itself (null on a fully scanned test), so the gap kind is readable from the text; the values below are verbatim from `collector.ts:455-465` (`declarationGapReason`).
+`declaration_gap` holds the human-readable reason string itself (null on a fully scanned test), so the gap kind is readable from the text; the values below are verbatim from `support.ts:793-807` (`declarationGapReason`).
 
-| Gap Kind             | Forms                                                                                                                                  | `declaration_gap` Value                                                                                                            | Coverage                                                                  | Availability                                                                                                     | Can FAIL? |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------- |
-| **declaration-only** | `it.todo('name')`, and any no-body form (`it.skip('name')`)                                                                            | `"'it.todo' declares no executable test body; it contributes no assertions"`                                                       | UNAVAILABLE                                                               | UNKNOWN                                                                                                          | **Never** |
-| **unresolved-body**  | `it('name', helperFn)`                                                                                                                 | `"'it' body is not an inline function; the collector cannot resolve or scan it"`                                                   | PARTIAL                                                                   | UNKNOWN                                                                                                          | **Never** |
-| **unsupported-form** | `it.each(...)`, `it.skip`, `it.only`, `it.failing`, `it.concurrent`, `it.skipIf`, `it.runIf`, unrecognized modifier, chained modifiers | `"'it.each' is not a supported test declaration form; how often its body runs cannot be established statically"`                   | PARTIAL                                                                   | UNKNOWN                                                                                                          | **Never** |
-| **conditional**      | `(c ? it.skip : it)(...)`, `(c ? it : helper)(...)`, `(flag && it.skip)(...)`, `(cond                                                  |                                                                                                                                    | it)(...)` (compound callees; one or both operands resolve to a test root) | `"'it.conditional' is a conditional declaration (...); which declaration runs cannot be established statically"` | PARTIAL   | UNKNOWN | **Never** |
-| **aliased**          | `const t = it; t(...)` / `let t = it; t(...)` (verified in-file alias)                                                                 | `"'it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs"` | PARTIAL                                                                   | UNKNOWN                                                                                                          | **Never** |
+| Gap Kind             | Forms                                                                                                                                                  | `declaration_gap` Value                                                                                                            | Coverage                                                                  | Availability                                                                                                     | Can FAIL? |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------- |
+| **declaration-only** | `it.todo('name')`, and any no-body form (`it.skip('name')`)                                                                                            | `"'it.todo' declares no executable test body; it contributes no assertions"`                                                       | UNAVAILABLE                                                               | UNKNOWN                                                                                                          | **Never** |
+| **unresolved-body**  | `it('name', helperFn)`                                                                                                                                 | `"'it' body is not an inline function; the collector cannot resolve or scan it"`                                                   | PARTIAL                                                                   | UNKNOWN                                                                                                          | **Never** |
+| **unsupported-form** | `it.each(<non-literal table>)`, `it.skip`, `it.only`, `it.failing`, `it.concurrent`, `it.skipIf`, `it.runIf`, unrecognized modifier, chained modifiers | `"'it.each' is not a supported test declaration form; how often its body runs cannot be established statically"`                   | PARTIAL                                                                   | UNKNOWN                                                                                                          | **Never** |
+| **conditional**      | `(c ? it.skip : it)(...)`, `(c ? it : helper)(...)`, `(flag && it.skip)(...)`, `(cond                                                                  |                                                                                                                                    | it)(...)` (compound callees; one or both operands resolve to a test root) | `"'it.conditional' is a conditional declaration (...); which declaration runs cannot be established statically"` | PARTIAL   | UNKNOWN | **Never** |
+| **aliased**          | `const t = it; t(...)` / `let t = it; t(...)` (verified in-file alias)                                                                                 | `"'it.aliased' is declared through a verified in-file test alias (it); the collector reports it without establishing how it runs"` | PARTIAL                                                                   | UNKNOWN                                                                                                          | **Never** |
 
 The gap kind is decided by (has inline callback) × (has modifier) at `collector.ts:546-554`, so `it.skip('name')` — a modifier form with no body at all — lands in **declaration-only**, not **unsupported-form**: no body exists to scan, and the reason still names the form (`'it.skip'`), so the modifier is never lost.
 
 **Conservative non-FAIL rule:** A declaration with `availability: UNKNOWN` (all three gaps: declaration-only, unresolved-body, unsupported-form) is **never** read as zero assertions and turned into FAIL. The rule's `unknown_evidence_policy` applies (default `INDETERMINATE`). This is enforced per test, not file-wide (SPEC:425 applied per declaration).
 
-A `declaration-only` form (`it.todo`) has no body to scan, so it gets its **own** record with no value, `coverage.status: UNAVAILABLE` and availability `UNKNOWN` (`src/adapters/typescript/collector.ts:394-400` the gap→coverage mapping, `:402-413` the value/availability pair, `src/core/evidence.ts:99-109`) — a record that can never become the basis of a FAIL verdict. Its analysis completeness stays `COMPLETE` (`collector.ts:427-430`): the declaration form itself was fully understood.
+A `declaration-only` form (`it.todo`) has no body to scan, so it gets its **own** record with no value, `coverage.status: UNAVAILABLE` and availability `UNKNOWN` (`src/adapters/typescript/collector.ts:400-423` testScopeResult — the gap→coverage mapping and the value/availability pair, `src/core/evidence.ts:99-109`) — a record that can never become the basis of a FAIL verdict. Its analysis completeness stays `COMPLETE` (`collector.ts:487-488`): the declaration form itself was fully understood.
 
 ### Declaration Boundary Enforcement
 

@@ -279,18 +279,26 @@ export function evaluateTests(
   // Framework detection is file-scoped (plan task 7): every test scope of one
   // UNSUPPORTED file shares the subject-level capabilities description.
   const unsupported = describe(analysis);
+  // C4: file-level-only rules (CT-MUT-001 mutation_score) never reach a
+  // per-declaration scope — mutation evidence is attached to the subject
+  // envelope only. Skip per-test scopes so no phantom 'absent' INDETERMINATE
+  // rows are emitted; the subject-level verdict is surfaced by
+  // evaluationScopes() in the reporter.
+  const isFileLevelOnly = rule.file_level_only === true;
   const scopes: Array<{ test: TestIdentity | null; scope: ScopeView }> =
     tests === undefined
       ? [{ test: null, scope: subjectScope(analysis) }]
-      : tests.map((testScope) => ({
-          test: testScope.test,
-          scope: {
-            summary: testScope.analysis,
-            evidence: testScope.evidence,
-            unsupported,
-            framework: analysis.subject.framework,
-          },
-        }));
+      : isFileLevelOnly
+        ? []
+        : tests.map((testScope) => ({
+            test: testScope.test,
+            scope: {
+              summary: testScope.analysis,
+              evidence: testScope.evidence,
+              unsupported,
+              framework: analysis.subject.framework,
+            },
+          }));
 
   return scopes.map(({ test, scope }) => {
     const finding = decide(rule, scope, explicitRuleIds);

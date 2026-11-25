@@ -94,7 +94,7 @@ describe('CLI --coverage-report with CT-COV-001 (active: evidence attaches, verd
     expect(json.testResults[0].ruleResults[0].result).toBe('INDETERMINATE');
     expect(json.summary).toEqual({ total: 1, pass: 0, fail: 0, indeterminate: 1, not_applicable: 0, failed: 0 });
     // Evidence still reaches the report with full structured fields.
-    const evid = json.testResults[0].evidence.line_coverage;
+    const evid = json.evidence.line_coverage;
     expect(evid.provider).toBe('istanbul');
     expect(evid.provider_version).toBe('1.0.0');
     expect(evid.source_revision).toBe('unknown');
@@ -116,7 +116,7 @@ describe('CLI --coverage-report with CT-COV-001 (active: evidence attaches, verd
     expect(json.testResults[0].ruleResults[0].result).toBe('INDETERMINATE');
     expect(json.summary.fail).toBe(0);
     expect(json.summary.failed).toBe(0); // active: INDETERMINATE is a verdict, not a failure
-    const evid = json.testResults[0].evidence.line_coverage;
+    const evid = json.evidence.line_coverage;
     expect(evid.availability).toBe('UNKNOWN');
     expect(evid.coverage.status).toBe('UNAVAILABLE');
     expect(evid.value).toBeNull();
@@ -133,7 +133,7 @@ describe('CLI --coverage-report with CT-COV-001 (active: evidence attaches, verd
     expect(json.schemaVersion).toBe('0.5');
     expect(json.testResults[0].ruleResults).toHaveLength(1);
     expect(json.testResults[0].ruleResults[0].result).toBe('INDETERMINATE');
-    const evid = json.testResults[0].evidence.line_coverage;
+    const evid = json.evidence.line_coverage;
     expect(evid.provider).toBe('c8');
     expect(evid.provider_version).toBe('1.0.0');
     expect(evid.source_revision).toBe('unknown');
@@ -153,7 +153,7 @@ describe('CLI --coverage-report with CT-COV-001 (active: evidence attaches, verd
     expect(json.testResults[0].ruleResults).toHaveLength(1);
     expect(json.testResults[0].ruleResults[0].result).toBe('INDETERMINATE');
     expect(json.summary.fail).toBe(0);
-    const evid = json.testResults[0].evidence.line_coverage;
+    const evid = json.evidence.line_coverage;
     expect(evid.availability).toBe('UNKNOWN');
     expect(evid.coverage.status).toBe('UNAVAILABLE');
     expect(evid.value).toBeNull();
@@ -170,7 +170,7 @@ describe('CLI --coverage-report with CT-COV-001 (active: evidence attaches, verd
     expect(json.analysisStatus).toBe('SUCCESS');
     expect(json.testResults[0].ruleResults).toHaveLength(1);
     expect(json.testResults[0].ruleResults[0].result).toBe('INDETERMINATE');
-    const evid = json.testResults[0].evidence.line_coverage;
+    const evid = json.evidence.line_coverage;
     expect(evid.value).toBeNull();
     expect(evid.availability).toBe('UNKNOWN');
     expect(evid.reason).toBeTruthy();

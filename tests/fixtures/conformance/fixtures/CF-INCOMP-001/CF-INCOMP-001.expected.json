@@ -1,13 +1,13 @@
 {
   "fixtureId": "CF-INCOMP-001",
   "schemaVersionExpectation": "0.5",
-  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it", "unresolvedCallLine": 3 }] }, "python": { "count": 1, "sites": [{ "line": 1, "unresolvedCallLine": 2 }], "declarationToken": "NOT_VERIFIED" } },
-  "expectedEnvelope": { "analysisStatus": "FAILED", "evaluationStatus": "FAILED", "completeness": "INCOMPLETE" },
-  "expectedEvidence": { "perTest": { "assertion_count": { "value": null, "availability": "UNKNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "UNAVAILABLE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } }, "fileLevel": {} },
+  "expectedDiscovery": { "ts": { "count": 1, "sites": [{ "line": 2, "declaration": "it" }] }, "python": { "count": 1, "sites": [{ "line": 1 }], "declarationToken": "NOT_VERIFIED" } },
+  "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "COMPLETE" },
+  "expectedEvidence": { "perTest": { "assertion_count": { "value": 0, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" } } }, "fileLevel": {} },
   "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
-  "expectedFindings": [],
-  "expectedExplanation": "The engine was never asked; evaluationStatus FAILED is the absence of a verdict, not a rule FAIL.",
-  "expectedDiagnostics": { "reasons": ["unresolvable test body"] },
+  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "FAIL", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }],
+  "expectedExplanation": "The sample is statically resolvable; the engine evaluates it and the per-declaration verdicts are recorded (owner call, GAP-TS-7/GAP-PY-5).",
+  "expectedDiagnostics": { "reasons": [] },
   "attribution": { "level": "individual-test" },
-  "knownLimitations": ["Python twin's exact collector status NOT_VERIFIED at WP5; confirm before asserting cross-language equality."]
+  "knownLimitations": ["Python twin's exact collector status NOT_VERIFIED at WP5; confirm before asserting cross-language equality.", "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-TS-7/GAP-PY-5 expectation-side ('Amend expectations'): envelope SUCCESS/EVALUATED/COMPLETE, assertion_count 0/KNOWN/COMPLETE, verdicts FAIL/INDETERMINATE/PASS, no 'unresolvable test body' reason; unresolvedCallLine pin removed. Both languages identical."]
 }

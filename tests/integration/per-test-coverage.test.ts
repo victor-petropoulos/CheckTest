@@ -13,10 +13,10 @@
  *
  * Two format boundaries are pinned here, both observed on real runs:
  *   1. the RAW vitest/v8 `coverage-final.json` is an Istanbul FLAT map keyed by
- *      absolute production paths; `parseCoverageReport` does not read it
- *      (reason: 'unsupported coverage report format'). Test files never appear
- *      in the map (contract §1.1), so a per-file run's map IS the run-scoped
- *      evidence.
+ *      absolute production paths; since C2 `parseCoverageReport` reads shape-A
+ *      natively and its coveredLines equal the DERIVED artifact on the same
+ *      bytes. Test files never appear in the map (contract §1.1), so a
+ *      per-file run's map IS the run-scoped evidence.
  *   2. the DERIVED artifact (`{ files: { <abs production path>: { coveredLines }}`)
  *      carries the same run's line hits in the c8 shape the provider parses; the
  *      derivation is mechanical and lives in the recipe script, not here.
@@ -275,15 +275,27 @@ describe('CT-COV-001 unit D — per-test-run corpus recipe (real vitest runs)', 
   } else {
     for (const entry of manifest) {
       describe(`${entry.name} @ ${entry.commit_sha.slice(0, 12)}`, () => {
-        // Pinned boundary 1: the RAW vitest/v8 report is not provider-consumable.
-        it('raw vitest coverage-final.json is an Istanbul flat map the provider does not parse', () => {
+        // Pinned boundary 1: the RAW vitest/v8 report is an Istanbul flat map;
+        // since C2 it parses natively (shape A) with coveredLines identical to
+        // the derived c8 recipe output for the same run bytes.
+        it('raw vitest coverage-final.json parses natively (shape A, derive()-equivalent)', () => {
           requireArtifact(entry.raw_artifact);
+          requireArtifact(entry.derived_artifact);
           // Integrity pin: the goldens below hold only for these exact run bytes.
           const digest = createHash('sha256').update(readFileSync(entry.raw_artifact)).digest('hex');
           expect(digest).toBe(entry.raw_sha256);
           const raw = parseCoverageReport(entry.raw_artifact);
-          expect(raw.records.size).toBe(0);
-          expect(raw.reason).toBe('unsupported coverage report format');
+          expect(raw.provider).toBe('vitest');
+          expect(raw.reason).toBeUndefined();
+          const derived = JSON.parse(readFileSync(entry.derived_artifact, 'utf8')) as {
+            files: Record<string, { coveredLines: number[] }>;
+          };
+          expect(raw.records.size).toBe(Object.keys(derived.files).length);
+          for (const [file, rec] of raw.records) {
+            expect(rec.availability).toBe(Availability.KNOWN);
+            expect(rec.coverage.status).toBe(CollectionStatus.COMPLETE);
+            expect(rec.value).toEqual(derived.files[file].coveredLines);
+          }
         });
 
         it('recipe ran a single test file with the json coverage reporter', () => {
@@ -328,7 +340,9 @@ describe('CT-COV-001 unit D — per-test-run corpus recipe (real vitest runs)', 
               // cannot make a claim: UNKNOWN + INDETERMINATE.
               expect(subject.availability).toBe(Availability.UNKNOWN);
               expect(subject.coverage.status).toBe(CollectionStatus.UNAVAILABLE);
-              expect(subject.reason).toBe(`no coverage data for ${entry.test_file_abs}`);
+              expect(subject.reason).toBe(
+                `no coverage data for ${entry.test_file_abs} (no --coverage-map <from>=<to> entry maps this test file to a production file with coverage)`,
+              );
             } else {
               expect(subject.availability).toBe(Availability.KNOWN);
               expect(subject.coverage.status).toBe(CollectionStatus.COMPLETE);
@@ -340,13 +354,16 @@ describe('CT-COV-001 unit D — per-test-run corpus recipe (real vitest runs)', 
             expect(out.tests).toHaveLength(NR_OF_TESTS.decl_lines.length);
             for (const [i, scope] of out.tests!.entries()) {
               const decl = scope.evidence.line_coverage;
-              expect(decl.value).toBe(golden.decl_value);
-              expect('per_test_run' in decl).toBe(false);
-              expect(decl.reason).toBe(
-                testCase.mapped_to === null
-                  ? `no coverage data for ${entry.test_file_abs}`
-                  : `coverage evidence from a run scoped to ${entry.test_file_abs}`,
-              );
+              // B5 C-2 (Decisions #12): ordinary non-mapped coverage carries no
+              // per-declaration line_coverage copy; only mapped runs attribute it.
+              if (decl === undefined) {
+                expect(testCase.mapped_to).toBeNull();
+              } else {
+                expect(testCase.mapped_to).not.toBeNull();
+                expect(decl.value).toBe(golden.decl_value);
+                expect('per_test_run' in decl).toBe(false);
+                expect(decl.reason).toBe(`coverage evidence from a run scoped to ${entry.test_file_abs}`);
+              }
               expect(evaluateTests(CT_COV_001, out)[i].finding?.result).toBe(golden.decl);
             }
           });
@@ -421,11 +438,13 @@ describe('CT-COV-001 unit D — synthetic-report CLI cases (phase9 2.3)', () => 
     expect(stderr).toBe('');
     expect(json.summary.fail).toBe(0);
 
-    const subj = json.testResults[0].evidence.line_coverage;
+    const subj = json.evidence.line_coverage;
     expect(subj.availability).toBe('UNKNOWN');
     expect(subj.coverage.status).toBe('UNAVAILABLE');
     expect(subj.value).toBeNull();
-    expect(subj.reason).toBe(`no coverage data for ${SYNTH_SUBJECT_ABS}`);
+    expect(subj.reason).toBe(
+      `no coverage data for ${SYNTH_SUBJECT_ABS} (no --coverage-map <from>=<to> entry maps this test file to a production file with coverage)`,
+    );
 
     expect(json.ruleResults).toHaveLength(1);
     expect(json.ruleResults[0].result).toBe('INDETERMINATE');
@@ -458,11 +477,13 @@ describe('CT-COV-001 unit D — synthetic-report CLI cases (phase9 2.3)', () => 
     expect(code).toBe(0);
     expect(stderr).toBe('');
     const json = JSON.parse(stdout.trim()) as Record<string, any>;
-    const subj = json.testResults[0].evidence.line_coverage;
+    const subj = json.evidence.line_coverage;
     expect(subj.availability).toBe('UNKNOWN');
     expect(subj.coverage.status).toBe('UNAVAILABLE');
     expect(subj.value).toBeNull();
-    expect(subj.reason).toBe(`no coverage data for ${SYNTH_SUBJECT_ABS}`);
+    expect(subj.reason).toBe(
+      `no coverage data for ${SYNTH_SUBJECT_ABS} (no --coverage-map <from>=<to> entry maps this test file to a production file with coverage)`,
+    );
     expect(json.ruleResults[0].result).toBe('INDETERMINATE');
   });
 

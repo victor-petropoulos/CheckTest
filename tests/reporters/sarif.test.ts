@@ -585,7 +585,7 @@ describe('toSarif — evidenceStrength exposure golden (case-26, real pipeline)'
   });
 
   function sarifReport(): string {
-    return runAnalysis({ test: file, type: TestType.UNIT, rule: 'CT-INT-001', format: 'sarif' })
+    return runAnalysis({ test: file, type: TestType.UNIT, rules: ['CT-INT-001'], format: 'sarif' })
       .report.split(root)
       .join('<fixture-root>');
   }

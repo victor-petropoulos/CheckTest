@@ -371,7 +371,7 @@ describe('NOT_VERIFIED closure evidence — observed python behavior (matrix row
   });
 
   describe('matrix 4 — CF-UNSUP-001 @given reason strings + unsupported-form emission', () => {
-    it('per-test/file-level @given reasons verbatim; SYNTAX_OBSERVED + property_based; unsupported-form never emitted', () => {
+    it('per-test/file-level @given reasons carry the canonical unsupported-form constant (B5 C-1)', () => {
       const a = analyses.get('CF-UNSUP-001')!;
       const t = a.tests![0];
       const ac = t.evidence['assertion_count']!;
@@ -380,19 +380,20 @@ describe('NOT_VERIFIED closure evidence — observed python behavior (matrix row
       expect(ac.coverage.status).toBe(CollectionStatus.PARTIAL);
       expect(ac.evidenceStrength).toBe('SYNTAX_OBSERVED');
       expect((ac as unknown as Record<string, unknown>)['property_based']).toBe(true);
-      expect(ac.reason).toBe('hypothesis @given: property-based count (not case-exhaustive)');
+      // B5 C-1 (Decisions #12): both reasons compose the canonical constant verbatim.
+      expect(ac.reason).toBe('unsupported-form: hypothesis @given property-based count (not case-exhaustive)');
       const fileAc = a.evidence['assertion_count']!;
       expect(fileAc.reason).toBe(
-        '1 hypothesis @given declaration(s): property-based count (not case-exhaustive), so executability cannot be established statically',
+        '1 hypothesis @given declaration(s): unsupported-form: property-based count (not case-exhaustive), so executability cannot be established statically',
       );
       expect(fileAc.coverage.status).toBe(CollectionStatus.PARTIAL);
       expect(a.analysis.completeness).toBe('INCOMPLETE');
       expect(ac).not.toHaveProperty('unclassified_constructs');
       // UNSUPPORTED_FORM_GAP='unsupported-form' (src/adapters/python/support.ts:53)
-      // is imported at src/adapters/python/collector.ts:55 but has NO emission
-      // call site in the python collector (rg: only no-mutation-report /
-      // unparseable-report reach gapReason). Pin the observed fact:
-      expect(JSON.stringify(a)).not.toContain('unsupported-form');
+      // now reaches gapReason() at the @given emission sites (B5 C-1, Decisions #12).
+      // Pin the observed fact: constant published verbatim, unsupported assertion
+      // namespace wording still absent.
+      expect(JSON.stringify(a)).toContain('unsupported-form');
       expect(JSON.stringify(a)).not.toContain("'assert' is not a supported assertion form");
     });
   });

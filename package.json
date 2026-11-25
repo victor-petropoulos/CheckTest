@@ -1,6 +1,6 @@
 {
   "name": "checktest-cli",
-  "version": "1.15.1",
+  "version": "1.15.2",
   "description": "Static test-quality analysis: deterministic evidence collector + rule engine",
   "license": "MIT",
   "bin": {
@@ -38,6 +38,7 @@
     "@types/node": "^24.19.2",
     "prettier": "^3.9.10",
     "ts-jest": "^29.3",
+    "tsx": "4.20.4",
     "typescript": "^6.0.3"
   },
   "optionalDependencies": {

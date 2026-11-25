@@ -17,7 +17,12 @@
 /** A9 — framework allowlist. Anything else is UNSUPPORTED (plan task 3). */
 export const SUPPORTED_FRAMEWORKS: readonly string[] = ['jest', 'vitest', 'mocha'];
 
-/** A9 — the recognized assertion form IDs (KickOff:84-90; expanded to 11 in B3). */
+/**
+ * A9 — the recognized assertion form IDs (KickOff:84-90; expanded to 11 in B3;
+ * +17 in the dogfood-gap-closure matcher expansion, council FROZEN FORM SET
+ * 2026-11-22: 11 plain + 6 negated = 28; +2 supertest HTTP forms, C2 council
+ * 2026-11-22: 30 total).
+ */
 export const SUPPORTED_ASSERTION_FORMS: readonly string[] = [
   'expect-to-be',
   'expect-to-equal',
@@ -30,4 +35,38 @@ export const SUPPORTED_ASSERTION_FORMS: readonly string[] = [
   'expect-matcher-utils',
   'expect-to-match-object',
   'expect-to-have-been-called-times',
+  'expect-to-be-undefined',
+  'expect-to-have-property',
+  'expect-to-be-defined',
+  'expect-to-have-length',
+  'expect-to-be-greater-than',
+  'expect-to-be-null',
+  'expect-to-match',
+  'expect-to-have-been-called',
+  'expect-to-have-been-called-with',
+  'expect-to-match-inline-snapshot',
+  'expect-to-be-greater-than-or-equal',
+  // Open item #1 — newly recognized matchers (batch 1).
+  'expect-to-be-less-than',
+  'expect-to-be-less-than-or-equal',
+  'expect-to-be-close-to',
+  'expect-to-be-instance-of',
+  'expect-to-strict-equal',
+  'expect-to-be-type-of',
+  'expect-to-have-been-last-called-with',
+  'expect-to-have-been-nth-called-with',
+  'expect-not-to-be-less-than',
+  'expect-not-to-be-less-than-or-equal',
+  'expect-not-to-be-close-to',
+  'expect-not-to-be-instance-of',
+  'expect-not-to-strict-equal',
+  'expect-not-to-be-type-of',
+  'expect-not-to-have-been-called',
+  'expect-not-to-be',
+  'expect-not-to-contain',
+  'expect-not-to-have-property',
+  'expect-not-to-be-null',
+  'expect-not-to-throw',
+  'supertest-expect-status',
+  'supertest-expect-body',
 ];

@@ -1,4 +1,4 @@
-# CheckTest command reference (verified 2026-11-20, HEAD f77c38f)
+# CheckTest command reference (verified 2026-11-24, HEAD 7678038)
 
 Every command below was executed at HEAD. `npx --yes tsx src/cli.ts` is the in-repo form; an installed `checktest` binary takes the same arguments. `--help` is ground truth: no `--json` flag on `check`.
 
@@ -42,7 +42,7 @@ done < <(printf '%s\n' "${files[@]}" | LC_ALL=C sort)
 
 ## Report fields (observed, not a second schema)
 
-JSON `schemaVersion: "0.5"`. Envelope: `test{}`, `analysisStatus`, `evaluationStatus`, `completeness`, `scope`, `test_type{value,source}`, `capabilities{}`, `evidence{}`, `ruleResults[]`, `testResults[]`, `summary{total,pass,fail,indeterminate,not_applicable,failed}`, `adapter`, `decidedBy`. `doctor`/`explain` payloads carry `kind: "doctor"|"explain"`; `check` envelope observed without `kind` on the normal path. Evidence record: `value`, `availability` (`KNOWN|UNKNOWN|NOT_APPLICABLE`), `provenance` (`DIRECT|DERIVED|EXTERNAL`), `source`, `collector_version`, `scope`, `coverage{status COMPLETE|PARTIAL|UNAVAILABLE,...}`, `location`, `evidenceStrength` (`SYNTAX_OBSERVED|EXECUTION_ESTABLISHED|UNSUPPORTED`). Finding: `rule_id`, `result` (`PASS|FAIL|INDETERMINATE|N/A`), `reason`, `evidence[]`, `ruleStatus`, `description`, `rationale`, `limitations`, `docsUrl`, `test_id`, `location`. `analysisStatus` and `evaluationStatus` are lifecycle states, not verdicts. Omitted `evidenceStrength` must not be read as EXECUTION_ESTABLISHED. Authoritative schema/contract: `docs/product-contract.md`.
+JSON `schemaVersion: "0.5"`. Envelope: `test{}`, `analysisStatus`, `evaluationStatus`, `completeness`, `scope`, `test_type{value,source}`, `capabilities{}`, `evidence{}`, `ruleResults[]`, `testResults[]`, `summary{total,pass,fail,indeterminate,not_applicable,failed}`, `adapter`, `decidedBy`, and optionally `manifestFramework` (manifest-declared framework from package.json when dispatch is manifest-decided). `doctor`/`explain` payloads carry `kind: "doctor"|"explain"`; `check` envelope observed without `kind` on the normal path. Evidence record: `value`, `availability` (`KNOWN|UNKNOWN|NOT_APPLICABLE`), `provenance` (`DIRECT|DERIVED|EXTERNAL`), `source`, `collector_version`, `scope`, `coverage{status COMPLETE|PARTIAL|UNAVAILABLE,...}`, `location`, `evidenceStrength` (`SYNTAX_OBSERVED|EXECUTION_ESTABLISHED|UNSUPPORTED`). Finding: `rule_id`, `result` (`PASS|FAIL|INDETERMINATE|N/A`), `reason`, `evidence[]`, `ruleStatus`, `description`, `rationale`, `limitations`, `docsUrl`, `test_id`, `location`. `analysisStatus` and `evaluationStatus` are lifecycle states, not verdicts. Omitted `evidenceStrength` must not be read as EXECUTION_ESTABLISHED. Authoritative schema/contract: `docs/product-contract.md`.
 
 ## Exit-code matrix
 

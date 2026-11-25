@@ -7,10 +7,25 @@
   },
   "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "EVALUATED", "completeness": "COMPLETE" },
   "expectedEvidence": { "perTest": { "assertion_count": { "value": 1, "availability": "KNOWN", "provenance": "DIRECT", "source": "ADAPTER_SOURCE", "collector_version": "0.1.0", "scope": "test-body", "evidenceStrength": "SYNTAX_OBSERVED", "coverage": { "status": "COMPLETE", "supported_frameworks": "ADAPTER_FRAMEWORKS", "supported_assertion_forms": "ADAPTER_FORMS" }, "unestablished_assertions": { "count": 0, "reasons": [] } } }, "fileLevel": {} },
+  "expectedEvidenceByLanguage": {
+    "ts": { "perTest": { "assertion_count": { "evidenceStrength": "EXECUTION_ESTABLISHED", "unestablished_assertions": null } } },
+    "python": { "perTest": { "assertion_count": { "evidenceStrength": "EXECUTION_ESTABLISHED", "unestablished_assertions": null } } }
+  },
   "expectedApplicability": ["CT-INT-001", "CT-INT-003", "CT-INT-004"],
-  "expectedFindings": [{ "rule_id": "CT-INT-001", "result": "PASS", "test_id_present": true }, { "rule_id": "CT-INT-003", "result": "PASS", "test_id_present": true }, { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }],
+  "expectedFindings": {
+    "ts": [
+      { "rule_id": "CT-INT-001", "result": "PASS", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "PASS", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }
+    ],
+    "python": [
+      { "rule_id": "CT-INT-001", "result": "PASS", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }
+    ]
+  },
   "expectedExplanation": "At least one established executable assertion; no unestablished or unclassified constructs.",
   "expectedDiagnostics": { "reasons": [] },
   "attribution": { "level": "individual-test" },
-  "knownLimitations": ["Static shape only; no runtime verification claim."]
+  "knownLimitations": ["Static shape only; no runtime verification claim.", "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-TS-1 expectation-side ('Amend expectations'): both languages actually emit evidenceStrength=EXECUTION_ESTABLISHED with unestablished_assertions absent; recorded in expectedEvidenceByLanguage. Shared block kept (green test tests/conformance/python.conformance.test.ts:217 pins mismatches>0; 18a ruling (2)). Findings divergence (python CT-INT-003 INDETERMINATE) pinned per-language."]
 }

@@ -731,7 +731,11 @@ function testEvidence(
       scope: ANALYSIS_SCOPE,
       coverage: coverageBlock(test.given ? CollectionStatus.PARTIAL : CollectionStatus.COMPLETE),
       ...(test.given
-        ? { reason: 'hypothesis @given: property-based count (not case-exhaustive)', property_based: true }
+        ? {
+            // B5 C-1 (Decisions #12): compose from the canonical gap constant.
+            reason: `${gapReason('unsupported-form')}: hypothesis @given property-based count (not case-exhaustive)`,
+            property_based: true,
+          }
         : {}),
       evidenceStrength: testStrength,
     }),
@@ -818,7 +822,8 @@ function buildSubjectEvidence(
   if (anyGiven) {
     reasonParts.push(
       `${parsed.tests.filter((test) => test.given).length} hypothesis @given declaration(s): ` +
-        'property-based count (not case-exhaustive), so executability cannot be established statically',
+        `${gapReason('unsupported-form')}: property-based count (not case-exhaustive), ` +
+        'so executability cannot be established statically',
     );
   }
   if (reasonParts.length > 0) {

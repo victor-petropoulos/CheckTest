@@ -687,7 +687,7 @@ describe('toJson — evidenceStrength exposure golden (case-26, real pipeline)',
   // the fixture-root normalization — including the adapter/decidedBy envelope
   // keys the CLI stamps post-collect (src/cli.ts:760-761).
   function report(): string {
-    return runAnalysis({ test: file, type: TestType.UNIT, rule: 'CT-INT-001', format: 'json' })
+    return runAnalysis({ test: file, type: TestType.UNIT, rules: ['CT-INT-001'], format: 'json' })
       .report.split(root)
       .join('<fixture-root>');
   }
@@ -710,5 +710,19 @@ describe('toJson — evidenceStrength exposure golden (case-26, real pipeline)',
       EvidenceStrength.EXECUTION_ESTABLISHED,
       EvidenceStrength.SYNTAX_OBSERVED,
     ]);
+  });
+  it('carries manifestFramework in test envelope when subject.manifestFramework is set', () => {
+    const a = analysis(AnalysisStatus.SUCCESS);
+    a.subject = { ...a.subject, framework: 'jest', manifestFramework: 'vitest' } as any;
+    const out = JSON.parse(toJson(a, evaluateRule(RULE, a))) as { test: Record<string, any> };
+    expect(out.test.manifestFramework).toBe('vitest');
+  });
+
+  it('omits manifestFramework from test envelope when subject.manifestFramework is unset', () => {
+    const a = analysis(AnalysisStatus.SUCCESS);
+    a.subject = { ...a.subject, framework: 'jest' } as any;
+    const out = JSON.parse(toJson(a, evaluateRule(RULE, a))) as { test: Record<string, any> };
+    expect(out.test.manifestFramework).toBeUndefined();
+    expect('manifestFramework' in out.test).toBe(false);
   });
 });

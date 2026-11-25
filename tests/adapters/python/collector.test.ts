@@ -81,7 +81,9 @@ describe('python adapter — collectAnalysis contract (Phase 8 C1)', () => {
     expect(record.availability).toBe(Availability.KNOWN);
     expect(record.value as number).toBeGreaterThan(0);
     expect(record.reason).toContain('property-based');
-    expect(record.reason).not.toContain('unsupported-form');
+    // B5 C-1 (Decisions #12): the canonical UNSUPPORTED_FORM_GAP constant is now
+    // published verbatim in the @given reason (collector composes from gapReason()).
+    expect(record.reason).toContain('unsupported-form');
     // @given records are tagged property_based (present-only, never false).
     expect((record as { property_based?: boolean }).property_based).toBe(true);
   });
@@ -1153,7 +1155,8 @@ describe('D-20261117-2: decoratedWithGiven detection false positive (task 0)', (
       const scope = (output.tests ?? []).find((s) => s.test.name === 'test_prop')!;
       expect(scope).toBeDefined();
       // Detection fires for a REAL @given: the scope record carries the @given
-      // note in its reason (pre-fix 'unsupported-form', post-fix 'property-based').
+      // note in its reason ('property-based' + the canonical 'unsupported-form'
+      // gap constant, B5 C-1 Decisions #12).
       // A detection regression would leave the record value-counted with no reason.
       expect(scope.evidence['assertion_count'].reason).toMatch(/hypothesis @given/);
     }
@@ -1167,7 +1170,8 @@ describe('D-20261117-2: decoratedWithGiven detection false positive (task 0)', (
  * inside hypothesis @given bodies into assertion_count (value > 0),
  * availability KNOWN (was UNKNOWN), coverage PARTIAL retained (count not
  * case-exhaustive -> verdict stays INDETERMINATE), reason carries
- * 'property-based' (NOT 'unsupported-form'), and the record is tagged
+ * 'property-based' AND the canonical 'unsupported-form' gap constant
+ * (B5 C-1, Decisions #12), and the record is tagged
  * property_based === true. Subject-level aggregate mirrors the tag.
  *
  * RED pre-fix: given tests zero-suppress -> value undefined / UNKNOWN /
@@ -1213,7 +1217,9 @@ describe('D-20261117-2: @given estimate_marker semantics (task 1a)', () => {
     expect(record.coverage.status).toBe(CollectionStatus.PARTIAL);
     expect((record as { property_based?: boolean }).property_based).toBe(true);
     expect(record.reason).toContain('property-based');
-    expect(record.reason).not.toContain('unsupported-form');
+    // B5 C-1 (Decisions #12): the canonical UNSUPPORTED_FORM_GAP constant is now
+    // published verbatim in the @given reason (collector composes from gapReason()).
+    expect(record.reason).toContain('unsupported-form');
   });
 
   it('(b) subject-level aggregate carries property_based === true for a file with @given', () => {
@@ -1237,7 +1243,9 @@ describe('D-20261117-2: @given estimate_marker semantics (task 1a)', () => {
     expect(record.coverage.status).toBe(CollectionStatus.PARTIAL);
     expect((record as { property_based?: boolean }).property_based).toBe(true);
     expect(record.reason).toContain('property-based');
-    expect(record.reason).not.toContain('unsupported-form');
+    // B5 C-1 (Decisions #12): the canonical UNSUPPORTED_FORM_GAP constant is now
+    // published verbatim in the @given reason (collector composes from gapReason()).
+    expect(record.reason).toContain('unsupported-form');
     expect(subjectRecord.value as number).toBeGreaterThan(0);
     expect((subjectRecord as { property_based?: boolean }).property_based).toBe(true);
   });

@@ -17,5 +17,5 @@
     "test_id_present": false,
     "note": "GAP 6: suite/file-level mutation result MUST NOT become an individual-test result without a supported relationship. None is claimed here."
   },
-  "knownLimitations": ["Missing/unreadable/malformed/revision-mismatched/zero-valid-mutants report yields INDETERMINATE, never FAIL. No schemaVersion bump."]
+  "knownLimitations": ["Missing/unreadable/malformed/revision-mismatched/zero-valid-mutants report yields INDETERMINATE, never FAIL. No schemaVersion bump.", "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-TS-10/GAP-EXT-1/GAP-EXT-4: perTest.mutation_score MUST_BE_ABSENT retained. The harness no-report run has no fileLevel.mutation_score (CT-MUT-001 INDETERMINATE with the engine absent-evidence reason; the python 'no mutation report supplied' constant has no TS equivalent) and the provider-wired stryker record is an object vs the sidecar's scalar 0.75; both recorded by tests/conformance/external-evidence.conformance.test.ts GROUP B, not sidecar defects. No shared-block change (18a ruling (2))."]
 }

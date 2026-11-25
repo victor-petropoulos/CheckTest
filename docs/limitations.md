@@ -64,17 +64,23 @@ The test file is **never executed**. No dynamic analysis, no test runs, no runti
 
 `expect(x)[matcher]()` where the matcher name is computed (variable, property access) cannot be resolved statically. The construct is recorded as an unclassified assertion → `CollectionStatus.PARTIAL` → `availability: UNKNOWN` → `INDETERMINATE`.
 
-**Source:** `src/adapters/typescript/collector.ts:593-600` (element access on expect chain), `src/adapters/typescript/support.ts:219-224` (computed matchers not in A9 list).
+**Source:** `src/adapters/typescript/collector.ts:593-600` (element access on expect chain), `src/adapters/typescript/support.ts:397-399` (computed/element-access matchers return null in `classifyForm`).
 
 ---
 
-## 6. `test.each` / `it.each` / `it.todo` — Detected But Not Fully Supported (F)
+## 6. `test.each` / `it.each` / `it.todo` — Literal Tables Counted, the Rest Reported (F)
 
-Table-driven tests using `test.each([...])(name, fn)` or `it.each([...])(name, fn)` and `it.todo('name')` **are recognized as test declarations** (the collector reports them) but their bodies are **not analyzed** (rule 5 of straight-line definition). Assertions inside them are not counted toward `assertion_count`.
+An `each` table is **statically countable** when the table argument is an `ArrayExpression` whose elements are, recursively, primitive literals (string / number / boolean / null) or nested arrays of them — no spread, identifiers, calls, template literals or computed members (`literalTableRows`, `src/adapters/typescript/support.ts:821-845`). Such a declaration has **no gap**: its one shared callback runs once per row, so its established count is `rows x straight-line assertion count`, reported `KNOWN` / `COMPLETE`, with the file-level aggregate summing the same product across declarations. One `TestScopeResult` per declaration site is kept (an aggregate `xN` value, not one record per row), so the test id and report shapes are unchanged.
 
-Other modifier forms (`skip`, `only`, `failing`, `concurrent`, `skipIf`, `runIf`, unrecognized) and non-inline bodies (`it('name', helperFn)`) are also detected and reported as "not fully supported". A declaration-only form (`it.todo`) does not degrade **file-level** coverage because its body provably does not exist; its own per-declaration record is still `UNAVAILABLE` / `availability: UNKNOWN` (see §11, `collector.ts:394-400`).
+Everything else stays detected-but-not-analyzed:
 
-**Source:** `src/adapters/typescript/support.ts:278-339` (`TEST_DECLARATION_NAMES`, `classifyTestDeclaration`), `src/adapters/typescript/collector.ts:517-566` (`findTestDeclarations`, `declarationSite`, `DeclarationGap`), `src/adapters/typescript/collector.ts:467-501` (`coverageReason` — declares recognized vs supported counts).
+- **Non-literal tables** (`it.each(rows)`, `it.each(makeRows())`, a spread, a template expression, a computed member) and the **tagged-template form** (``it.each`row ${n}` ``) keep the `unsupported-form` gap: the row count is not statically enumerable without executing the file. An **empty** literal table (`it.each([])`) is also not counted — jest rejects it and it runs nothing — and parentheses / negative numeric literals are not peeled.
+- **Other modifier forms** (`skip`, `only`, `failing`, `concurrent`, `skipIf`, `runIf`, unrecognized, chained) and **non-inline bodies** (`it('name', helperFn)`) are unchanged: detected, reported as "not fully supported", never counted.
+- A countable table whose callback body is **not straight-line** reports only its established assertions (multiplied by rows) under `PARTIAL` coverage — `availability: UNKNOWN`, never a fabricated `rows x 0`.
+
+Assertions inside a gapped declaration are still not counted toward `assertion_count`. A declaration-only form (`it.todo`) does not degrade **file-level** coverage because its body provably does not exist; its own per-declaration record is still `UNAVAILABLE` / `availability: UNKNOWN` (see §11).
+
+**Source:** `src/adapters/typescript/support.ts:821-839` (`literalTableRows` / `isLiteralTableCell`), `:841-851` (`eachTableArgument`), `:853-893` (`declarationSite` — gap + `rowCount`), `:530` (`TEST_DECLARATION_NAMES`), `:682-691` (`classifyTestDeclaration`), `src/adapters/typescript/collector.ts:556-569` (`findTestDeclarations`), `:313-322` + `:336` (file-level xN aggregate), `:400-504` (`testScopeResult` — per-declaration `value`/`availability`), `:506-540` (`coverageReason`).
 
 ---
 
@@ -128,15 +134,15 @@ The five declaration gap forms (`declaration-only` / `unresolved-body` / `unsupp
 
 - `declaration-only` (`it.todo`): no body exists → nothing to count → `availability: UNKNOWN` (no value recorded, coverage `UNAVAILABLE`) — a zero is never asserted, so no violation can be claimed
 - `unresolved-body` (`it('name', helperFn)`): body is an identifier reference → `availability: UNKNOWN` → rule's `unknown_evidence_policy` (default INDETERMINATE)
-- `unsupported-form` (`it.each`, modifiers, chained): execution frequency unmodelled → `availability: UNKNOWN` → `unknown_evidence_policy`
+- `unsupported-form` (`it.each` over a non-literal/tagged-template table, modifiers, chained):
 - `conditional` (`(c ? it.skip : it)(...)`, WP3.4 defect 1): which declaration runs cannot be established statically → `availability: UNKNOWN` → `unknown_evidence_policy`
 - `aliased` (`const t = it; t(...)`, WP3.4 defect 2): how the aliased declaration runs is not established at this analysis level → `availability: UNKNOWN` → `unknown_evidence_policy`
 
 Conservative rule enforced in `evaluateRule` step 5 (availability guard): `availability !== KNOWN` → `unknown_evidence_policy` → INDETERMINATE. A zero count from an unestablishable body is **never** read as meaningful and turned into FAIL (SPEC:425 applied per test: "zero not meaningful unless COMPLETE+supported").
 
-**Source:** `src/adapters/typescript/collector.ts:537-566` (`declarationSite` gap classification), `src/adapters/typescript/collector.ts:455-465` (`declarationGapReason`), `src/adapters/typescript/collector.ts:394-400` (gap → `PARTIAL`/`UNAVAILABLE` coverage mapping), `src/core/evaluation.ts:243-254` (step 5 availability guard), `docs/supported-syntax.md` (Five Declaration Gaps table).
+**Source:** `src/adapters/typescript/support.ts:853-893` (`declarationSite` gap classification), `src/adapters/typescript/support.ts:793-807` (`declarationGapReason`), `src/adapters/typescript/collector.ts:400-423` (gap → `PARTIAL`/`UNAVAILABLE` coverage mapping and the value/availability pair), `src/core/evaluation.ts:243-254` (step 5 availability guard), `docs/supported-syntax.md` (Five Declaration Gaps table).
 
-**DPC-1 (resolved 2026-10-17, user decision "Align docs to code").** This section previously claimed `availability: KNOWN` for `declaration-only`. That was wrong for the per-declaration record: a gap forces `coverage.status: UNAVAILABLE` and leaves `value` undefined (`collector.ts:394-400`, `:402-413`), so the declaration is `UNKNOWN`, never `KNOWN`-zero. Corrected above.
+**DPC-1 (resolved 2026-10-17, user decision "Align docs to code").** This section previously claimed `availability: KNOWN` for `declaration-only`. That was wrong for the per-declaration record: a gap forces `coverage.status: UNAVAILABLE` and leaves `value` undefined (`collector.ts:400-423`), so the declaration is `UNKNOWN`, never `KNOWN`-zero. Corrected above.
 
 The **file-level aggregate** for a file whose only gaps are declaration-only does remain `COMPLETE`/`KNOWN` — a different scope, documented separately at `docs/supported-syntax.md:169` (table scope header at `:166`, scope note at `:164`). The two scopes do not necessarily agree; reading one as the other was the whole of DPC-1. `docs/supported-syntax.md` already stated both correctly and is unchanged.
 
@@ -344,6 +350,13 @@ SUBSET (DPC-5); the goldens are the full-file regression layer that a schema cha
 can no longer slip past. `dist/` is gitignored, so the suite builds the CLI in
 `beforeAll`.
 
+- **Multi-rule runs are first-rule-only in SARIF.** Repeating `--rule` makes the JSON
+  report gain an additive `rules` array (one `{ rule, ruleResults, summary }` entry per
+  named rule) while its top-level `ruleResults`/`summary` mirror the **first named rule**
+  — not an aggregate across rules. SARIF has no `rules` equivalent: a multi-rule run
+  serializes the first named rule's evaluation only. Single-file scope only (one
+  `--test`); multi-file is deferred.
+
 ## 18. Global `vi.*` Is a Heuristic Vitest Signal (Option A, 2026-11-02)
 
 Vitest's `globals: true` config exposes `vi` on the global scope, so a globals-enabled
@@ -427,10 +440,10 @@ Setup: run Stryker with a JSON reporter, then invoke
 - There is **no** `PENDING` or `SKIPPED` status enum. `it.todo` and `it.skip` are reported as declaration gaps via the `declaration_gap` string (`declarationGapReason` at `src/adapters/typescript/support.ts:709`, attached in `src/adapters/typescript/collector.ts:406`), with `availability: UNKNOWN` and coverage `UNAVAILABLE`; they never produce a FAIL verdict.
 - **No-tests behavior** (a file with zero recognized declarations, e.g. `case-18-no-tests`): `analysisStatus` stays `SUCCESS` (the analysis itself completed), `evaluationStatus` is `FAILED`, `ruleResults`/`testResults` stay empty, CLI exits `2`. Source: `src/cli.ts:856` (`const exitCode = scopes.some(...) ? 0 : 2`), contract pinned in `tests/cli.test.ts:259-282`. Exit `2` is the single "no verdict" bucket; exit `0` means at least one scope reached `EVALUATED`; exit `1` stays reserved for usage errors/crashes.
 - **Exported test functions with no `it`/`test` call site** (`case-36-vitest-exported-test-fn`): a file whose only test-like code is an exported function body (not wrapped in `it`/`test`) has zero recognized declarations. The collector reports `assertion_count: 0` with `availability: KNOWN` and `coverage_status: COMPLETE` (no declarations to be incomplete about). CT-INT-001's `minimum_evidence_completeness: COMPLETE` admits the result, and the numeric threshold `assertion_count > 0` yields **FAIL**. This is the same outcome as any file with zero assertions in supported declarations — not a vitest-specific gap.
-- **`expect(...).not.*` negation** (`case-37-vitest-not-to-throw`): the `.not` chain on an expect call produces a matcher that is not in `SUPPORTED_ASSERTION_FORMS`. The construct is recorded as an unsupported assertion form → `PARTIAL` → `UNKNOWN` → **INDETERMINATE**. Same treatment as any unsupported matcher (e.g. `toBeDefined`, `toBeTruthy`).
-- **Vitest-only matchers** (`case-38-vitest-matchers`): matchers that exist in Vitest but not in the Jest allowlist — `toHaveLength`, `toBeCloseTo`, `toBeGreaterThan`, `toBeCalledWith` — are not in `SUPPORTED_ASSERTION_FORMS`. Each produces an unsupported-form record → `PARTIAL` → `UNKNOWN` → **INDETERMINATE**. Same treatment as computed matchers (§5) or Chai-style matchers (§7).
+- **`expect(...).not.*` negation** (`case-37-vitest-not-to-throw`; supported since 2026-11-22): a literal `.not` whose receiver is a direct `expect(...)` call maps through `ASSERTION_NEGATED_FORM_BY_MATCHER` to one of 6 negated forms (`expect-not-to-be` / `-to-contain` / `-to-have-property` / `-to-be-null` / `-to-throw` / `-to-have-been-called`), so `expect(() => {}).not.toThrow()` counts as an established assertion → `COMPLETE` → **PASS**. Only a computed `.not` (`expect(x).not[m]()`) or async negation (`expect(p).rejects.not.<matcher>()`) stays `UNKNOWN` → **INDETERMINATE** (§5).
+- **Vitest-only matchers** (`case-38-vitest-matchers`): matchers that exist in Vitest but not in the Jest allowlist — `toBeCloseTo` (and, before 2026-11-22, `toHaveLength` / `toBeGreaterThan`) — are not in `SUPPORTED_ASSERTION_FORMS` and produce an unsupported-form record → `PARTIAL` → `UNKNOWN` → **INDETERMINATE**, same treatment as computed matchers (§5) or Chai-style matchers (§7). `toHaveLength` and `toBeGreaterThan` became supported on 2026-11-22, so case-38 now yields `assertion_count: 2` with `coverage_status: PARTIAL` (only `toBeCloseTo` unresolved) → still **INDETERMINATE**.
 
-**Source:** `tests/fixtures/ct-int-001/case-36-vitest-exported-test-fn`, `case-37-vitest-not-to-throw`, `case-38-vitest-matchers`; `src/adapters/typescript/support.ts:22-33` (`SUPPORTED_ASSERTION_FORMS`); `src/adapters/typescript/collector.ts:593-600` (unsupported matcher path).
+**Source:** `tests/fixtures/ct-int-001/case-36-vitest-exported-test-fn`, `case-37-vitest-not-to-throw`, `case-38-vitest-matchers`; `src/adapters/typescript/capabilities.ts:25-54` (`SUPPORTED_ASSERTION_FORMS`); `src/adapters/typescript/collector.ts:593-600` (unsupported matcher path).
 
 ---
 
@@ -452,7 +465,7 @@ Setup: run Stryker with a JSON reporter, then invoke
 ## 22. Mocha-class bare-global derivation (P2, SP2)
 
 - **Derivation rule**: A file with bare `describe`/`it`/`test` declarations and/or bare `expect()` calls — no framework import and no local binding of those identifiers — is treated as a **mocha-class DERIVED signal**. This is not a runtime observation; mocha, chai, jasmine, ava, and jest all expose these globals, so the shape alone cannot distinguish among them. The same honesty frame applies as §18's global-vi note (vitest globals-only heuristic — inferred, not observed).
-- **Jest keeps its own derivation**: Files with a bare declaration **plus** a bare `expect(...)` call keep the existing jest derivation (`Provenance.DERIVED`, `framework_detection: PARTIAL`) because the 11 supported assertion forms are Jest-specific matchers. Without `expect(`, only the mocha-class derivation fires.
+- **Jest keeps its own derivation**: Files with a bare declaration **plus** a bare `expect(...)` call keep the existing jest derivation (`Provenance.DERIVED`, `framework_detection: PARTIAL`) because the 44 supported assertion forms are Jest/Vitest-specific matchers. Without `expect(`, only the mocha-class derivation fires.
 - **Imported bindings block both derivations**: An explicit import such as `import { describe } from 'mocha'` or `import { expect } from 'vitest'` makes the identifier local, not global — neither derivation applies, and the file falls through to the standard framework-import detection path.
 - **Supertest chains now classified (SP3)**: mocha-derived files whose assertions are supertest fluent chains (`.expect(status)` / `.expect(status, body, …)`) are now classified as `supertest-expect-status` / `supertest-expect-body` and counted toward `assertion_count` (fixture `case-40-supertest-chains`: 2 assertions, `COMPLETE`/`KNOWN`/`PASS`; corpus: `checktest-corpus/express/test/res.sendStatus.js:17,29,41` (clone of expressjs/express). The earlier 'report zero' under-count no longer applies to these forms.
 - **Remaining unclassified fluent-chain APIs**: chai `expect(x).to.equal(y)`, should.js `.should.equal(...)`, node `assert.*` remain explicit-unsupported — their namespaces are in `UNSUPPORTED_ASSERTION_NAMESPACES` (`support.ts:67`, unchanged). Such chains land in the unsupported reporting path (`collector.ts:675` expect-rooted unsupported matcher; `:682` namespace check) → `PARTIAL` → `UNKNOWN` → `INDETERMINATE`: never a silent drop and never a fabricated zero. See [Supported Syntax — Supertest HTTP Assertion Chains](./supported-syntax.md#supertest-http-assertion-chains-sp3-2026-11-09).
@@ -500,11 +513,11 @@ Classification is language-specific and lives in the adapters (`src/adapters/*`)
 
 **TypeScript (jest/vitest)** — `src/adapters/typescript/regex-assertion-count.ts:69` (`classifyFormStrength`), `src/adapters/typescript/collector.ts:329` (file-level) / `:418` (per-declaration):
 
-| Construct                                                                                         | Strength                |
-| ------------------------------------------------------------------------------------------------- | ----------------------- |
-| Straight-line module-level assertion (all 5 straight-line rules hold)                             | `EXECUTION_ESTABLISHED` |
-| Assertion nested in a helper/branch/callback, or modifier declaration (`it.each`/`skip`/`only`/…) | `SYNTAX_OBSERVED`       |
-| Unclassifiable matcher, computed matcher, or gapped declaration with no classified form           | `UNSUPPORTED`           |
+| Construct                                                                                                                             | Strength                |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| Straight-line module-level assertion (all 5 straight-line rules hold)                                                                 | `EXECUTION_ESTABLISHED` |
+| Assertion nested in a helper/branch/callback, or a gapped modifier declaration (`it.each` over a non-literal table/`skip`/`only`/...) | `SYNTAX_OBSERVED`       |
+| Unclassifiable matcher, computed matcher, or gapped declaration with no classified form                                               | `UNSUPPORTED`           |
 
 Aggregation: weakest-finding-wins at file level and per-declaration (`classifyFormStrength`: an unclassifiable form outranks a classified-but-unestablished one, which outranks a straight-line one). A scan that found nothing is `EXECUTION_ESTABLISHED` — its value 0 is definite.
 
@@ -541,14 +554,14 @@ Byte-exact goldens pin all three locations with BOTH `EXECUTION_ESTABLISHED` and
 
 The TypeScript external coverage provider accepts only explicitly shaped JSON reports for the supported coverage inputs.
 
-Raw Vitest `coverage-final.json` is not parsed; convert it to a supported shape first (Istanbul `covered`, or the derived c8 `files.<path>.coveredLines`) before passing `--coverage-report`.
+Raw Vitest `coverage-final.json` (shape A: flat Istanbul map `{ "<absPath>": { statementMap, s, ... } }`) is now parsed natively by `src/providers/coverage.ts`; covered lines are the sorted unique `statementMap[*].start.line` values whose hit count in `s` is > 0 (the derive() recipe, `validation/cov001-per-test-recipe.sh:124-145`). Malformed shape-A entries fail closed: `UNKNOWN` / `UNAVAILABLE`, never a zero-coverage `KNOWN`. Other raw shapes still require conversion (Istanbul `covered`, or the derived c8 `files.<path>.coveredLines`) before passing `--coverage-report`.
 
-| Format                                        | Provenance | Freshness check                                                                                                                                          | Example                                                       |
-| --------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Istanbul JSON                                 | `EXTERNAL` | source revision must be declared and equal the analyzed revision for a `KNOWN` freshness claim; mismatch or unknown revision → `UNKNOWN` / `UNAVAILABLE` | `{ "covered": { "/abs/file.js": [null, 1, 0] } }`             |
-| c8 JSON                                       | `EXTERNAL` | source revision must be declared and equal the analyzed revision for a `KNOWN` freshness claim; mismatch or unknown revision → `UNKNOWN` / `UNAVAILABLE` | `{ "files": { "/abs/file.js": { "coveredLines": [1, 3] } } }` |
-| Per-test-run derived shape                    | `EXTERNAL` | source revision plus explicit mapping plus `--per-test-run`; numeric per-declaration attribution only when `KNOWN` + `COMPLETE`                          | derived c8-shaped report plus mapping plus attestation        |
-| UNSUPPORTED: raw Vitest `coverage-final.json` | `N/A`      | unsupported format                                                                                                                                       | reason: `unsupported coverage report format`                  |
+| Format                                     | Provenance | Freshness check                                                                                                                                                                                       | Example                                                       |
+| ------------------------------------------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Istanbul JSON                              | `EXTERNAL` | source revision must be declared and equal the analyzed revision for a `KNOWN` freshness claim; mismatch or unknown revision → `UNKNOWN` / `UNAVAILABLE`                                              | `{ "covered": { "/abs/file.js": [null, 1, 0] } }`             |
+| c8 JSON                                    | `EXTERNAL` | source revision must be declared and equal the analyzed revision for a `KNOWN` freshness claim; mismatch or unknown revision → `UNKNOWN` / `UNAVAILABLE`                                              | `{ "files": { "/abs/file.js": { "coveredLines": [1, 3] } } }` |
+| Per-test-run derived shape                 | `EXTERNAL` | source revision plus explicit mapping plus `--per-test-run`; numeric per-declaration attribution only when `KNOWN` + `COMPLETE`                                                                       | derived c8-shaped report plus mapping plus attestation        |
+| Raw Vitest `coverage-final.json` (shape A) | `EXTERNAL` | source revision must be declared and equal the analyzed revision for a `KNOWN` freshness claim; mismatch or unknown revision → `UNKNOWN` / `UNAVAILABLE`; malformed entry → `UNKNOWN` / `UNAVAILABLE` | `{ "<absPath>": { "statementMap": {...}, "s": {...} } }`      |
 
 **File identity matching.** Exact normalized path match is preferred. Explicit mapping uses `--coverage-map <from>=<to>`; a mapped-missing target yields reason `no coverage data for <mappedTo>`, optionally prefixed with the mapping reason. Without mapping, an exact miss with multiple basename collisions fails closed with reason `ambiguous basename match: <sorted colliding paths>`, availability `UNKNOWN`, coverage status `UNAVAILABLE`, no numeric value (undefined, or the c8 fail-closed empty array); never wrong-file selection.
 
@@ -596,3 +609,179 @@ Adapter selection is stable across working directories for every file extension 
 - **Pre-fix workaround.** On checkouts before this fix, force the intended adapter with `--adapter <id>` (e.g. `check --test path/to/test.py --adapter python-pytest-adapter`) or run from a directory without a conflicting manifest; both yield the adapter the fixed dispatch now selects by itself.
 
 **Source:** `src/adapters/registry.ts:103-118` (manifest block), `:120-129` (extension + unsupported); `src/adapters/adapter.ts:143-149` (extensions also gate manifest candidacy); `src/cli.ts:326-331` (`runDoctorDispatch`), `:719,733-739` (`runAnalysis`); `docs/adr/ADR-034-layered-adapter-dispatch-recorded-decision.md` §Amendment 2026-11-21. Probes from repo root: `check --test tests/adapters/python/fixtures/pytest_sample.py --type UNIT` → exit 0, `python-pytest-adapter`, `decidedBy: extension`; `doctor --test ... --json` → `adapterId: python-pytest-adapter`, `decidedBy: extension`; repo-root `.rs` → exit 2 / `NO_ADAPTER_MATCHED`, pinned by `tests/cli.test.ts:1055`.
+
+---
+
+## 29. Post-v1.15.1 backlog initiative (WP11, 2026-11-21)
+
+The initiative closed the seven backlog register items (WP11 brief:11-17) across commits `02837f8`, `163bcfb` and `4b6b2c1` (HEAD). `REPORT_SCHEMA_VERSION` stayed `0.5`; ADR-042 held (no envelope key add/remove/rename).
+
+**(a) python-slice-corpus — RESTORED, machine-local.** Verdict `FEASIBLE`: all four feasibility conjuncts PASS, the recipe re-ran (exit 0), all six raw-artifact sha256 values re-verified, and the corpus suite executes green — `npx jest tests/integration/python-slice-corpus.test.ts`: 21 passed, 21 total, 0 skipped (3-implementer-notes.md §3). Disclosed behavior: `validation/python-slice/manifest.json` is gitignored (`.gitignore:8 validation/*`), so every checkout without the corpus lacks the manifest and the `it.skip` guard at `tests/integration/python-slice-corpus.test.ts:70-73` remains the honest default — the suite runs when the manifest is present, skips when absent. Evidence: 2-researcher-notes.md (`VERDICT: FEASIBLE` + per-conjunct (a)-(d) table); 3-implementer-notes.md (recipe run + jest output + skip-guard KEPT decision).
+
+**(b) CI Option C — (c') measured-dispatch landed, UNPROVEN-on-runner.** `.github/workflows/stryker-dispatch.yml` (89 lines) landed at commit `163bcfb`: `workflow_dispatch`-ONLY (no `schedule`, no `cron`, no `pull_request`/`push`), one scoped-recipe stryker run per dispatch (config PATH positional, no `--configFile`, `-c 1`), records wall-clock/exit code/report size+score/mutant count, uploads the report artifact with 14d retention, 30-minute timeout. First manual dispatch completed 2026-11-22 (run 44968057090: real 4m10.7s, exit 0, score 67/68 = 0.9852941176470589 — identical to the local baseline; runner determinism confirmed; datum in .opencode/scratch/wp11-followups/followup-stryker-datum.md). Owner ruling (WP11 plan ## Decisions #16): **manual dispatch stays the permanent mode — no schedule**. No playbook pitfall-6 amendment this initiative — `docs/release-playbook.md:234` ("Don't add Stryker to CI.") stands; the amendment is a gated policy edit deferred to a later owner decision. Evidence: 10-orchestrator-notes.md (ruling); 15-orchestrator-notes.md (commit execution + auditor 13/13 INFO); the workflow file's `on:` block.
+
+**(c) 22 WP6 expectation-gap clusters — resolved expectation-side.** Owner ruling ## Decisions #12 (task 16): all 22 clusters answered exactly once, every batch "Amend expectations" plus B5 cleanup (C-1 publish the canonical `unsupported-form` constant; C-2 remove the ordinary per-test `line_coverage` copy). Zero src/ bugs designated, zero deferrals; sidecars pin adapter behavior per cluster (`jev/record/post-v1151-cluster-rulings-2026-11-21.md`; commit `4b6b2c1`). 168 conformance tests green (144 + 24 harness-adoption suite), unchanged.
+
+Adoption landed: the conformance harness now reads the `*ByLanguage` sidecar branches via the exported deep-merge helper `mergeExpected` in `tests/conformance/harness.ts`; each branch is authoritative per key over the shared block (branch key wins per leaf, arrays/scalars/null replace, branch absent → shared identity), and shared blocks remain for branchless fixtures. The two EXPECTED-REMAINING shared-only residuals (CF-COND-001 python `unestablished_assertions`, CF-UNSUP-001 python `unclassified_constructs`) are reported residuals in the observation table, not failures. C-2's `perTest line_coverage` MUST_BE_ABSENT rule stands — src now complies.
+
+**(d) §4.7 closed — no human summary ever.** Owner ruling ## Decisions #14 (task 23): `check` never emits a separate human count summary. Rejected alternatives, one reason each: a stderr-only summary (a second output surface with no demonstrated need); an opt-in stdout summary flag (two documented stdout shapes when the envelope already carries the counters); an always-on stdout summary (changes the default report bytes); a new envelope key (ADR-042 freezes the envelope). `[docs/reporting-contract.md §4.7](reporting-contract.md)` records the closure + rationale; default `check` stdout is pinned byte-for-byte by `tests/cli.test.ts:1605-1615` (digest `dcec8784...`). Task 24 was docs-only plus the byte-pin test; `src/` is untouched. Evidence: `docs/reporting-contract.md §4.7` (`:227-237`); `jev/record/post-v1151-section47-summary-2026-11-21.md`; 23-orchestrator-notes.md; 24-implementer-notes.md.
+
+**(e) Observation statuses — both awaiting first real data.**
+
+- Item 7 (checkchange Option A WARN/FAILED path on a real runner): `PENDING-PR`. Public run `44939792339` was a push (base `8c345ea`, gate `NOT_EVALUATED`, exit 0); the WARN/FAILED path is unproven on a real runner until a PR lands (8-orchestrator-notes.md item-7 checkpoint). Not a task in this initiative.
+- Stryker measured-dispatch experiment: CLOSED 2026-11-22 — first dispatch datum landed (run 44968057090) and the owner ruling is manual-only status quo (## Decisions #16). Evidence: 15-orchestrator-notes.md; followup-stryker-datum.md.
+
+**Source:** `.opencode/plans/2026-11-21-post-v1151-backlog-initiative.md` (task 26 acceptance; ## Decisions #8-14); commits `4b6b2c1` / `163bcfb` / `02837f8`.
+
+---
+
+## 30. Node `assert` Is a Detected-but-Unsupported Assertion Namespace (T10, council-frozen 2026-11-22)
+
+`node:assert` calls (`assert.strictEqual(...)`, `assert.equal(...)`, ...) are **detected but never counted**. The namespace guard at `src/adapters/typescript/collector.ts:766-774` resolves the call's root identifier and, when it is one of `UNSUPPORTED_ASSERTION_NAMESPACES = ['assert', 'chai', 'should']` (`src/adapters/typescript/support.ts:92`), records an unsupported-form construct with reason `'assert' is not a supported assertion form` — `form: null`, `established: false`. The construct therefore never enters `assertion_count`; the file is `PARTIAL` and CT-INT-001 yields **INDETERMINATE**, never PASS and never FAIL.
+
+- **Bare `assert(x)` is not even detected as an assertion API.** `classifyForm` requires a property-access callee (`src/adapters/typescript/support.ts:395-398`); a bare call has no matcher to read, so it returns `null` and is silently dropped (the §7 heuristic gap). Only `assert.<member>(...)` forms reach the namespace guard.
+- **Census size: 42 rows.** The external B census carries **42** node-assert-unsupported rows after the gap-closure re-run (37 before -> 42 after; `.opencode/scratch/dogfood-gap-closure/21-reviewer-notes.md:109`; council fact-check `.opencode/scratch/open-items-closure/c-council-notes.md:24`). The regrowth is the documented fence-maintenance cost of the hand-maintained `UNSUPPORTED_ASSERTION_NAMESPACES` list.
+- **Frozen semantics (Q10 = B).** The reason stays `'assert' is not a supported assertion form`; the boundary is stated here and in [Supported Syntax — Not Recognized](./supported-syntax.md#not-recognized-recorded-as-unsupported-forms) (`docs/supported-syntax.md:77`). No src/ change.
+- **Deferral clause.** Supporting node:assert becomes a dedicated milestone unit **only if** a future census shows demand, and only with per-form static semantics (strict vs loose equality, `assert.ok`, `assert.ifError`, `assert.doesNotReject`, ...) plus characterization fixtures (true + near-miss) first. Partial-namespace support (bare `assert(x)` plus loose `assert.equal`) was rejected: it would create a mixed PASS/INDETERMINATE split inside one namespace.
+
+**Source:** `src/adapters/typescript/collector.ts:766-774` (namespace guard + reason), `src/adapters/typescript/support.ts:92` (`UNSUPPORTED_ASSERTION_NAMESPACES`), `src/adapters/typescript/support.ts:395-398` (`classifyForm` property-access guard), `docs/supported-syntax.md:77` (Not Recognized), `.opencode/scratch/dogfood-gap-closure/21-reviewer-notes.md:109` (37->42), `.opencode/scratch/open-items-closure/c-council-notes.md:27` (Q10 = B frozen + deferral clause).
+
+---
+
+## 31. Framework-Unknown Files Are UNSUPPORTED-as-Expected (T5, council-frozen 2026-11-22)
+
+A file whose detected framework is `unknown` — no detectable `jest`/`vitest`/`mocha` runtime signal — is reported at **report level** as `analysisStatus: UNSUPPORTED`, `completeness: NOT_APPLICABLE`, with the verbatim reason:
+
+```
+framework 'unknown' is outside the supported framework list [jest, vitest, mocha]
+```
+
+The reason is built at `src/adapters/typescript/collector.ts:278-279` from `SUPPORTED_FRAMEWORKS = ['jest', 'vitest', 'mocha']` (`src/adapters/typescript/capabilities.ts:18`). No `testResults` are emitted, so the file contributes neither PASS nor INDETERMINATE to test-level numerics.
+
+- **Corpus size: 7 files.** Five `vitest` UI specs (`test/ui/test/{trace,watch-updates,editor,ui,trace-stream}.spec.ts`) import `@playwright/test`; `react packages/dom-event-testing-library/testHelpers.js` and `react-testing-library tests/failOnUnexpectedConsoleCalls.js` carry no runner import at all (`.opencode/scratch/dogfood-census/B-census-external-notes.md:81-85,96,100,189`).
+- **Declared product boundary (Q5 = B, unanimous).** The framework list is the product boundary; no Playwright adapter is planned at milestone-1. This is report-level text only — no schema change, no src/ change. See §4 for the detection rules that leave these files `unknown`.
+- **The two helper-only files assert nothing by design.** `testHelpers.js` and `failOnUnexpectedConsoleCalls.js` are setup/helper modules, not test modules; the UNSUPPORTED verdict is the honest outcome, not a missed detection. Folding them into a bucket would overstate coverage.
+
+**Source:** `src/adapters/typescript/collector.ts:278-279` (`unsupported()` reason), `src/adapters/typescript/capabilities.ts:18` (`SUPPORTED_FRAMEWORKS`), §4 (framework detection), `.opencode/scratch/dogfood-census/B-census-external-notes.md:81-85,96,100,189` (7-file census), `.opencode/scratch/open-items-closure/c-council-notes.md:28` (Q5 = B frozen).
+
+---
+
+## 32. Zero-Assertion FAILs and Their Known False-Negative Causes (T9, council-frozen 2026-11-22)
+
+All **86** external-census FAILs carry the identical reason `CT-INT-001: assertion_count=0 <= 0`. Per-repo split (re-aggregated from the 99 retained B-reports, no re-clone): express 26, apollo-server 22, testcontainers-node 15, react 14, redux 7, vitest 2 (`.opencode/scratch/open-items-closure/t9a-documenter-notes.md` §2). The count measures **recognized** forms within the declared form vocabulary (`SUPPORTED_ASSERTION_FORMS`); it is a real measurement, not a fabricated zero.
+
+- **Known false-negative cause 1 — supertest chains read as declaration gaps.** A supertest fluent chain (`request(app).post('/').expect(413, done)`) is not a recognized assertion; the collector can read `var test = request(app).post('/')` as a test declaration and its `.set()/.write()/.expect()/.end()` calls as gap evidence. Verified example: `express/test/express.json.js#it@132` — `should 413 when over limit with chunked encoding`, whose body ends `test.expect(413, done)` — is reported FAIL with `assertion_count=0` (`B-reports/express--test_express.json.js.json`, test_id `...#it@132:0`; corpus source `express/test/express.json.js:132-141`). The misread is documented at `.opencode/scratch/dogfood-census/B-census-external-notes.md:174`.
+- **Known false-negative cause 2 — callback-executed assertions.** The 40 `coverage-evidence-missing` rows are INDETERMINATE (`assertion is inside a callback; callback execution cannot be established statically`), **correctly NOT FAIL** — a recognized assertion whose execution cannot be established statically is not a proved zero.
+- **Mislabel honesty (Q9 = B-conditional).** A FAIL here means **"no recognized assertion"**, not "no assertion". Local-variable supertest chains are recognized as of 2026-11-22 (S unit, C2 council), so that cause is closed for the in-file shape; the bucket stays a known false-negative bucket pending the deferred external re-measure, not a precision measurement.
+- **Named follow-up — recognition LANDED 2026-11-22 (S unit, C2 council).** The `supertest-chain assertion recognition` unit landed: `isSupertestChain` (`src/adapters/typescript/support.ts:442-461`) now resolves a non-`expect` root identifier to its enclosing `VariableDeclaration` initializer and re-walks that initializer's chain for an HTTP verb (`SUPERTEST_HTTP_METHODS`), so local-variable supertest chains (`const test = request(app).post('/'); test.expect(413)`) are recognized. Residual zero-assertion FAILs are unchanged; the external 86-FAIL census re-measure is **deferred to a later named unit** (cite-don't-re-measure — no corpus re-clone in this unit).
+
+**Source:** `.opencode/scratch/open-items-closure/t9a-documenter-notes.md` §2 (86 + per-repo split, verbatim reasons), `.opencode/scratch/dogfood-census/B-census-external-notes.md:163,165,174,179-182` (bucket + FAIL table + supertest note), `.opencode/scratch/dogfood-census/B-reports/express--test_express.json.js.json` (`#it@132:0` FAIL), `src/adapters/typescript/capabilities.ts:25-54` (`SUPPORTED_ASSERTION_FORMS`), `.opencode/scratch/open-items-closure/c-council-notes.md:29` (Q9 = B-conditional frozen).
+
+---
+
+## 33. `.cjs` Is Claimed by the TypeScript Adapter (T11, owner ruling 2026-11-22)
+
+The TypeScript adapter claims `.cjs` (`src/adapters/typescript/adapter.ts:50`), so a CommonJS test file resolves to `typescript-jest-adapter` at the extension layer instead of `UNSUPPORTED` / `no adapter matched`. Owner ruling 2026-11-22 (open item 11, `docs/open-items.md:166-169`): **add `.cjs`** rather than document `.cjs` as out-of-scope UNSUPPORTED.
+
+- **Why the claim is safe.** The collector applies no extension gate — it parses any path it is given (`src/adapters/typescript/collector.ts:139-148`) — so `extensions` is a dispatch CLAIM, not an analysis filter. `.cjs` source is CommonJS, parsed as `ScriptKind.TS` (the JSX heuristic matches only `/\.(jsx?|tsx?)$/`).
+- **Honest outcome, not a PASS.** A `.cjs` smoke test with bare `test(...)` and node `assert` derives the framework as `mocha` (bare-global, no `expect`) and `assert` is a detected-but-unsupported namespace (§30), so the file is `SUCCESS` / `PARTIAL` with `assertion_count` UNKNOWN and CT-INT-001 **INDETERMINATE**. The ruling makes the file ANALYZED; it does not extend the assertion vocabulary.
+- **Pinned by** `tests/adapters/adapter-contract.test.ts` (`.cjs` claimed), `tests/adapters/registry-integration.test.ts` (`.cjs` → `extension` / `typescript-jest-adapter`), and fixture `tests/fixtures/ct-int-001/case-57-cjs-extension/`.
+
+**Source:** `src/adapters/typescript/adapter.ts:50` (`extensions`), `src/adapters/registry.ts:120-129` (extension layer), `docs/open-items.md:166-169` (item 11), §30 (assert namespace), `tests/fixtures/ct-int-001/case-57-cjs-extension/sample.expected.json` (derived from a real `collectAnalysis` run).
+
+---
+
+## 34. Custom-Helper Calls Outside the Declared Test-Body Scope (A1 honest remainder; T7, owner ruling 2026-11-22)
+
+A1, verbatim (`docs/supported-syntax.md:227`): "**Cross-file helper resolution: out of scope.** A call like `expectValidUser(id)` is recorded as an unsupported form with reason `custom assertion helper is out of the declared test-body scope` — never silently dropped." The external census B re-aggregation contains exactly **33** such pure custom-helper rows (per-repo table, `.opencode/scratch/open-items-remainder-closure/t7-evidence-documenter-notes.md`, 10639B, lines 27–70) across **4 repos**: redux 23, react 6, axios 3, apollo-server 1. All 33 are **INDETERMINATE** verdicts with `coverage.status` PARTIAL — **never FAIL**. (The census's 86 FAILs are all `CT-INT-001: assertion_count=0 <= 0`; none involves a custom helper.)
+
+- **Representative helper patterns.** Each row is a direct call inside a test body: `assert(response.body.kind === 'single')` (apollo-server, 1 row), `expectAdapterFailurePreserved()` (axios, 3 rows), `assertConsoleErrorDev([...])` (react, 6 rows in one file), `expectTypeOf(...)` (redux, 23 rows across five `.test-d.ts` files).
+- **Capability gate.** Every row maps to A1: resolving a custom helper is `custom_helper_resolution: UNAVAILABLE` (`src/adapters/typescript/collector.ts:223`); no row is the A1 "test body passed as an identifier" case.
+- **Owner ruling (O2, 2026-11-22): keep out-of-scope.** These 33 rows stay INDETERMINATE/PARTIAL as the honest remainder; no src/ change is warranted. A "relax for local helpers" unit (enable `custom_helper_resolution`, so rows whose only gap is the helper can tip toward COMPLETE/PASS) is a possible future design unit — **not scheduled** under this docs-only unit (§11 guardrail).
+
+**Source:** `.opencode/scratch/open-items-remainder-closure/t7-evidence-documenter-notes.md:22-35,37-43,45-77` (33-row table, per-repo split, A1 mapping), `.opencode/scratch/dogfood-census/B-census-external-notes.md:163,179` (bucket baseline "33 custom-helper-out-of-scope"; 86 zero-assertion FAILs), `docs/supported-syntax.md:227-231` (A1), `src/adapters/typescript/collector.ts:223` (`custom_helper_resolution: UNAVAILABLE`), owner ruling O2 (2026-11-22).
+
+---
+
+## 35. Nested-Block Assertions Stay INDETERMINATE (executability honest remainder; T8, council-frozen 2026-11-22)
+
+Anchor A's straight-line rule 3, verbatim (`src/adapters/typescript/collector.ts:596-599`):
+
+> 3. it is not nested inside a block or control-flow construct (`if`,
+>    `else`, loop, `try`/`catch`/`finally`, `switch`, `do`, labeled
+>    statement) — those may or may not run, and which is not establishable
+>    without control-flow analysis, which milestone-1 does not do;
+
+An assertion failing that rule is **unestablished**: it is not counted, `coverage.status` is `PARTIAL`, `evidence.assertion_count.availability` becomes `UNKNOWN`, and CT-INT-001 yields **INDETERMINATE** — never FAIL (§1, §11). The reason string is `assertion is inside a nested block (if/loop/try/switch); straight-line execution cannot be established statically` (`src/adapters/typescript/collector.ts:94-95`); the walk that applies it is `isControlFlow` (`src/adapters/typescript/collector.ts:672-685`).
+
+- **Census datum — misc 108, named split.** The post-T9 self census (47 subjects, HEAD `2b7d060`) reports the `misc` bucket — `(nested-block OR custom-helper) AND NOT matcher` — at **108**, split **nested-only 67 / custom-only 37 / both 4** (`.opencode/scratch/dogfood-gap-closure/census-after/summary.md:24-27`, disk-verified; cite-don't-re-measure). The nested-only 67 is this section's actionable remainder; custom-only 37 and both 4 are §34's A1 remainder. The 53 → 108 rise is the documented partition effect of A's bucket definition plus new/changed test code between `d472fea` and `2b7d060`, not a tool regression (`census-after/summary.md:37-60`, "Why misc rose while INDET fell").
+- **Never-FAIL invariant.** No unestablished construct yields FAIL: an unestablished assertion is not a proved zero, so `availability: UNKNOWN` routes to `unknown_evidence_policy` = INDETERMINATE under the step-5 availability guard (`src/core/evaluation.ts:412-428`; `src/rules/ct-int-001.ts:63`). UNKNOWN stays INDETERMINATE.
+- **Council ruling (C2, 2026-11-22, unanimous 5/5): keep.** Item 8 = documented honest remainder with **zero src/ change**; semantics unchanged (nested/unestablished → coverage PARTIAL → INDETERMINATE, never FAIL). Executability heuristics — attempting to prove nested-block execution statically — were rejected as fabricated evidence; Anchor A already states the epistemic limit. The named reason split above is adopted from the Expansionist advisor so the bucket is actionable (`.opencode/scratch/open-items-remainder-closure/c2-council-notes.md:53-54`).
+- **Milestone that would change this.** Control-flow analysis (reachability, branch conditions, loop trip counts, `try`/`catch` paths) is the milestone that would let a nested-block assertion be established instead of left UNKNOWN; until it lands, the honest remainder stands.
+
+**Source:** `src/adapters/typescript/collector.ts:596-599` (Anchor A rule 3 verbatim), `src/adapters/typescript/collector.ts:94-95` (`REASON_NESTED_BLOCK`), `src/adapters/typescript/collector.ts:663-666` (nested-block walk), `src/adapters/typescript/collector.ts:672-685` (`isControlFlow`), `src/core/evaluation.ts:412-428` (step-5 availability guard), `src/rules/ct-int-001.ts:63` (`unknown_evidence_policy: INDETERMINATE`), `docs/supported-syntax.md:97` (A7 table row), `.opencode/scratch/dogfood-gap-closure/census-after/summary.md:24-27,37-60` (misc 108 split + partition note), `.opencode/scratch/open-items-remainder-closure/c2-council-notes.md:53-54` (item 8 = (a) frozen), §1, §11, §34.
+
+---
+
+## 36. TSX Parse Failures Surface as Report-Level FAILED + stderr Warning (T6, owner ruling 2026-11-22)
+
+A `.tsx` test file whose source the TypeScript parser rejects is a **report-level FAILED entry**, exactly as before: `analysisStatus: FAILED`, `evaluationStatus: FAILED`, `ruleResults: []`, `testResults: []`, `schemaVersion` 0.5 and the report envelope unchanged (ADR-042). Owner ruling O2 (2026-11-22, verbatim "Tolerate-skip + warning (Recommended)") adds a **file-level human-readable warning on stderr** — one line per file, no new report fields:
+
+```
+checktest: TSX parse failure: <file path>: parse diagnostics (N): TS<code> <message> (line L); …
+```
+
+- **Seam.** `runAnalysis` computes an optional `warning` string (`src/cli.ts`, `tsxParseWarning`) from the collector's own `parse diagnostics …` reason and returns it as data; `main()` writes it to the existing `process.stderr` channel. `runAnalysis` stays I/O-free. The warning is derived from `formatParseDiagnostics` (`src/adapters/typescript/collector.ts:238-247`), so the report reason and the stderr line cannot drift.
+- **Scoped to `.tsx`.** A `.ts` parse failure (fixture `tests/fixtures/ct-int-001/case-11-collector-failure/broken.test.ts`) keeps the long-standing contract "a FAILED test is reported in the JSON — never on stderr" (`tests/cli.test.ts`, case-11). The new warning fires only for a `.tsx` path whose analysis is FAILED with a `parse diagnostics` reason.
+- **Census datum — 10 FAILED files.** External census B (`.opencode/scratch/dogfood-census/B-census-external-notes.md:112-113,128-138,168`) reports **10** TSX parse FAILED files, all in the report-level bucket and excluded from the 776 test-level `ruleResults`: styled-components 2 (`commit-order.test.tsx` TS1109 line 638, 1 diag; `modern-css.test.tsx` TS1005 line 1032, 8 diags), query 5 (`useMutationState.test.tsx` TS1005 line 256, 25; `usePrefetchInfiniteQuery.test.tsx` TS1109 line 33, 38; `useQueries.test.tsx` TS1109 line 69, 35; `fine-grained-persister.test.tsx` TS1109 line 30, 12; `useMutation.test.tsx` TS1005 line 68, 155), zustand 3 (`persistAsync.test.tsx` TS1005 line 285, 14; `middlewareTypes.test.tsx` TS1109 line 47, 286; `basic.test.tsx` TS1109 line 225, 3). Under this ruling the 10 stay FAILED; the warning only makes the parse diagnostics visible on stderr.
+- **Parse-level, not TSX-per-se.** The same zustand repo has 4 TSX SUCCESS rows (`persistSync.test.tsx`, `immer.test.tsx`, `subscribe.test.tsx`, `vanilla/subscribe.test.tsx`; `B-census-external-notes.md:134-136,140`) — identical extension, clean parse. The failures are TSX grammar diagnostics, not a TSX-specific incapability.
+- **Pinned by** `tests/cli.test.ts` (T6: exit 2, FAILED report entry unchanged, stderr names the file and the first `TS<code>`).
+
+**Source:** `.opencode/scratch/open-items-remainder-closure/t6-evidence-documenter-notes.md:4-46` (10-file catalog + verbatim diagnostic codes), `:48-57` (4 zustand TSX SUCCESS contrast), `:91-115` (collector parse-failure seam `src/adapters/typescript/collector.ts:166-172,249-276`), `.opencode/scratch/dogfood-census/B-census-external-notes.md:112-113,128-138,134-136,140,168` (census buckets), `src/cli.ts` (`tsxParseWarning`, `runAnalysis` warning return, `main()` stderr write), `src/adapters/typescript/collector.ts:238-247` (`formatParseDiagnostics`), owner ruling O2 (2026-11-22), §33.
+
+---
+
+## 37. Source-Touch Contract — Static-Read-Only Analysis vs External Stryker (U8, 2026-11-23)
+
+**CheckTest analysis is static-read-only.** The TypeScript adapter parses the test file via AST (`src/adapters/typescript/collector.ts`); the coverage and mutation providers only READ report files from disk (`src/providers/coverage.ts`, `src/providers/mutation.ts`); `doctor`/`explain` never write files. Nothing in the `check` path creates, edits, or deletes a file in the analyzed repository.
+
+**Battery precedent (2026-11-23).** The five-rule battery replayed against the CheckChange and Engram checkouts ended with **0 tracked-file modifications in both foreign repos** (`.opencode/scratch/open-items-remainder-closure/dogfood-checkchange-engram-repos-2026-11-23.md`). That is the observed contract, not a promised guarantee.
+
+**The mutating component is external Stryker.** CheckTest never runs Stryker; it only reads a Stryker report the user produced (`--mutation-report`). Stryker is the tool that instruments and rewrites source files, so the safe-area question belongs to the user's mutation workflow, not to CheckTest's analysis path.
+
+**Shipped helper (owner ruling U8 option (B), `jev/record/mutation-sandbox-guarantee-2026-11-23.md`).** `checktest mutation-sandbox init [--dir <path>]` prepares the safe area:
+
+- creates a gitignored sandbox directory `.checktest-sandbox/` in the target repo;
+- writes `.checktest-sandbox/stryker.config.json` bound to that sandbox (`tempDirName: ".checktest-sandbox/stryker-tmp"`, `inPlace: false`, `ignorePatterns` including `.checktest-sandbox/**`; no `testRunner`, no `mutate` — runner-agnostic and minimal);
+- for CheckTest's own repo, ensures the `.gitignore` entry `.checktest-sandbox/` (idempotent);
+- for a FOREIGN repo, PRINTS the required `.gitignore` line and leaves the foreign `.gitignore` byte-identical — it never silently appends to a tracked file in a repo this unit does not own.
+
+**No enforcement claim.** The helper prepares a directory and a config; it does not run Stryker, does not watch provenance, and does not guarantee anything about where the user's mutation tooling actually runs. Framing constraint (binding, from the ruling record): CheckTest analysis is read-only; the sandbox is where the user's external mutation tool should run.
+
+**Foreign-repo caveat (battery finding).** In the 2026-11-23 battery, CheckChange's `.gitignore` covered `.stryker-tmp/` natively, while Engram's did NOT — residue had to be removed by hand. A foreign repo without an ignore entry will show `.checktest-sandbox/` as untracked; add the printed line before running mutation tooling there.
+
+**Source:** `src/sandbox/init.ts` (`initMutationSandbox`, `buildStrykerConfig`, `isOwnRepo`), `src/sandbox/cli.ts` (`runMutationSandbox`), `src/cli.ts` (dispatch only), `tests/cli-mutation-sandbox.test.ts` (dir creation, config content, own-repo append / foreign print-or-confirm with byte-identical foreign `.gitignore`), `jev/record/mutation-sandbox-guarantee-2026-11-23.md` (ruling + binding framing constraint), `.opencode/scratch/open-items-remainder-closure/dogfood-checkchange-engram-repos-2026-11-23.md` (battery precedent: 0 tracked-file modifications), `node_modules/@stryker-mutator/core/schema/stryker-schema.json` (`tempDirName`, `inPlace`, `ignorePatterns`; `workingDir` is not a Stryker core option and is deliberately absent).
+
+
+## 40. Re-derivation and provenance (outputs terminal)
+
+CheckTest reports are terminal outputs, not inputs. A report is the serialized result
+of one deterministic analysis of one input file; feeding a report back as an input
+(`--from-report`) is not supported and would break the determinism and
+schema-stability contracts (ADR-042, ADR-035).
+
+**Re-derivation recipe.** To reproduce a run, keep the inputs and re-run:
+
+1. Preserve the test file analyzed (its path is `test.file` in the report).
+2. Preserve every external evidence report attached via `--coverage-report` /
+   `--mutation-report`. Their paths and sha256 are recorded in the provenance
+   manifest's `external_evidence` block when `--provenance` was used.
+3. Re-run the command recorded in the provenance manifest's `command` field with
+   the same flags. The manifest's `input.sha256` must match the preserved test
+   file; a mismatch means the input changed and the verdict may differ — that is
+   correct, not a defect.
+4. Outputs are byte-identical when inputs, flags, and CheckTest version match.
+
+**If inputs are lost.** The manifest records that they are gone (sha256 mismatch or
+missing file) but cannot reconstruct the original verdict. Preserve inputs; this
+is a documentation contract, not an engine feature.

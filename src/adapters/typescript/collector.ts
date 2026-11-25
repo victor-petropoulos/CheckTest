@@ -68,6 +68,7 @@ import {
   classifyForm,
   classifyTestDeclaration,
   collectTestAliases,
+  collectTestShadows,
   declarationGapReason,
   declarationLabel,
   declarationName,
@@ -173,7 +174,11 @@ export function collectAnalysis(filePath: string, declaredType: TestType = TestT
     return unsupported(filePath, declaredType, framework);
   }
 
-  const perDeclaration = collectTestBodyFindings(sourceFile, collectTestAliases(sourceFile));
+  const perDeclaration = collectTestBodyFindings(
+    sourceFile,
+    collectTestAliases(sourceFile),
+    collectTestShadows(sourceFile),
+  );
   return supported(filePath, declaredType, framework, perDeclaration, detection.derived);
 }
 
@@ -310,6 +315,14 @@ function supported(
   const recognized = findings.filter((finding) => finding.form !== null);
   const unclassified = findings.filter((finding) => finding.form === null);
   const established = recognized.filter((finding) => finding.established);
+  // T9 — xN aggregation: established assertions in a literal-table `it.each`
+  // execute rowCount times (see the per-declaration value below).
+  const establishedCount = perDeclaration.reduce(
+    (total, entry) =>
+      total +
+      entry.findings.filter((finding) => finding.form !== null && finding.established).length * entry.site.rowCount,
+    0,
+  );
   const gaps = declarations.filter((site) => isCapabilityGap(site.gap));
 
   // COMPLETE means "the collector could classify every construct AND establish
@@ -320,9 +333,10 @@ function supported(
 
   const record = makeEvidenceRecord({
     type: EVIDENCE_ASSERTION_COUNT,
-    // Only ESTABLISHED assertions are counted (A7). The availability + reason
-    // below carry the truth about what was not establishable.
-    value: established.length,
+    // Only ESTABLISHED assertions are counted (A7), each multiplied by how often
+    // its declaration runs (T9: a literal `each` table's row count). The
+    // availability + reason below carry the truth about what was not establishable.
+    value: establishedCount,
     availability: deriveAvailability(coverageStatus),
     provenance: Provenance.DIRECT,
     source: ANALYZER_ID,
@@ -360,10 +374,51 @@ function supported(
     record.location = { file: filePath, line: first.line };
   }
 
+  // C1 (option (a)): file-level `unestablished_assertion` aggregate signal.
+  // Counted ONLY over the POSITIVELY-KNOWN subset of declarations — those whose
+  // body was actually scanned (site.gap === 'none') and which recognized at
+  // least one assertion. Gap declarations (the five §11 forms:
+  // declaration-only / unresolved-body / unsupported-form / conditional /
+  // aliased) are EXCLUDED from the count — never synthesized as 0 — so a file
+  // whose only declarations are gap forms yields NO signal record and the
+  // subject scope stays INDETERMINATE (F1 guard: no UNKNOWN laundering).
+  // Availability is KNOWN by construction (presence-and-count fact), matching
+  // the per-declaration seam (ADR-035 amendment 2026-11-18).
+  // Stricter F1 guard: emit the subject-scope signal ONLY when EVERY declaration
+  // site is statically scanned (no gap form). A single gap declaration makes the
+  // subject scope INDETERMINATE rather than aggregating over a partial subset,
+  // so the five §11 gap forms can never be laundered into a KNOWN -> FAIL.
+  const allScanned = perDeclaration.length > 0 && perDeclaration.every((entry) => entry.site.gap === 'none');
+  const scannedRecognized = perDeclaration
+    .filter((entry) => entry.site.gap === 'none')
+    .filter((entry) => entry.findings.some((finding) => finding.form !== null));
+  const fileEvidence: Record<string, EvidenceRecord> = { [EVIDENCE_ASSERTION_COUNT]: record };
+  if (allScanned && scannedRecognized.length > 0) {
+    const scannedFindings = perDeclaration
+      .filter((entry) => entry.site.gap === 'none')
+      .flatMap((entry) => entry.findings);
+    const scannedRecognizedFindings = scannedFindings.filter((finding) => finding.form !== null);
+    const scannedUnestablished = scannedRecognizedFindings.filter((finding) => !finding.established);
+    const scannedUnestablishedCount = scannedUnestablished.length;
+    const scannedUnestablishedReasons = [...new Set(scannedUnestablished.map((finding) => finding.reason))];
+    fileEvidence[EVIDENCE_UNESTABLISHED_ASSERTION] = makeEvidenceRecord({
+      type: EVIDENCE_UNESTABLISHED_ASSERTION,
+      value: scannedUnestablishedCount,
+      availability: Availability.KNOWN,
+      provenance: Provenance.DIRECT,
+      source: ANALYZER_ID,
+      collector_version: COLLECTOR_VERSION,
+      scope: ANALYSIS_SCOPE,
+      coverage: coverage(coverageStatus),
+      unestablished_assertions: { count: scannedUnestablishedCount, reasons: scannedUnestablishedReasons },
+      evidenceStrength: EvidenceStrength.SYNTAX_OBSERVED,
+    });
+  }
+
   return {
     subject: subject(filePath, declaredType, framework),
     analysis: summary(AnalysisStatus.SUCCESS, completeness, declaredType),
-    evidence: { [EVIDENCE_ASSERTION_COUNT]: record },
+    evidence: fileEvidence,
     capabilities: {
       ...capabilitiesOf(coverageStatus),
       // P1.3 — a DERIVED framework is a partial capability: the framework was
@@ -409,7 +464,7 @@ function testScopeResult(filePath: string, declaredType: TestType, entry: Declar
     type: EVIDENCE_ASSERTION_COUNT,
     // Gap declarations report NO value: a fabricated 0 would be exactly the
     // zero-assertion verdict basis for a body we never scanned.
-    value: gapped ? undefined : established.length,
+    value: gapped ? undefined : established.length * site.rowCount,
     availability: deriveAvailability(coverageStatus),
     provenance: Provenance.DIRECT,
     source: ANALYZER_ID,
@@ -542,11 +597,15 @@ function coverageReason(
  * skipped: in `it.each(t)(name, fn)` the OUTER call is the declaration, and
  * counting the inner `it.each(t)` too would report one test twice.
  */
-function findTestDeclarations(sourceFile: ts.SourceFile, aliases: ReadonlyMap<string, string>): DeclarationSite[] {
+function findTestDeclarations(
+  sourceFile: ts.SourceFile,
+  aliases: ReadonlyMap<string, string>,
+  shadows: ReadonlySet<string>,
+): DeclarationSite[] {
   const sites: DeclarationSite[] = [];
   const visit = (node: ts.Node): void => {
     if (ts.isCallExpression(node) && !isChainedCallee(node)) {
-      const declaration = classifyTestDeclaration(node.expression, aliases);
+      const declaration = classifyTestDeclaration(node.expression, aliases, shadows);
       if (declaration !== null) {
         sites.push(declarationSite(sourceFile, node, declaration));
       }
@@ -669,8 +728,9 @@ function isControlFlow(node: ts.Node): boolean {
 function collectTestBodyFindings(
   sourceFile: ts.SourceFile,
   aliases: ReadonlyMap<string, string>,
+  shadows: ReadonlySet<string>,
 ): DeclarationFindings[] {
-  const sites = findTestDeclarations(sourceFile, aliases);
+  const sites = findTestDeclarations(sourceFile, aliases, shadows);
   // Every declaration call in the file — a scan stops at these, so one finding
   // can belong to at most one declaration (plan task 7, hardening c).
   const declarations = new Set<ts.Node>(sites.map((site) => site.node));

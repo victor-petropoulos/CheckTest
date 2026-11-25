@@ -50,28 +50,27 @@
     },
     "fileLevel": {}
   },
+  "expectedEvidenceByLanguage": {
+    "ts": { "perTest": { "assertion_count": { "value": 0, "availability": "UNKNOWN", "coverage": { "status": "PARTIAL" }, "evidenceStrength": "UNSUPPORTED", "unclassified_constructs": { "count": 1, "reasons": ["'assert' is not a supported assertion form"] } } } },
+    "python": { "perTest": { "assertion_count": { "value": 1, "availability": "KNOWN", "coverage": { "status": "PARTIAL" }, "evidenceStrength": "SYNTAX_OBSERVED", "property_based": true, "reason": "unsupported-form: hypothesis @given property-based count (not case-exhaustive)" } } }
+  },
   "expectedApplicability": [
     "CT-INT-001",
     "CT-INT-003",
     "CT-INT-004"
   ],
-  "expectedFindings": [
-    {
-      "rule_id": "CT-INT-001",
-      "result": "INDETERMINATE",
-      "test_id_present": true
-    },
-    {
-      "rule_id": "CT-INT-003",
-      "result": "INDETERMINATE",
-      "test_id_present": true
-    },
-    {
-      "rule_id": "CT-INT-004",
-      "result": "INDETERMINATE",
-      "test_id_present": true
-    }
-  ],
+  "expectedFindings": {
+    "ts": [
+      { "rule_id": "CT-INT-001", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "INDETERMINATE", "test_id_present": true }
+    ],
+    "python": [
+      { "rule_id": "CT-INT-001", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-003", "result": "INDETERMINATE", "test_id_present": true },
+      { "rule_id": "CT-INT-004", "result": "PASS", "test_id_present": true }
+    ]
+  },
   "expectedExplanation": "Unsupported syntax is absence of evidence, never a fabricated zero-assertion PASS or a negative finding.",
   "expectedDiagnostics": {
     "reasons": [
@@ -83,6 +82,7 @@
     "level": "individual-test"
   },
   "knownLimitations": [
-    "TS namespace list verified at src/adapters/typescript/support.ts:64 and src/adapters/typescript/collector.ts:749-755 (reason: \"'assert' is not a supported assertion form\"); Python hypothesis @given gap reason UNSUPPORTED_FORM_GAP='unsupported-form' at src/adapters/python/support.ts:52-53. Exact TS reason wording must be pinned by WP6."
+    "TS namespace list verified at src/adapters/typescript/support.ts:64 and src/adapters/typescript/collector.ts:749-755 (reason: \"'assert' is not a supported assertion form\"); Python hypothesis @given gap reason UNSUPPORTED_FORM_GAP='unsupported-form' at src/adapters/python/support.ts:52-53. Exact TS reason wording must be pinned by WP6.",
+    "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-TS-4/GAP-TS-9/GAP-PY-3 expectation-side ('Amend expectations'): per-language evidence/findings recorded. C-1 publishes UNSUPPORTED_FORM_GAP verbatim, so the python @given reason is 'unsupported-form: hypothesis @given property-based count (not case-exhaustive)' (collector.ts:736/823-827). Shared expectedDiagnostics kept (18a ruling (2)); exact per-language reasons in the cluster table."
   ]
 }

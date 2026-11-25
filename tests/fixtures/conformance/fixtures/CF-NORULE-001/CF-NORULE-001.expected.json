@@ -3,6 +3,7 @@
   "schemaVersionExpectation": "0.5",
   "expectedDiscovery": { "ts": { "count": 0, "sites": [] }, "python": { "count": 0, "sites": [] } },
   "expectedEnvelope": { "analysisStatus": "SUCCESS", "evaluationStatus": "FAILED", "completeness": "NOT_APPLICABLE" },
+  "expectedEnvelopeByLanguage": { "ts": { "analysisStatus": "UNSUPPORTED", "evaluationStatus": "FAILED", "completeness": "NOT_APPLICABLE" }, "python": { "analysisStatus": "SUCCESS", "evaluationStatus": "FAILED", "completeness": "COMPLETE" } },
   "expectedEvidence": { "perTest": {}, "fileLevel": {} },
   "expectedApplicability": [],
   "expectedFindings": [],
@@ -10,5 +11,5 @@
   "expectedExplanation": "Zero declarations means zero evaluation scopes; no rule is applied and no verdict is invented.",
   "expectedDiagnostics": { "reasons": [] },
   "attribution": { "level": "not-applicable", "note": "No evidence exists at any level." },
-  "knownLimitations": ["N/A is unreachable for the five shipped rules (docs/rules/catalog.md:24); CT-DEMO-001 stub deliberately not used (docs/rules/catalog.md:179-183). No-adapter envelope is not exercised here."]
+  "knownLimitations": ["N/A is unreachable for the five shipped rules (docs/rules/catalog.md:24); CT-DEMO-001 stub deliberately not used (docs/rules/catalog.md:179-183). No-adapter envelope is not exercised here.", "WP11 task-16 (jev/record/post-v1151-cluster-rulings-2026-11-21.md) GAP-TS-8/GAP-PY-7/GAP-PY-8 expectation-side ('Amend expectations'): ts envelope UNSUPPORTED + framework-list reason; python SUCCESS/COMPLETE (empty file defaults pytest). Recorded in expectedEnvelopeByLanguage; shared block kept (18a ruling (2))."]
 }
