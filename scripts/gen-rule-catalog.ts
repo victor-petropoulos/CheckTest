@@ -105,6 +105,7 @@ export function renderRuleTable(rule: RuleMetadata): string {
       'Numeric-threshold honesty marker',
       rule.thresholds_inert === true ? '`thresholds_inert: true`' : 'absent (thresholds live)',
     ],
+    ['File-level-only evidence', rule.file_level_only === true ? '`file_level_only: true`' : '—'],
   ];
   return `### ${rule.id} — ${rule.name}\n\n${padTable(
     ['Catalog field', 'Value'],

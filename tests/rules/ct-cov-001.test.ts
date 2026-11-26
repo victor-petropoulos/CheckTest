@@ -71,6 +71,19 @@ describe('CT-COV-001 metadata', () => {
     expect(CT_COV_001.severity).toBe('warning');
     expect(CT_COV_001.status).toBe('active');
   });
+
+  it('description names exact numeric per-declaration precondition', () => {
+    expect(CT_COV_001.description).toContain('--per-test-run');
+    expect(CT_COV_001.description).toContain('--coverage-map');
+    expect(CT_COV_001.description).toContain('KNOWN + COMPLETE');
+    expect(CT_COV_001.description).toContain('Never asserts that a specific test body executed.');
+  });
+
+  it('rationale names exact numeric per-declaration precondition', () => {
+    expect(CT_COV_001.rationale).toContain('--per-test-run');
+    expect(CT_COV_001.rationale).toContain('--coverage-map');
+    expect(CT_COV_001.rationale).toContain('KNOWN + COMPLETE');
+  });
 });
 
 describe('CT-COV-001 verdicts (active: file-level mapped coverage)', () => {

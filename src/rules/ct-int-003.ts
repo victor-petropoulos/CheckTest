@@ -44,6 +44,7 @@ export const CT_INT_003: RuleMetadata = {
   evidence_completeness: { unestablished_assertion: 'signal' },
   // Numeric thresholds are inert for this rule: local_decision replaces step 7.
   // They still satisfy the registry's strict ordering contract (pass > fail).
+  thresholds_inert: true,
   evaluation: { metric: 'unestablished_assertion', pass_at_least: 1, fail_at_most: 0 },
   severity: 'warning',
   status: RuleStatus.ACTIVE,

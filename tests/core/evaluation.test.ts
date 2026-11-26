@@ -25,7 +25,6 @@ import { CT_INT_003 } from '../../src/rules/ct-int-003';
 import { CT_INT_004 } from '../../src/rules/ct-int-004';
 import { CT_COV_001 } from '../../src/rules/ct-cov-001';
 import { CT_MUT_001 } from '../../src/rules/ct-mut-001';
-import { CT_DEMO_001 } from '../../src/rules/ct-demo-001';
 import {
   AnalysisOutput,
   AnalysisStatus,
@@ -843,7 +842,7 @@ describe('reason field stays evidence-tied (plan 6.4)', () => {
   };
 
   beforeAll(() => {
-    for (const rule of [CT_INT_001, CT_INT_003, CT_INT_004, CT_COV_001, CT_MUT_001, CT_DEMO_001]) {
+    for (const rule of [CT_INT_001, CT_INT_003, CT_INT_004, CT_COV_001, CT_MUT_001]) {
       registerRule(rule);
     }
   });

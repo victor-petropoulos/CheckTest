@@ -28,7 +28,7 @@ import {
   makeEvidenceRecord,
 } from '../core/evidence';
 import { AnalysisOutput } from '../core/analysis';
-import { lineCount } from '../core/coverage-math';
+import { intersectLines, lineCount, toCoveredLineNumbers } from '../core/coverage-math';
 
 export type CoverageMapEntry = string | { from: string; to: string } | [string, string];
 
@@ -57,6 +57,12 @@ export interface CoverageReportOptions {
    * (`--per-test-run`), never inferred from the report.
    */
   per_test_run?: boolean;
+  /**
+   * When true, per-declaration line_coverage records are attributed per
+   * declaration (Tier 1/2/3) instead of the advisory record. Flag-gated;
+   * default false keeps behavior byte-identical.
+   */
+  per_declaration_coverage?: boolean;
 }
 
 /** Normalize any supported coverage-map input shape into from=to pairs. */
@@ -547,6 +553,58 @@ function advisoryPerDeclarationRecord(
   });
 }
 
+function attributedPerDeclarationRecord(
+  targetRecord: EvidenceRecord,
+  parsed: CoverageReportResult,
+  testFile: string,
+  declLine: number,
+  tier: 1 | 2 | 3,
+  mappingReason: string | undefined,
+): EvidenceRecord {
+  const provider = targetRecord.provider ?? parsed.provider;
+  const version = targetRecord.provider_version ?? parsed.provider_version;
+  const revision = targetRecord.source_revision ?? parsed.source_revision;
+  if (tier === 1) {
+    const covered = toCoveredLineNumbers(targetRecord.value);
+    const value = covered === null ? undefined : intersectLines(covered, declLine, Infinity);
+    return makeEvidenceRecord({
+      type: 'line_coverage',
+      value,
+      availability: Availability.KNOWN,
+      provenance: Provenance.EXTERNAL,
+      source: provider,
+      collector_version: version,
+      scope: EVIDENCE_SCOPE_TEST_BODY,
+      coverage: coverageBlock(targetRecord.coverage.status),
+      provider,
+      provider_version: version,
+      source_revision: revision,
+      location: { file: testFile, line: declLine },
+      reason: `coverage attributed: ${mappingReason ?? 'mapped'}; revision ${revision} matches; per-test-run attested; single-declaration span`,
+    });
+  }
+  if (tier === 2) {
+    return makeEvidenceRecord({
+      type: 'line_coverage',
+      value: undefined,
+      availability: Availability.UNKNOWN,
+      provenance: Provenance.EXTERNAL,
+      source: provider,
+      collector_version: version,
+      scope: EVIDENCE_SCOPE_TEST_BODY,
+      coverage: coverageBlock(targetRecord.coverage.status),
+      provider,
+      provider_version: version,
+      source_revision: revision,
+      location: { file: testFile, line: declLine },
+      reason: `run-scoped file-level coverage, not per-test-causal (${mappingReason ?? 'mapped'}; revision ${revision})`,
+    });
+  }
+  const cause = targetRecord.reason ?? 'per-declaration attribution unavailable';
+  const rec = unknownRecord(parsed, cause);
+  return { ...rec, location: { file: testFile, line: declLine } };
+}
+
 /**
  * CT-COV-001 per-test-run mode (design §2). A numeric per-declaration record
  * standing for the file-level claim "the mapped production file was exercised in
@@ -614,6 +672,7 @@ export function applyCoverageReport(
   // keeps the RAW target record (the fileRecord's value is already collapsed to a
   // covered-line count, which the numeric per-declaration records appraise).
   let perDeclNumericSource: EvidenceRecord | undefined;
+  let mappedTargetRecord: EvidenceRecord | undefined;
   if (mappedTo !== undefined) {
     const targetRecord = findFileRecord(parsed, mappedTo);
     if (targetRecord !== undefined) {
@@ -626,6 +685,7 @@ export function applyCoverageReport(
           targetRecord.availability === Availability.KNOWN ? countCoveredLines(targetRecord.value) : targetRecord.value,
         reason: targetRecord.reason ? `${mappingReason} (${targetRecord.reason})` : mappingReason,
       };
+      mappedTargetRecord = targetRecord;
       if (
         opts?.per_test_run === true &&
         targetRecord.availability === Availability.KNOWN &&
@@ -697,12 +757,63 @@ export function applyCoverageReport(
       // B5 C-2 (Decisions #12): ordinary non-mapped coverage MUST NOT be copied
       // into per-declaration evidence (CF-COV-001 sidecar perTest.line_coverage
       // = MUST_BE_ABSENT). Only the mapped branches attribute per-declaration.
-      const lineCoverage =
-        perDeclNumericSource !== undefined
-          ? scopedPerDeclarationRecord(perDeclNumericSource, parsed, analysis.subject.file, testScope.test.line)
-          : isMapped
-            ? advisoryPerDeclarationRecord(fileRecord, parsed, mappingReason)
-            : undefined;
+      const selfCoverage = mappedTo !== undefined && normalizePath(mappedTo) === normalizePath(analysis.subject.file);
+      const singleDecl = (analysis.tests ?? []).length === 1;
+      const tier1 =
+        opts?.per_declaration_coverage === true &&
+        perDeclNumericSource !== undefined &&
+        selfCoverage &&
+        singleDecl &&
+        mappedTargetRecord !== undefined &&
+        mappedTargetRecord.source_revision !== undefined &&
+        mappedTargetRecord.source_revision !== 'unknown' &&
+        (opts?.analyzedRevision === mappedTargetRecord.source_revision ||
+          opts?.analyzed_revision === mappedTargetRecord.source_revision);
+      let lineCoverage: EvidenceRecord | undefined;
+      if (opts?.per_declaration_coverage !== true) {
+        lineCoverage =
+          perDeclNumericSource !== undefined
+            ? scopedPerDeclarationRecord(perDeclNumericSource, parsed, analysis.subject.file, testScope.test.line)
+            : isMapped
+              ? advisoryPerDeclarationRecord(fileRecord, parsed, mappingReason)
+              : undefined;
+      } else if (tier1 && mappedTargetRecord !== undefined) {
+        lineCoverage = attributedPerDeclarationRecord(
+          mappedTargetRecord,
+          parsed,
+          analysis.subject.file,
+          testScope.test.line,
+          1,
+          mappingReason,
+        );
+      } else if (isMapped) {
+        if (
+          mappedTargetRecord !== undefined &&
+          mappedTargetRecord.availability === Availability.KNOWN &&
+          mappedTargetRecord.source_revision !== undefined &&
+          mappedTargetRecord.source_revision !== 'unknown'
+        ) {
+          lineCoverage = attributedPerDeclarationRecord(
+            mappedTargetRecord,
+            parsed,
+            analysis.subject.file,
+            testScope.test.line,
+            2,
+            mappingReason,
+          );
+        } else {
+          lineCoverage = attributedPerDeclarationRecord(
+            mappedTargetRecord ?? fileRecord,
+            parsed,
+            analysis.subject.file,
+            testScope.test.line,
+            3,
+            mappingReason,
+          );
+        }
+      } else {
+        lineCoverage = undefined;
+      }
       return {
         ...testScope,
         evidence:

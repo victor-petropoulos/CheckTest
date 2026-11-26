@@ -44,6 +44,37 @@ export function toLineSet(value: unknown): Set<number> | null {
 }
 
 /**
+ * Format-aware extraction of the covered LINE-NUMBER SET from a raw coverage value.
+ *
+ * Reuses the SAME discrimination as `lineCount` (coverage-math.ts:20-32):
+ * - array containing `null` (Istanbul hit-map) → indices+1 where entry === 1 (nulls skipped)
+ * - numeric array whose max > 1 (c8 coveredLines / vitest shape-A list) → members as a Set
+ * - otherwise dense 0/1 array → indices+1 where entry === 1
+ * - malformed (non-array, non-numeric elements without nulls) → null
+ */
+export function toCoveredLineNumbers(value: unknown): Set<number> | null {
+  if (!Array.isArray(value)) return null;
+  if (value.some((x) => x === null)) {
+    const out = new Set<number>();
+    for (let i = 0; i < value.length; i++) {
+      if (value[i] === 1) out.add(i + 1);
+    }
+    return out;
+  }
+  if (!value.every((x) => typeof x === 'number')) return null;
+  const nums = value as number[];
+  if (nums.length === 0) return new Set<number>();
+  if (Math.max(...nums) > 1) {
+    return new Set(nums);
+  }
+  const out = new Set<number>();
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] === 1) out.add(i + 1);
+  }
+  return out;
+}
+
+/**
  * Count the members of `lines` that fall within the inclusive span
  * `[start, end]`. A `null` set (no usable line list) counts as 0.
  */

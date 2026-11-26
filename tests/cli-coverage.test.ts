@@ -18,6 +18,7 @@
  */
 
 import { join } from 'path';
+import { execFileSync } from 'child_process';
 import { mkdirSync, writeFileSync } from 'fs';
 
 import { main } from '../src/cli';
@@ -333,8 +334,127 @@ describe('--per-test-run flag (CT-COV-001 unit A)', () => {
     expect(code).toBe(0);
     expect(stdout).toContain('--per-test-run');
   });
+  it('--help lists --per-declaration-coverage', () => {
+    const code = run(['--help']);
+
+    expect(code).toBe(0);
+    expect(stdout).toContain('--per-declaration-coverage');
+  });
+  it('per-declaration-coverage Tier 1 end-to-end: numeric KNOWN', () => {
+    const key = join(process.cwd(), 'tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts');
+    const p = report('pd-e2e-tier1.json', JSON.stringify({ covered: { [key]: [0, 0, 0, 0, 0, 0, 0, 1] } }));
+    const rev = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const code = run([
+      '--test',
+      CASE_01,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      p,
+      '--coverage-map',
+      `${key}=${key}`,
+      '--per-test-run',
+      '--per-declaration-coverage',
+      '--source-revision',
+      rev,
+    ]);
+    expect(code).toBe(0);
+    const json = reportJson();
+    expect(json.schemaVersion).toBe('0.5');
+    const decl = json.testResults[0].evidence?.line_coverage ?? json.evidence.line_coverage;
+    expect(decl.value).toBe(1);
+    expect(decl.availability).toBe('KNOWN');
+    expect(json.testResults[0].ruleResults[0].result).toBe('PASS');
+  });
+
+  it('per-declaration-coverage absent source-revision: per-decl UNKNOWN', () => {
+    const key = join(process.cwd(), 'tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts');
+    const p = report('pd-e2e-tier3.json', JSON.stringify({ covered: { [key]: [0, 0, 0, 0, 0, 0, 0, 1] } }));
+    const code = run([
+      '--test',
+      CASE_01,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      p,
+      '--coverage-map',
+      `${key}=${key}`,
+      '--per-test-run',
+      '--per-declaration-coverage',
+    ]);
+    expect(code).toBe(0);
+    const json = reportJson();
+    expect(json.schemaVersion).toBe('0.5');
+    const decl2 = json.testResults[0].evidence?.line_coverage ?? json.evidence.line_coverage;
+    expect(decl2.availability).toBe('UNKNOWN');
+    expect(decl2.value).toBeNull();
+    expect(json.testResults[0].ruleResults[0].result).toBe('INDETERMINATE');
+  });
 
   // Still byte-identical under unit B, because the CLI injects `analyzedRevision`
+
+  it('flag dropped: report byte-identical to pre-Option B baseline', () => {
+    const key = join(process.cwd(), 'tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts');
+    const p = report('pd-tier7-baseline.json', JSON.stringify({ covered: { [key]: [0, 0, 0, 0, 0, 0, 0, 1] } }));
+    const rev = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    // (a): without --per-declaration-coverage (flag absent = pre-Option B baseline)
+    const codeA = run([
+      '--test',
+      CASE_01,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      p,
+      '--coverage-map',
+      `${key}=${key}`,
+    ]);
+    expect(codeA).toBe(0);
+    const jsonA = reportJson();
+    // Pin exact advisory expectations from pre-Option B baseline
+    expect(jsonA.schemaVersion).toBe('0.5');
+    const declA = jsonA.testResults[0].evidence?.line_coverage ?? jsonA.evidence.line_coverage;
+    expect(declA.availability).toBe('UNKNOWN');
+    expect(declA.value).toBeNull();
+    expect(declA.reason).toContain('per-declaration attribution not supported for mapped coverage');
+    // Envelope equality: flag-absent must not add new keys
+    expect(Object.keys(jsonA)).toEqual(expect.arrayContaining(['schemaVersion', 'evidence', 'testResults', 'summary']));
+    // Subject record must match existing pinned expectations
+    expect('line_coverage' in jsonA.evidence).toBe(true);
+
+    // (b): WITH --per-declaration-coverage — adds Tier 2 per-decl record
+    const codeB = run([
+      '--test',
+      CASE_01,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      p,
+      '--coverage-map',
+      `${key}=${key}`,
+      '--per-declaration-coverage',
+      '--source-revision',
+      rev,
+    ]);
+    expect(codeB).toBe(0);
+    const jsonB = reportJson();
+    const declB = jsonB.testResults[0].evidence?.line_coverage ?? jsonB.evidence.line_coverage;
+    expect(declB.availability).toBe('UNKNOWN');
+    expect(declB.value).toBeNull();
+    expect(declB.reason).toContain('run-scoped file-level coverage, not per-test-causal');
+    // Flag-b must add a per-decl record beyond envelope
+    expect('line_coverage' in jsonB.testResults[0].evidence).toBe(true);
+    expect(declB.value).toBeNull();
+  });
+
+  // Still byte-identical
   // = git HEAD while the report carries no revision -> revision 'unknown' +
   // analyzed set => UNAVAILABLE (cli.ts:294-312). Unit B's numeric per-declaration
   // path needs a KNOWN + COMPLETE target, so the stale report keeps every record
@@ -393,5 +513,34 @@ describe('--per-test-run flag (CT-COV-001 unit A)', () => {
 
     expect(code).toBe(1);
     expect(stderr).toContain("invalid --coverage-map 'no-equals-sign'");
+  });
+});
+
+describe('per-declaration-coverage Tier2 e2e', () => {
+  it('flag on without per_test_run: per-decl UNKNOWN + run-scoped reason', () => {
+    const key = join(process.cwd(), 'tests/fixtures/ct-int-001/case-01-standard-assertion/sample.test.ts');
+    const p = report('pd-e2e-tier2.json', JSON.stringify({ covered: { [key]: [0, 0, 0, 0, 0, 0, 0, 1] } }));
+    const rev = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const code = run([
+      '--test',
+      CASE_01,
+      '--type',
+      'UNIT',
+      '--rule',
+      'CT-COV-001',
+      '--coverage-report',
+      p,
+      '--coverage-map',
+      `${key}=${key}`,
+      '--per-declaration-coverage',
+      '--source-revision',
+      rev,
+    ]);
+    expect(code).toBe(0);
+    const json = reportJson();
+    const decl = json.testResults[0].evidence?.line_coverage ?? json.evidence.line_coverage;
+    expect(decl.availability).toBe('UNKNOWN');
+    expect(decl.value).toBeNull();
+    expect(decl.reason).toContain('run-scoped file-level coverage, not per-test-causal');
   });
 });

@@ -34,7 +34,7 @@ export const CT_MUT_001: RuleMetadata = {
   category: 'mutation',
   description:
     'mutation-score-observed diagnostic: reports whether the file-level mutation score meets the fixed 0.5 threshold. Evidence is file-level only (Stryker report); no per-declaration attribution is claimed.',
-  applies_to: [TestType.UNIT, TestType.COMPONENT, TestType.INTEGRATION, TestType.CONTRACT, TestType.E2E],
+  applies_to: [TestType.UNIT, TestType.COMPONENT],
   required_evidence: ['mutation_score'],
   analysis_scope: 'test-body',
   minimum_evidence_completeness: CollectionStatus.COMPLETE,
@@ -42,6 +42,7 @@ export const CT_MUT_001: RuleMetadata = {
   conflicting_evidence_policy: RuleResult.INDETERMINATE,
   // Numeric thresholds are inert for this rule: local_decision replaces step 7.
   // They still satisfy the registry's strict ordering contract (pass > fail).
+  thresholds_inert: true,
   evaluation: { metric: 'mutation_score', pass_at_least: 1, fail_at_most: 0 },
   severity: 'warning',
   status: RuleStatus.ACTIVE,

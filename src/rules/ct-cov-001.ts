@@ -17,7 +17,7 @@ export const CT_COV_001: RuleMetadata = {
   name: 'coverage-observed',
   category: 'coverage',
   description:
-    'coverage-observed diagnostic: measures whether the mapped production file was exercised by an external coverage provider. Produces a file-level verdict when coverage is mapped (count of covered lines); when the report was produced by a run scoped to a single test file (--per-test-run) it also yields numeric per-declaration verdicts against the mapped file. Never asserts that a specific test body executed.',
+    'coverage-observed diagnostic: measures whether the mapped production file was exercised by an external coverage provider. Produces a file-level verdict when coverage is mapped (count of covered lines); when the report was produced by a run scoped to a single test file (--per-test-run) it also yields numeric per-declaration verdicts against the mapped file, which additionally require an explicit --coverage-map and a KNOWN + COMPLETE mapped target. Never asserts that a specific test body executed.',
   applies_to: [TestType.UNIT, TestType.COMPONENT, TestType.INTEGRATION, TestType.CONTRACT, TestType.E2E],
   required_evidence: ['line_coverage'],
   analysis_scope: 'test-body',
@@ -29,7 +29,7 @@ export const CT_COV_001: RuleMetadata = {
   severity: 'warning',
   status: RuleStatus.ACTIVE,
   rationale:
-    'When coverage is mapped from a test file to a production file, CT-COV-001 reports whether that production file was exercised (any covered line). It does not claim a specific test body executed: per-declaration attribution is not supported for ordinary mapped coverage, but a report produced by a run scoped to that test file (--per-test-run) with a KNOWN + COMPLETE mapped target yields numeric per-declaration verdicts carrying the file-level claim.',
+    'When coverage is mapped from a test file to a production file, CT-COV-001 reports whether that production file was exercised (any covered line). It does not claim a specific test body executed: per-declaration attribution is not supported for ordinary mapped coverage, but a report produced by a run scoped to that test file (--per-test-run) with an explicit --coverage-map and a KNOWN + COMPLETE mapped target yields numeric per-declaration verdicts carrying the file-level claim.',
   limitations:
     'Depends entirely on an externally produced coverage report; a missing, stale, partial or mismatched report yields INDETERMINATE rather than FAIL. In --per-test-run mode a mapped-pair contradiction (other PARTIAL report entries) only prepends veto-WARN to the subject reason and never changes a verdict.',
   docsUrl:

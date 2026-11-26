@@ -1443,13 +1443,13 @@ describe('CLI explain (Phase 2b)', () => {
     expect(json.kind).toBe('explain');
     expect(json.schemaVersion).toBe('0.5');
     // Full-shape pin: every registered rule carries rationale/limitations/docsUrl;
-    // deprecatedSince/thresholds_inert stay absent (present-when-present).
+    // deprecatedSince stays absent; thresholds_inert present for CT-MUT-001 since Task 8 hook-rule flag.
     expect(json.id).toBe('CT-MUT-001');
     expect(typeof json.rationale).toBe('string');
     expect(typeof json.limitations).toBe('string');
     expect(typeof json.docsUrl).toBe('string');
     expect(json).not.toHaveProperty('deprecatedSince');
-    expect(json).not.toHaveProperty('thresholds_inert');
+    expect(json).toHaveProperty('thresholds_inert', true);
   });
 
   it('explain prints threshold lines for a threshold rule (CT-INT-001)', () => {

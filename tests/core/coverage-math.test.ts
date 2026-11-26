@@ -1,4 +1,4 @@
-import { intersectLines, lineCount, toLineSet } from '../../src/core/coverage-math';
+import { intersectLines, lineCount, toCoveredLineNumbers, toLineSet } from '../../src/core/coverage-math';
 
 describe('lineCount (countCoveredLines semantics)', () => {
   it('non-array input yields 0', () => {
@@ -75,5 +75,32 @@ describe('intersectLines', () => {
   it('empty set or disjoint span yields 0', () => {
     expect(intersectLines(new Set(), 1, 5)).toBe(0);
     expect(intersectLines(new Set([1, 2, 3]), 5, 9)).toBe(0);
+  });
+});
+
+describe('toCoveredLineNumbers', () => {
+  it('dense 0/1 array maps indices+1 where entry===1', () => {
+    expect(toCoveredLineNumbers([0, 1, 0])).toEqual(new Set([2]));
+    expect(toCoveredLineNumbers([1, 1])).toEqual(new Set([1, 2]));
+    expect(toCoveredLineNumbers([0, 0])).toEqual(new Set());
+  });
+
+  it('empty array yields empty set', () => {
+    expect(toCoveredLineNumbers([])).toEqual(new Set());
+  });
+
+  it('null-entried array skips nulls and maps 1s', () => {
+    expect(toCoveredLineNumbers([null, 1, 0])).toEqual(new Set([2]));
+  });
+
+  it('c8 numeric list returns members', () => {
+    expect(toCoveredLineNumbers([1, 2, 3])).toEqual(new Set([1, 2, 3]));
+    expect(toCoveredLineNumbers([3, 17])).toEqual(new Set([3, 17]));
+  });
+
+  it('malformed returns null', () => {
+    expect(toCoveredLineNumbers(['a'])).toBeNull();
+    expect(toCoveredLineNumbers('x')).toBeNull();
+    expect(toCoveredLineNumbers(null)).toBeNull();
   });
 });

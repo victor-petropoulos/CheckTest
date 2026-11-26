@@ -596,7 +596,7 @@ Cross-reference: Coverage-input file identity is in §25; declaration/test ident
 - **Registration is explicit** and re-registering an id replaces the entry (`src/rules/registry.ts:175-181`). Validation covers id shape, classification, thresholds, severity, status and advisory fields (`:34-150`); evidence policy fields are immutable via config (§21).
 - **Report exposure differs by format.** JSON carries `ruleStatus` on each finding (`src/reporters/json.ts:133-138`); SARIF carries `status` (and `deprecatedSince` when present) on the rule descriptor (`src/reporters/sarif.ts:161-178`). See the §17 asymmetry note.
 - **Historical posture.** ADR-030 (`docs/adr/030-draft-rules-produce-no-verdicts.md`) recorded the earlier "draft rules produce no verdicts" decision and was amended by ADR-031 for CT-COV-001. Its blanket statement about future draft rules is superseded for opt-in runs by the D6 enforcement above; the ADR is retained as history, not rewritten here.
-- **Today's registry** contains five registered rules, all `active`: CT-INT-001, CT-INT-003, CT-INT-004, CT-COV-001, CT-MUT-001 (`src/cli.ts` `main()` — five `registerRule` calls, observed at `:589-593` on 2026-11-20; rule files `src/rules/ct-{int-001,int-003,int-004,cov-001,mut-001}.ts` each declare `RuleStatus.ACTIVE`). `src/rules/ct-demo-001.ts` declares `RuleStatus.ACTIVE` (`ct-demo-001.ts:30`) but is an unregistered N/A-path stub, registered only in tests (`tests/integration/fixtures.test.ts:179`); it is not a shipped rule. No draft or deprecated rule is registered, so the gates above are contract behavior for future rules, not currently exercised by a shipped rule.
+- **Today's registry** contains five registered rules, all `active`: CT-INT-001, CT-INT-003, CT-INT-004, CT-COV-001, CT-MUT-001 (`src/cli.ts` `main()` — five `registerRule` calls, observed at `src/cli.ts:630-634` (live verified); rule files `src/rules/ct-{int-001,int-003,int-004,cov-001,mut-001}.ts` each declare `RuleStatus.ACTIVE`). `src/rules/ct-demo-001.ts` declares `RuleStatus.ACTIVE` (`ct-demo-001.ts:30`) but is an unregistered N/A-path stub, referenced only in tests as an unregistered N/A witness (`tests/integration/fixtures.test.ts:262-264`); it is not a shipped rule. No draft or deprecated rule is registered, so the gates above are contract behavior for future rules, not currently exercised by a shipped rule.
 
 **Source:** `src/core/rule.ts:39-84`; `src/core/evaluation.ts:311-317`; `src/rules/registry.ts:34-150,163-181`; `src/reporters/json.ts:133-138`; `src/reporters/sarif.ts:161-178`; `README.md:95-108`; `docs/adr/030-draft-rules-produce-no-verdicts.md`.
 
@@ -762,7 +762,6 @@ checktest: TSX parse failure: <file path>: parse diagnostics (N): TS<code> <mess
 
 **Source:** `src/sandbox/init.ts` (`initMutationSandbox`, `buildStrykerConfig`, `isOwnRepo`), `src/sandbox/cli.ts` (`runMutationSandbox`), `src/cli.ts` (dispatch only), `tests/cli-mutation-sandbox.test.ts` (dir creation, config content, own-repo append / foreign print-or-confirm with byte-identical foreign `.gitignore`), `jev/record/mutation-sandbox-guarantee-2026-11-23.md` (ruling + binding framing constraint), `.opencode/scratch/open-items-remainder-closure/dogfood-checkchange-engram-repos-2026-11-23.md` (battery precedent: 0 tracked-file modifications), `node_modules/@stryker-mutator/core/schema/stryker-schema.json` (`tempDirName`, `inPlace`, `ignorePatterns`; `workingDir` is not a Stryker core option and is deliberately absent).
 
-
 ## 40. Re-derivation and provenance (outputs terminal)
 
 CheckTest reports are terminal outputs, not inputs. A report is the serialized result
@@ -785,3 +784,61 @@ schema-stability contracts (ADR-042, ADR-035).
 **If inputs are lost.** The manifest records that they are gone (sha256 mismatch or
 missing file) but cannot reconstruct the original verdict. Preserve inputs; this
 is a documentation contract, not an engine feature.
+
+---
+
+## 41. Scoped mutation-score measurement recipe (on-demand; owner ruling 2026-11-25)
+
+The WP11 (c') measured-dispatch experiment is **CLOSED** (owner ruling (iii), 2026-11-25). The proven scoped invocation is kept as an on-demand command; no cron/schedule is ever added. The measuring workflow `.github/workflows/stryker-dispatch.yml` stays in place as a workflow_dispatch-only tool — header comment carries the ruling, YAML body byte-identical.
+
+**Pinned scoped invocation.** Run from the CheckTest checkout root:
+
+```
+npx stryker run stryker.config.json --mutate "src/core/coverage-math.ts" -c 1
+```
+
+- `stryker.config.json` is passed as a config **PATH positional** (`stryker run [options] [configFile]`). The `--configFile` long flag is **rejected** by stryker 10.1.1 (workflow header comment, stryker-dispatch.yml:8-10).
+- `-c 1` concurrency 1; one scoped file — the LEDGER 2026-11-18 reference run shape (67/68 killed, score 0.9852941176470589, file `src/core/coverage-math.ts`).
+- `disableTypeChecks` string form is already set in `stryker.config.json:21`.
+
+**Pins.** `@stryker-mutator/core` and `@stryker-mutator/jest-runner` at `^10.1.1` in `package.json:35-36`; versions resolved from `package-lock.json` on the runner (datum step prints core/jest-runner versions).
+
+**Full-suite excluded.** The tracked `stryker.config.json` mutate scope `src/**/*.ts` (full suite) is deliberately NOT used: it SIGSEGV'd at 446/4877 mutants (~3h4m) per the workflow header comment (stryker-dispatch.yml:14-15). Scoped single-file measurement is the proven, cheap shape (~4.5 min including install+build).
+
+**Freshness flag pairing.** `--mutation-source-revision` must equal the FULL sha of cwd `git HEAD`; a short revision trips the freshness guard → CT-MUT-001 INDETERMINATE (open item #7 close, 2026-11-25).
+
+**Scores are re-derivable.** Mutation scores are not recomputed from reports; they are re-derived from stored CheckTest report evidence — the killed/survived/timeout/noCoverage breakdown persists in report JSONs (see limitations §40 Re-derivation and provenance; datum `.opencode/scratch/wp11-followups/followup-stryker-datum.md`).
+
+**Measured CI datum.** Run 44968057090 (workflow_dispatch @0d14395, job `stryker-measure`, success): wall 4m10.694s, exit 0, score 0.9852941176470589 = 67/68 killed — IDENTICAL to the local baseline; runner-deterministic; survived mutant `src/core/coverage-math.ts:27` ConditionalExpression → `false` (known local-equivalent survivor). Report artifact `stryker-dispatch-report.zip` 130435B → extracted `mutation.json` 817575B. Point at `.github/workflows/stryker-dispatch.yml` as the on-demand (workflow_dispatch-only) tool. Owner ruling (iii): no schedule/cron ever. Datum file: `.opencode/scratch/wp11-followups/followup-stryker-datum.md` (run 44968057090).
+
+**Source:** `.github/workflows/stryker-dispatch.yml:4-18` (header comment: scoped recipe, config-path positional, `--configFile` rejected, full-suite SIGSEGV precedent, pins); `package.json:35-36` (`^10.1.1` declarations); `.opencode/scratch/wp11-followups/followup-stryker-datum.md` (run 44968057090 datum: wall/exit/score/survived-mutant); `docs/limitations.md:766-787` (§40 re-derivation contract).
+
+## 42. Framework-Unknown Owner-Action Guidance (docs-only; 3a under §31 freeze; 2026-11-26)
+
+Cross-reference: §31 (council-frozen 2026-11-26, Q5=B boundary). This section is **NON-BOUNDARY-EXPANDING**: it adds no adapter, changes no `SUPPORTED_FRAMEWORKS` list, widens no detection or manifest heuristic, and makes no schema change. §31's verbatim reason string `framework 'unknown' is outside the supported framework list [jest, vitest, mocha]` is unchanged.
+
+When a report shows `analysisStatus: UNSUPPORTED` with reason `framework 'unknown' is outside the supported framework list [jest, vitest, mocha]`, the owner action is:
+
+- **Run the test file under a supported test runner** — add a `jest`, `vitest`, or `mocha` manifest/import so framework detection resolves to a supported framework. Jest/Vitest/Mocha are the only supported runners by design (§31 Q5=B).
+- **Other frameworks are reported UNSUPPORTED by design.** There is no adapter and no widening planned; this is the declared boundary, not a gap to close.
+- Do not expect a heuristic or manifest fallback to paper over an unsupported framework — detection stays strict.
+
+**Pending (not applied).** A narrow §31 amendment to append an additive owner-action hint to the reason text in `src/adapters/typescript/collector.ts` (task 3b) is recorded as pending intent in `.opencode/progress/DECISIONS.md` and requires its own explicit owner sign-off before any src change. Until then, the reason string stays verbatim and the 5 golden sites (`tests/adapters/collector.test.ts:175`, fixtures `ct-int-001` case-10/-15/-26/-47) remain untouched.
+
+**Measurement datum.** v3 census (`.opencode/scratch/nested-block-shapes-20261126/summary.md`): 13 framework-unknown rows / 13 files — Splash 9, agent-errors 4.
+
+**Source:** `.opencode/scratch/nested-block-shapes-20261126/summary.md` (v3 census: 13 framework-unknown rows/13 files — Splash 9, agent-errors 4); `docs/limitations.md` §31 (council-frozen, Q5=B); `src/adapters/typescript/collector.ts:278-279` (reason build, unchanged); `src/adapters/typescript/capabilities.ts:18` (`SUPPORTED_FRAMEWORKS`); `.opencode/progress/DECISIONS.md` (3b pending intent).
+
+## 43. Per-Declaration Coverage Attribution Behind a Flag (ADR-045; council verdict 3-2 B, 2026-11-26)
+
+The CLI flag `--per-declaration-coverage` (default off; absent/false ⇒ behavior byte-identical to pre-Option B) introduces per-declaration `line_coverage` attribution behind a tiered model documented in `docs/adr/ADR-045-per-declaration-coverage-attribution.md`:
+
+- **Tier 1 (numeric KNOWN):** per-declaration covered-line count under per-test-run attestation + declared `--source-revision` == analyzed revision + KNOWN+COMPLETE mapped target + self-coverage (`mappedTo === analyzed file`) + exactly one declaration + span intersection (`intersectLines(covered, declLine, Infinity)`, covered lines at or above the declaration line).
+- **Tier 2 (value undefined + UNKNOWN):** exact mapping + revision KNOWN but any Tier-1 precondition missing (cross-file mapping, multi-declaration same file, missing `--per-test-run`); reason `run-scoped file-level coverage, not per-test-causal (...)`. Shared-line double-counting → fail-closed, no numeric.
+- **Tier 3 (UNKNOWN, cause-named reason):** mapped target missing/unavailable/mismatched/no declared revision; value undefined, reason names the failure.
+
+Coverage is run-scoped FILE-LEVEL evidence reported per declaration, **not** declaration-scoped proof; there is no cross-file span intersection (coordinate spaces differ between the mapped production file and the analyzed test file — repro B rejected). The per-test-run body-level contract in §35 (nested-block assertions stay INDETERMINATE, executability heuristics rejected, C2 council-frozen 2026-11-22) is UNCHANGED: coverage evidence remains run-scoped/file-level; §35's C2 executability-heuristic rejection stands, and per-declaration attribution does not upgrade nested-block semantics.
+
+When `--per-declaration-coverage` is absent or false, the advisory/scoped branches are untouched and output is byte-identical to the pre-Option B baseline (no numeric per-decl record beyond the existing scoped path). Revert = drop the flag; no data migration (additive records only; no new EvidenceType, Availability member, envelope field, or `schemaVersion` change — stays 0.5).
+
+**Source:** `docs/adr/ADR-045-per-declaration-coverage-attribution.md` (full decision, alternatives considered, drift gate); `src/providers/coverage.ts` (`attributedPerDeclarationRecord` Tier 1/2/3, `toCoveredLineNumbers` import from `src/core/coverage-math.ts`); `src/cli.ts` (`--per-declaration-coverage`, `Options.perDeclarationCoverage`).

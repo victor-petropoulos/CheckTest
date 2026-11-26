@@ -59,6 +59,11 @@ describe('gen-rule-catalog', () => {
     expect(block).not.toContain('CT-DEMO-001');
   });
 
+  it('exposes file_level_only for CT-MUT-001 in the catalog', () => {
+    const block = renderGeneratedBlock(PRODUCTION_RULES);
+    expect(block).toContain('`file_level_only: true`');
+  });
+
   it('matches the checked-in catalog byte-for-byte (drift gate)', () => {
     // The checked-in generated region must equal the generator's output; this
     // also pins byte-parity with the repo's prettier markdown table style.

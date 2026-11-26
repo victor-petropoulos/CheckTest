@@ -153,4 +153,19 @@ describe('CLI --provenance manifestFramework', () => {
     expect(m.manifestFramework).toBeUndefined();
     expect('manifestFramework' in m).toBe(false);
   });
+
+  it('nearest manifest wins: nested vitest overrides root jest', () => {
+    const nested = join(TMP, 'packages', 'core');
+    mkdirSync(nested, { recursive: true });
+    const testFile = join(nested, 'sample.test.ts');
+    writeFileSync(testFile, readFileSync(fixture('case-01-standard-assertion'), 'utf8'));
+    writeFileSync(join(TMP, 'package.json'), JSON.stringify({ devDependencies: { jest: '^29' } }));
+    writeFileSync(join(nested, 'package.json'), JSON.stringify({ devDependencies: { vitest: '^1' } }));
+    const out = join(TMP, 'prov.json');
+    const code = main(['--test', testFile, '--type', 'UNIT', '--provenance', out]);
+    expect(code).toBe(0);
+    const m = JSON.parse(readFileSync(out, 'utf8'));
+    expect(m.manifestFramework).toBe('vitest');
+    expect(m.decidedBy).toBe('manifest');
+  });
 });

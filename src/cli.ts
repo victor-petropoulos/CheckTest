@@ -95,6 +95,7 @@ const USAGE = [
   '  --coverage-report <path>  external Istanbul/c8 coverage report to attach',
   '  --coverage-map <from>=<to>  map analyzed file path to report key (repeatable)',
   '  --per-test-run            mark the coverage report as a single-test-file run (CT-COV-001)',
+  '  --per-declaration-coverage attribute per-declaration line_coverage evidence per declaration (Tier 1 numeric under attestation+revision+self-coverage+single-declaration; Tier 2/3 availability UNKNOWN, value undefined; missing != zero); has effect only together with --coverage-report; default off',
   '  --source-revision <rev>   declared revision the coverage report was produced against',
   '  --mutation-report <path>  external Stryker mutation report to attach',
   '  --mutation-source-revision <rev>  declared revision the mutation report was produced against (valid git rev or unknown)',
@@ -149,6 +150,8 @@ export interface Options {
   coverageMap?: string[];
   /** CT-COV-001: the coverage report came from a run scoped to one test file. */
   perTestRun?: boolean;
+  /** Per-declaration coverage attribution (Tier 1/2/3); flag-gated, default off. */
+  perDeclarationCoverage?: boolean;
   /** Declared source revision (--source-revision); beats config sourceRevision. */
   sourceRevision?: string;
   mutationReport?: string;
@@ -204,6 +207,10 @@ function parseArgs(argv: readonly string[]): Options {
     // and `continue` advances past this token only.
     if (flag === '--per-test-run') {
       options.perTestRun = true;
+      continue;
+    }
+    if (flag === '--per-declaration-coverage') {
+      options.perDeclarationCoverage = true;
       continue;
     }
     if (flag === '--all-rules') {
@@ -851,21 +858,23 @@ function resolveManifestFramework(
     join(testDir, '..', 'package.json'),
     join(testDir, '..', '..', 'package.json'),
   ];
+  // Nearest manifest wins: candidates are ordered testDir -> parent -> grandparent,
+  // so the first package.json that declares any supported framework is authoritative.
+  const SUPPORTED = ['jest', 'vitest', 'mocha'] as const;
   for (const candidate of candidates) {
     try {
       const pkg = JSON.parse(readFileSync(candidate, 'utf8')) as {
         dependencies?: Record<string, string>;
         devDependencies?: Record<string, string>;
       };
-      const order = ['jest', 'vitest', 'mocha'] as const;
-      const present = order.filter((name) => {
+      const present = SUPPORTED.filter((name) => {
         return (pkg.devDependencies && name in pkg.devDependencies) || (pkg.dependencies && name in pkg.dependencies);
       });
       if (present.length > 0) {
         if (detectedFramework && (present as readonly string[]).includes(detectedFramework)) {
           return detectedFramework;
         }
-        return order.find((n) => (present as readonly string[]).includes(n)) as string;
+        return present[0];
       }
     } catch {
       // try next candidate
@@ -953,6 +962,7 @@ export function runAnalysis(options: Options): { report: string; exitCode: numbe
           ...(declaredRevision !== undefined ? { source_revision: declaredRevision } : {}),
           coverageMap: options.coverageMap,
           per_test_run: options.perTestRun,
+          per_declaration_coverage: options.perDeclarationCoverage,
         });
       }
     }

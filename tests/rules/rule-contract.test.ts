@@ -35,18 +35,18 @@ import {
 } from '../../src/core/analysis';
 import { Availability, CollectionStatus, EvidenceRecord, EvidenceType, Provenance } from '../../src/core/evidence';
 import { EvaluationStatus, RuleResult } from '../../src/core/result';
-import { RuleEvaluation, RuleMetadata, RuleStatus } from '../../src/core/rule';
+import { RuleEvaluation, RuleMetadata, RuleStatus, hasLocalDecisionHook } from '../../src/core/rule';
 import { CT_INT_001 } from '../../src/rules/ct-int-001';
 import { CT_INT_003 } from '../../src/rules/ct-int-003';
 import { CT_INT_004 } from '../../src/rules/ct-int-004';
 import { CT_COV_001 } from '../../src/rules/ct-cov-001';
 import { CT_MUT_001 } from '../../src/rules/ct-mut-001';
 import { CT_DEMO_001 } from '../../src/rules/ct-demo-001';
-import { getRule, registerRule, validateRule } from '../../src/rules/registry';
+import { derivedAppliesTo, getRule, registerRule, validateRule } from '../../src/rules/registry';
 
 /** Every rule in this repo's rule set. CT-DEMO-001 is demo-only; CT-INT-001 is
  * the only rule src/cli.ts registers into the production CLI. */
-const CONTRACT_RULES: RuleMetadata[] = [CT_INT_001, CT_DEMO_001];
+const CONTRACT_RULES: RuleMetadata[] = [CT_INT_001];
 
 /** Every rule shipped in src/rules — all six must pass validateRule. */
 const SHIPPED_RULES: RuleMetadata[] = [CT_INT_001, CT_INT_003, CT_INT_004, CT_COV_001, CT_MUT_001, CT_DEMO_001];
@@ -517,6 +517,58 @@ describe('validateRule — RuleStatus lifecycle contract (plan task 5.4)', () =>
   });
 });
 
+/**
+ * Task 3 — derivedAppliesTo tiers and registerRule derived-mismatch rejection.
+ * These tests verify that registerRule rejects rules whose applies_to does not
+ * match the derived applicability set for their category, and that the error
+ * message exactly matches the shape from src/rules/registry.ts:197-199.
+ */
+
+describe('derivedAppliesTo tiers and registerRule mismatch', () => {
+  it('derivedAppliesTo integrity returns all five concrete types', () => {
+    const derived = derivedAppliesTo('integrity');
+    expect(derived).toEqual(['UNIT', 'COMPONENT', 'INTEGRATION', 'CONTRACT', 'E2E']);
+  });
+
+  it('derivedAppliesTo coverage returns all five concrete types', () => {
+    const derived = derivedAppliesTo('coverage');
+    expect(derived).toEqual(['UNIT', 'COMPONENT', 'INTEGRATION', 'CONTRACT', 'E2E']);
+  });
+
+  it('derivedAppliesTo mutation returns UNIT and COMPONENT', () => {
+    const derived = derivedAppliesTo('mutation');
+    expect(derived).toEqual(['UNIT', 'COMPONENT']);
+  });
+
+  it('derivedAppliesTo unknown category falls back to all five concrete types', () => {
+    const derived = derivedAppliesTo('unknown-category');
+    expect(derived).toEqual(['UNIT', 'COMPONENT', 'INTEGRATION', 'CONTRACT', 'E2E']);
+  });
+
+  it('registerRule throws for valid structure but wrong applies_to (CT_DEMO_001)', () => {
+    // CT_DEMO_001 has category 'integrity' but applies_to [TestType.UNIT]
+    // derivedAppliesTo('integrity') = [UNIT, COMPONENT, INTEGRATION, CONTRACT, E2E]
+    // so registration must throw with the derived-mismatch message
+    expect(() => registerRule(CT_DEMO_001)).toThrow(
+      'Invalid rule definition CT-DEMO-001: applies_to must match derived applicability for category "integrity" (UNIT, COMPONENT, INTEGRATION, CONTRACT, E2E) (got UNIT)',
+    );
+  });
+
+  it('registerRule throws for valid structure but wrong applies_to (mutation rule with wrong types)', () => {
+    // A rule with category 'mutation' but applies_to [TestType.INTEGRATION]
+    // derivedAppliesTo('mutation') = [UNIT, COMPONENT]
+    const badMutationRule = {
+      ...CT_MUT_001,
+      id: 'CT-BAD-001',
+      name: 'bad mutation rule',
+      applies_to: [TestType.INTEGRATION],
+    } as unknown as RuleMetadata;
+    expect(() => registerRule(badMutationRule)).toThrow(
+      'Invalid rule definition CT-BAD-001: applies_to must match derived applicability for category "mutation" (UNIT, COMPONENT) (got INTEGRATION)',
+    );
+  });
+});
+
 describe('all shipped rules validate cleanly', () => {
   it.each(SHIPPED_RULES.map((rule) => [rule.id, rule] as [string, RuleMetadata]))(
     '%s passes validateRule with no errors',
@@ -524,4 +576,14 @@ describe('all shipped rules validate cleanly', () => {
       expect(validateRule(rule)).toEqual([]);
     },
   );
+});
+
+describe('threshold-inert metadata contract', () => {
+  it('every rule with a local_decision hook declares thresholds_inert === true', () => {
+    for (const rule of SHIPPED_RULES) {
+      if (hasLocalDecisionHook(rule)) {
+        expect(rule.thresholds_inert).toBe(true);
+      }
+    }
+  });
 });

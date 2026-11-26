@@ -61,22 +61,22 @@ never runs Stryker. Exits 0 on success, 1 on usage error.
 
 ### Flags
 
-| Flag                               | Description                                                                                                                       |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `--test <path>`                    | Path to the test file to analyze (required)                                                                                       |
-| `--type <TYPE>`                    | Declared test type: `UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`, `UNKNOWN` (default `UNKNOWN`)                          |
-| `--adapter <id>`                   | Adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034)                                             |
-| `--rule <id>`                      | Rule ID to evaluate; repeat the flag to evaluate several rules in one run (deduped, first-occurrence order; default `CT-INT-001`) |
+| Flag                               | Description                                                                                                                               |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `--test <path>`                    | Path to the test file to analyze (required)                                                                                               |
+| `--type <TYPE>`                    | Declared test type: `UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`, `UNKNOWN` (default `UNKNOWN`)                                  |
+| `--adapter <id>`                   | Adapter to dispatch with (default: resolved via flag > manifest > extension, ADR-034)                                                     |
+| `--rule <id>`                      | Rule ID to evaluate; repeat the flag to evaluate several rules in one run (deduped, first-occurrence order; default `CT-INT-001`)         |
 | `--all-rules`                      | Evaluate every ACTIVE registered rule in one run (DRAFT rules stay excluded unless also named via `--rule`; sugar for repeating `--rule`) |
-| `--format <fmt>`                   | Report format: `json` or `sarif` (default `json`)                                                                                 |
-| `--coverage-report <path>`         | External Istanbul/c8 coverage report JSON to attach                                                                               |
-| `--coverage-map <from>=<to>`       | Map analyzed file path to report key (repeatable; expects `<from>=<to>`)                                                          |
-| `--per-test-run`                   | Mark the coverage report as a single-test-file run (CT-COV-001)                                                                   |
-| `--source-revision <rev>`          | Declared revision the coverage report was produced against (CLI beats config `sourceRevision`)                                    |
-| `--mutation-report <path>`         | External Stryker mutation report JSON to attach                                                                                   |
-| `--mutation-source-revision <rev>` | Declared revision the mutation report was produced against (valid git rev or `unknown`)                                           |
-| `--config <path>`                  | Explicit config file (`checktest.config.json`); no implicit discovery                                                             |
-| `--provenance <path>`              | Write a provenance manifest JSON sidecar to `<path>` (single path, not repeatable)                                         |
+| `--format <fmt>`                   | Report format: `json` or `sarif` (default `json`)                                                                                         |
+| `--coverage-report <path>`         | External Istanbul/c8 coverage report JSON to attach                                                                                       |
+| `--coverage-map <from>=<to>`       | Map analyzed file path to report key (repeatable; expects `<from>=<to>`)                                                                  |
+| `--per-test-run`                   | Mark the coverage report as a single-test-file run (CT-COV-001)                                                                           |
+| `--source-revision <rev>`          | Declared revision the coverage report was produced against (CLI beats config `sourceRevision`)                                            |
+| `--mutation-report <path>`         | External Stryker mutation report JSON to attach                                                                                           |
+| `--mutation-source-revision <rev>` | Declared revision the mutation report was produced against (valid git rev or `unknown`)                                                   |
+| `--config <path>`                  | Explicit config file (`checktest.config.json`); no implicit discovery                                                                     |
+| `--provenance <path>`              | Write a provenance manifest JSON sidecar to `<path>` (single path, not repeatable)                                                        |
 
 ### Config File
 
@@ -283,6 +283,18 @@ Docs URL: https://github.com/victor-petropoulos/CheckTest/blob/main/docs/support
 
 No Draft or Deprecated rules are registered today; all five registered rules are Active. `src/rules/ct-demo-001.ts` is an unregistered N/A-path stub used only in tests; it is not a shipped rule (see [rule catalog](./docs/rules/catalog.md)).
 
+### Rule applicability — declared type, category-derived
+
+`--type` is caller-declared and never inferred from a file (default `UNKNOWN`; `UNKNOWN` yields `INDETERMINATE`, never `N/A` — `src/core/evaluation.ts:337-344`). Each rule declares `applies_to` on its `RuleMetadata`; `registerRule` rejects any declared/derived mismatch after `validateRule()` (`src/rules/registry.ts:176-201`), so a registered rule never ships outside its category's allowed set:
+
+| Category  | Allowed concrete types                      |
+| --------- | ------------------------------------------- |
+| integrity | UNIT, COMPONENT, INTEGRATION, CONTRACT, E2E |
+| coverage  | UNIT, COMPONENT, INTEGRATION, CONTRACT, E2E |
+| mutation  | UNIT, COMPONENT                             |
+
+Integrity and coverage rules declare all five concrete types; CT-MUT-001 declares `UNIT` + `COMPONENT` only (`src/rules/ct-mut-001.ts:37`), so CT-MUT-001 evaluates N/A on INTEGRATION/CONTRACT/E2E runs. CT-DEMO-001 stays the unregistered UNIT-only N/A witness, never a shipped rule.
+
 ### Running all five rules on one file
 
 `--rule` is repeatable: `checktest --test path/to/file.test.ts --rule CT-INT-001 --rule CT-COV-001` evaluates both named rules in one run, deduplicated, in first-occurrence order. There is also an `--all-rules` flag that evaluates every ACTIVE registered rule (DRAFT rules stay excluded unless also named via `--rule`). There is no `--ruleset`. To run the full five-rule battery against one test file, repeat `--rule` once per id, or loop over the ids:
@@ -307,6 +319,8 @@ Jest and Vitest are supported natively. Mocha-class bare-global derivations and 
 - **Derived fallback**: bare `it`/`test` + `expect` (no import) → inferred as Jest; bare `describe`/`it`/`test` without `expect` → `mocha` ([limitations §22](./docs/limitations.md#22-mocha-class-bare-global-derivation-p2-sp2))
 - **Supertest chains**: `request(app).<method>(...).expect(...)` → `supertest-expect-status` / `supertest-expect-body` ([supported-syntax](./docs/supported-syntax.md#supertest-http-assertion-chains-sp3-2026-11-09))
 - **JSX in `.js`**: files with JSX tags parse via `ts.ScriptKind.JSX` with TS fallback on diagnostics
+
+- **Framework-unknown (`analysisStatus: UNSUPPORTED`, reason `framework 'unknown' is outside the supported framework list [jest, vitest, mocha]`)**: by design (limitations §31, Q5=B). Action: run the file under a supported runner manifest/import (jest, vitest, mocha); other frameworks are reported UNSUPPORTED and are not auto-detected or adapted. See [limitations §42](./docs/limitations.md).
 
 - **Python**: `pytest` and `unittest`, statically collected (the file is never executed) → adapter id `python-pytest-adapter` ([supported-syntax Python section](./docs/supported-syntax.md#python); [limitations §23](./docs/limitations.md)). Example: `checktest check --test test_sample.py --adapter python-pytest-adapter`
 

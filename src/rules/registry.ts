@@ -172,11 +172,31 @@ export function validateRule(rule: RuleMetadata): string[] {
   return [...guardIdentity(rule), ...guardClassification(rule), ...guardEvaluationLifecycle(rule)];
 }
 
+/** Pure derivation of the applies_to set from a rule's category. */
+export function derivedAppliesTo(category: string): readonly TestType[] {
+  switch (category) {
+    case 'mutation':
+      return [TestType.UNIT, TestType.COMPONENT];
+    case 'integrity':
+    case 'coverage':
+    default:
+      return [TestType.UNIT, TestType.COMPONENT, TestType.INTEGRATION, TestType.CONTRACT, TestType.E2E];
+  }
+}
+
 /** Re-registering an id replaces the entry — last registration wins. */
 export function registerRule(rule: RuleMetadata): void {
   const errors = validateRule(rule);
   if (errors.length > 0) {
     throw new Error(`Invalid rule definition${typeof rule.id === 'string' ? ` ${rule.id}` : ''}: ${errors.join('; ')}`);
+  }
+  const derived = derivedAppliesTo(rule.category);
+  const actual = rule.applies_to;
+  const same = derived.length === actual.length && derived.every((t, i) => t === actual[i]);
+  if (!same) {
+    throw new Error(
+      `Invalid rule definition ${rule.id}: applies_to must match derived applicability for category "${rule.category}" (${derived.join(', ')}) (got ${actual.join(', ')})`,
+    );
   }
   rules.set(rule.id, rule);
 }

@@ -208,3 +208,102 @@ describe('C4 phantom per-test rows', () => {
     expect(scopes.length).toBe(0);
   });
 });
+
+describe('CT-MUT-001 applicability', () => {
+  it('evaluates N/A against INTEGRATION test type (applies_to does not include INTEGRATION)', () => {
+    const { finding } = evaluateRule(CT_MUT_001, {
+      subject: { id: 's', name: 'sample', file: 'sample.test.ts', language: 'typescript' },
+      analysis: {
+        status: 'success' as any,
+        completeness: 'complete' as any,
+        scope: 'test-body',
+        test_type: { value: TestType.INTEGRATION, source: 'explicit' as any },
+      },
+      evidence: {
+        mutation_score: {
+          type: 'mutation_score',
+          value: 0.8,
+          availability: 'KNOWN' as any,
+          provenance: 'DIRECT' as any,
+          source: 'stryker' as any,
+          collector_version: '1.0.0' as any,
+          scope: 'test-body' as any,
+          coverage: {
+            status: 'COMPLETE' as any,
+            supported_frameworks: [] as any,
+            supported_assertion_forms: [] as any,
+          },
+        },
+      },
+      capabilities: { mutation_score: 'AVAILABLE' as any },
+    });
+    expect(finding?.result).toBe(RuleResult.N_A);
+    expect(finding?.reason).toContain('applicability');
+  });
+
+  it('evaluates N/A against CONTRACT test type (applies_to does not include CONTRACT)', () => {
+    const { finding } = evaluateRule(CT_MUT_001, {
+      subject: { id: 's', name: 'sample', file: 'sample.test.ts', language: 'typescript' },
+      analysis: {
+        status: 'success' as any,
+        completeness: 'complete' as any,
+        scope: 'test-body',
+        test_type: { value: TestType.CONTRACT, source: 'explicit' as any },
+      },
+      evidence: {
+        mutation_score: {
+          type: 'mutation_score',
+          value: 0.8,
+          availability: 'KNOWN' as any,
+          provenance: 'DIRECT' as any,
+          source: 'stryker' as any,
+          collector_version: '1.0.0' as any,
+          scope: 'test-body' as any,
+          coverage: {
+            status: 'COMPLETE' as any,
+            supported_frameworks: [] as any,
+            supported_assertion_forms: [] as any,
+          },
+        },
+      },
+      capabilities: { mutation_score: 'AVAILABLE' as any },
+    });
+    expect(finding?.result).toBe(RuleResult.N_A);
+    expect(finding?.reason).toContain('applicability');
+  });
+
+  it('evaluates N/A against E2E test type (applies_to does not include E2E)', () => {
+    const { finding } = evaluateRule(CT_MUT_001, {
+      subject: { id: 's', name: 'sample', file: 'sample.test.ts', language: 'typescript' },
+      analysis: {
+        status: 'success' as any,
+        completeness: 'complete' as any,
+        scope: 'test-body',
+        test_type: { value: TestType.E2E, source: 'explicit' as any },
+      },
+      evidence: {
+        mutation_score: {
+          type: 'mutation_score',
+          value: 0.8,
+          availability: 'KNOWN' as any,
+          provenance: 'DIRECT' as any,
+          source: 'stryker' as any,
+          collector_version: '1.0.0' as any,
+          scope: 'test-body' as any,
+          coverage: {
+            status: 'COMPLETE' as any,
+            supported_frameworks: [] as any,
+            supported_assertion_forms: [] as any,
+          },
+        },
+      },
+      capabilities: { mutation_score: 'AVAILABLE' as any },
+    });
+    expect(finding?.result).toBe(RuleResult.N_A);
+    expect(finding?.reason).toContain('applicability');
+  });
+
+  it('CT_MUT_001.applies_to deep-equals [UNIT, COMPONENT]', () => {
+    expect([...CT_MUT_001.applies_to]).toEqual([TestType.UNIT, TestType.COMPONENT]);
+  });
+});

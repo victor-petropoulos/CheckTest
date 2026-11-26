@@ -110,6 +110,26 @@ Keep rule verdicts separate from analysis status, evaluation status, and complet
 - Exit codes: `check` — `0` at least one scope reached a verdict, `1` usage error or crash, `2` no verdict. `doctor` — `0` diagnostic success, `1` usage error, `2` unresolvable dispatch. `explain` — `0` printed, `1` unknown or missing `--rule`. Full matrix in the [command reference](references/command-reference.md).
 - Do not convert INDETERMINATE, N/A, UNSUPPORTED, or missing results into PASS or FAIL.
 
+## Test type is declared, not inferred — and rule applicability is category-derived
+
+`--type` is caller-declared: CheckTest never infers test type from a filename (`src/adapters/adapter.ts:90-95`). Supply it only when known from reliable context (`UNIT`, `COMPONENT`, `INTEGRATION`, `CONTRACT`, `E2E`); the default is `UNKNOWN`. Do not guess it.
+
+Declared type is a contract input the engine evaluates against each rule's declared `applies_to`, in order (`src/core/evaluation.ts:337-354`):
+
+- Step 1 — `UNKNOWN` test type: applicability itself is undecidable → `INDETERMINATE`, never `N/A`.
+- Step 2 — a concrete type outside the rule's `applies_to` → `N/A` (a mismatch between two concrete types). This path is unreachable for registered rules: `registerRule` rejects any declared/derived mismatch after the `validateRule()` structural pass (`src/rules/registry.ts:176-201`), so a registered rule never ships with an `applies_to` its category does not allow.
+
+Category-derived tiers (allowed set computed by a pure `derivedAppliesTo(category)` helper in the registry; `applies_to` stays declared on `RuleMetadata`):
+
+- `integrity` → all five concrete types
+- `coverage` → all five concrete types
+- `mutation` → `UNIT`, `COMPONENT` only
+- unknown/default category → all five concrete types
+
+Shipped reality today: integrity and coverage rules declare all five concrete types (CT-INT-001 `src/rules/ct-int-001.ts:59`, CT-INT-003 `:35`, CT-INT-004 `:43`, CT-COV-001 `src/rules/ct-cov-001.ts:21`); CT-MUT-001 declares `UNIT` + `COMPONENT` only (`src/rules/ct-mut-001.ts:37`), so an INTEGRATION/CONTRACT/E2E invocation of CT-MUT-001 evaluates N/A while UNIT/COMPONENT evaluate normally.
+
+CT-DEMO-001 stays the unregistered UNIT-only N/A witness (`src/rules/ct-demo-001.ts:1-31`, applies_to `:22`); it is referenced only as an unregistered N/A witness in tests (resolved directly at `tests/integration/fixtures.test.ts:262-264`; registerRule rejects it — proof: `tests/rules/gate-repro-ct-demo.test.ts` + `tests/rules/rule-contract.test.ts:548`) and must never appear in `tests/fixtures` as a registered rule — `registerRule` rejects `CT_DEMO_001` as derived-mismatch (`src/rules/registry.ts:176-201`).
+
 ## Investigating a finding
 
 Before recommending any action: read the rule description and its intended measurement; inspect the evidence values and their `availability`, `provenance`, and `evidenceStrength`; read the test at the reported location and understand its purpose; check that the evidence is attributed to the right test; and note any limitation that changes interpretation.

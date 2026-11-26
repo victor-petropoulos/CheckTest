@@ -1537,3 +1537,151 @@ describe('raw vitest shape-A (coverage-final.json flat Istanbul map, C2)', () =>
     expect(r.records.get('/x/a.ts')!.provider).toBe('custom-vitest');
   });
 });
+
+describe('per-declaration coverage attribution (Task 1)', () => {
+  it('Tier 1: numeric KNOWN single-decl self-coverage', () => {
+    const p = tmpFile('pd-tier1.json', JSON.stringify({ covered: { 'from.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [2]), p, {
+      coverageMap: { 'from.ts': 'from.ts' },
+      per_test_run: true,
+      per_declaration_coverage: true,
+      source_revision: 'r1',
+      analyzedRevision: 'r1',
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.value).toBe(1);
+    expect(decl.availability).toBe('KNOWN');
+    expect(decl.location).toEqual({ file: 'from.ts', line: 2 });
+    expect(decl.reason).toContain('per-test-run attested');
+    expect(decl.reason).toContain('single-declaration');
+  });
+
+  it('Tier 2 cross-file mapping: value undefined + UNKNOWN + run-scoped reason', () => {
+    const p = tmpFile('pd-tier2-cross.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+      per_declaration_coverage: true,
+      source_revision: 'r1',
+      analyzedRevision: 'r1',
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.value).toBeUndefined();
+    expect(decl.availability).toBe('UNKNOWN');
+    expect(decl.reason).toContain('run-scoped file-level coverage, not per-test-causal');
+  });
+
+  it('Tier 2 multi-decl same-file: value undefined + UNKNOWN', () => {
+    const p = tmpFile('pd-tier2-multi.json', JSON.stringify({ covered: { 'from.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'from.ts' },
+      per_test_run: true,
+      per_declaration_coverage: true,
+      source_revision: 'r1',
+      analyzedRevision: 'r1',
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.value).toBeUndefined();
+    expect(decl.availability).toBe('UNKNOWN');
+    expect(decl.reason).toContain('run-scoped file-level coverage, not per-test-causal');
+  });
+
+  it('Tier 2 flag on without per_test_run: value undefined + UNKNOWN', () => {
+    const p = tmpFile('pd-tier2-noper.json', JSON.stringify({ covered: { 'from.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [2]), p, {
+      coverageMap: { 'from.ts': 'from.ts' },
+      per_declaration_coverage: true,
+      source_revision: 'r1',
+      analyzedRevision: 'r1',
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.value).toBeUndefined();
+    expect(decl.availability).toBe('UNKNOWN');
+    expect(decl.reason).toContain('run-scoped file-level coverage, not per-test-causal');
+  });
+
+  it('Tier 3 no declared source_revision: UNKNOWN', () => {
+    const p = tmpFile('pd-tier3.json', JSON.stringify({ covered: { 'from.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [2]), p, {
+      coverageMap: { 'from.ts': 'from.ts' },
+      per_test_run: true,
+      per_declaration_coverage: true,
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.value).toBeUndefined();
+    expect(decl.availability).toBe('UNKNOWN');
+  });
+
+  it('precedence flag OFF + per_test_run ON: scoped 0/1 unchanged', () => {
+    const p = tmpFile('pd-prec-a.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+      per_test_run: true,
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.value).toBe(1);
+    expect(decl.reason).toBe('coverage evidence from a run scoped to from.ts');
+  });
+
+  it('precedence flag OFF + mapped: advisory reason unchanged', () => {
+    const p = tmpFile('pd-prec-b.json', JSON.stringify({ covered: { 'to.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [1, 2]), p, {
+      coverageMap: { 'from.ts': 'to.ts' },
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.reason).toContain('per-declaration attribution not supported for mapped coverage');
+  });
+});
+
+describe('per-declaration coverage attribution (reviewer fixes)', () => {
+  it('Tier 1 span intersection excludes covered lines before declLine', () => {
+    // covered line 1 (import) precedes declaration at line 3 -> excluded
+    const p = tmpFile('pd-span.json', JSON.stringify({ covered: { 'from.ts': [1, 0, 1] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [3]), p, {
+      coverageMap: { 'from.ts': 'from.ts' },
+      per_test_run: true,
+      per_declaration_coverage: true,
+      source_revision: 'r1',
+      analyzedRevision: 'r1',
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.value).toBe(1); // only line 3 counts, not line 1
+  });
+
+  it('flag ON + unmapped: per-declaration line_coverage absent (C-2)', () => {
+    const p = tmpFile('pd-unmapped.json', JSON.stringify({ covered: { 'from.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [2]), p, {
+      per_declaration_coverage: true,
+    });
+    expect(out.tests![0].evidence.line_coverage).toBeUndefined();
+  });
+
+  it('Tier 3 cause substring: mapped target missing', () => {
+    const p = tmpFile('pd-tier3-missing.json', JSON.stringify({ covered: { 'other.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [2]), p, {
+      coverageMap: { 'from.ts': 'nonexistent.ts' },
+      per_test_run: true,
+      per_declaration_coverage: true,
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.availability).toBe('UNKNOWN');
+    expect(decl.value).toBeUndefined();
+    // reason = targetRecord.reason ?? 'per-declaration attribution unavailable'
+    // targetRecord = findFileRecord(parsed, 'nonexistent.ts') = undefined → unknownRecord
+    expect(decl.reason).toContain('no coverage data for');
+  });
+
+  it('Tier 3 cause substring: no declared --source-revision', () => {
+    const p = tmpFile('pd-tier3-nodecl.json', JSON.stringify({ covered: { 'from.ts': [0, 1, 0] } }));
+    const out = applyCoverageReport(analysisWith('from.ts', [2]), p, {
+      coverageMap: { 'from.ts': 'from.ts' },
+      per_test_run: true,
+      per_declaration_coverage: true,
+    });
+    const decl = out.tests![0].evidence.line_coverage!;
+    expect(decl.availability).toBe('UNKNOWN');
+    expect(decl.value).toBeUndefined();
+    // source_revision absent → unknownRecord cause string
+    expect(decl.reason).toContain('per-declaration attribution unavailable');
+  });
+});

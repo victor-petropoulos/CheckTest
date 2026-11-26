@@ -227,7 +227,6 @@ function withStubConflict(analysis: AnalysisOutput, sourceText: string): Analysi
 }
 
 registerRule(CT_INT_001);
-registerRule(CT_DEMO_001);
 
 function load(caseName: string): { path: string; expected: ExpectedSidecar } {
   // The fixture file name lives in the sidecar, so each case directory stays
@@ -261,7 +260,8 @@ describe('CT-INT-001 fixtures (plan §4)', () => {
       const { path, expected } = load(caseName);
 
       // Rules resolve through the registry — the same lookup the CLI performs.
-      const rule = getRule(expected.rule);
+      // CT-DEMO-001 is an unregistered N/A witness; registerRule rejects derived-mismatch.
+      const rule = expected.rule === CT_DEMO_001.id ? CT_DEMO_001 : getRule(expected.rule);
       expect(rule).toBeDefined();
 
       let analysis = collectAnalysis(path, expected.declared_type);

@@ -54,6 +54,7 @@ export const CT_INT_004: RuleMetadata = {
   // Numeric thresholds are inert: local_decision replaces step 7. `fail_at_most`
   // is -1 so even the numeric path could never FAIL (a count is never < 0); the
   // registry only requires pass_at_least > fail_at_most.
+  thresholds_inert: true,
   evaluation: { metric: 'assertion_count', pass_at_least: 0, fail_at_most: -1 },
   severity: 'info',
   status: RuleStatus.ACTIVE,

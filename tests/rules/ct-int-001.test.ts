@@ -9,6 +9,7 @@
 import { evaluateRule } from '../../src/core/evaluation';
 import { getRule, registerRule } from '../../src/rules/registry';
 import { CT_INT_001 } from '../../src/rules/ct-int-001';
+import { CT_COV_001 } from '../../src/rules/ct-cov-001';
 import { CT_DEMO_001 } from '../../src/rules/ct-demo-001';
 import {
   AnalysisOutput,
@@ -176,9 +177,9 @@ describe('CT-DEMO-001 stub — the N/A path (plan A2 OPTION A)', () => {
 describe('registry', () => {
   it('registers and returns rules by id', () => {
     registerRule(CT_INT_001);
-    registerRule(CT_DEMO_001);
+    registerRule(CT_COV_001);
     expect(getRule(CT_INT_001.id)).toBe(CT_INT_001);
-    expect(getRule(CT_DEMO_001.id)).toBe(CT_DEMO_001);
+    expect(getRule(CT_COV_001.id)).toBe(CT_COV_001);
   });
 
   it('returns undefined for an unregistered id', () => {
